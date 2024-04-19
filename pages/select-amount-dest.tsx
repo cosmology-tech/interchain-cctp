@@ -1,0 +1,445 @@
+import Image from "next/image";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { useSearchParams } from 'next/navigation';
+import { RouteResponse } from "@skip-router/core";
+import { useAccount, useReadContract } from "wagmi";
+import { Box, Text, useColorModeValue } from "@interchain-ui/react";
+import { ArrowDownIcon, BackButton, PrimaryButton, ConnectWalletButton, Layout, CloseIcon } from "@/components/common";
+import { USDC_CONTRACT_ABI, USDC_ETHEREUM_MAINNET, USDC_EVM, colors, sizes } from "@/config";
+import { UsdcToken } from "@/models";
+import { COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM, USDC_TO_UUSDC, cosmosAddressToSkipChain, uusdcToUsdc } from "@/utils";
+import { usePrice } from "@/hooks";
+import { SkipChain, useSkip } from "@/skip";
+
+function calcFeeFromRoute(route: RouteResponse, price = 1) {
+  if (!route) return "0";
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 4
+  }).format((+route.amountIn - +route.amountOut) / USDC_TO_UUSDC * price);
+}
+
+export default function SelectAmount() {
+  const [destChain, setDestChain] = useState<SkipChain | null>(null);   // destination chain
+  const [destAddress, setDestAddress] = useState<string>("");           // destination address
+  const [amount, setAmount] = useState("0");
+  const [route, setRoute] = useState<RouteResponse | null>(null);
+  const { price = 1 } = usePrice();
+  const { address } = useAccount();
+  const skip = useSkip();
+  const router = useRouter();
+  const searchParams = useSearchParams()
+  
+  const sourceChainId = searchParams.get("source_chain_id") || "1";
+  // @ts-ignore
+  const token: UsdcToken = USDC_EVM[sourceChainId] ?? USDC_ETHEREUM_MAINNET;
+
+  const { data: balance } = useReadContract({
+    abi: USDC_CONTRACT_ABI,
+    chainId: token.id,
+    address: token.contract,
+    functionName: 'balanceOf',
+    args: [address]
+  });
+
+  useEffect(() => {
+    token.balance = uusdcToUsdc(balance as bigint);
+  }, [balance])
+
+  useEffect(() => {
+    const chain = cosmosAddressToSkipChain(destAddress);
+    setDestChain(chain ? chain : null);
+  }, [destAddress])
+
+  useEffect(() => {
+    if (+amount > 0 && destChain) {
+      skip.route({
+        amountIn: `${parseInt(String(+amount * USDC_TO_UUSDC))}`,
+        sourceAssetChainID: String(token.id),
+        sourceAssetDenom: token.contract!,
+        destAssetChainID: destChain.chain_id!,
+        // @ts-ignore
+        destAssetDenom: COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[destChain.chain_id!]
+      })
+      .then(setRoute)
+      .catch(console.log);
+    } else {
+      setRoute(null);
+    }
+  }, [amount, destChain])
+
+  async function onTransfer() {
+    if (!route || !address || !destAddress) return;
+    try {
+      skip.executeRoute({
+        route,
+        userAddresses: { [String(token.id)]: address!, [destChain!.chain_id!]: destAddress },
+        onTransactionTracked: async (txStatus) => {
+          console.log('Transaction status:', txStatus);
+        }
+      })
+    } catch(e) {
+      console.error('Error:', e);
+    }
+  }
+
+  return (
+    <Layout>
+      <Box
+        minHeight="50rem"
+        maxWidth={sizes.main.maxWidth}
+        mx="auto"
+        mt="3.5rem"
+      >
+        <Box
+          mb="2.5rem"
+          gap="1rem"
+          display="flex"
+          alignItems="center"
+          color={useColorModeValue(colors.blue50, colors.white)}
+        >
+          <BackButton onClick={() => router.push('/select-token')} />
+          <Text
+            fontSize="20px"
+            fontWeight="600"
+            lineHeight="28px"
+          >
+            Select amount and destination
+          </Text>
+        </Box>
+        <Box
+          mb="1rem"
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Text
+            fontSize="14px"
+            fontWeight="600"
+            lineHeight="20px"
+            color={useColorModeValue(colors.gray500, colors.blue700)}
+          >
+            Amount
+          </Text>
+          <Box
+            gap="10px"
+            display="flex"
+          >
+            <AmountButton amount={125} />
+            <AmountButton amount={250} />
+            <AmountButton amount={500} />
+            <AmountButton amount={800} />
+            <AmountButton amount={1000} maxText={"Max"} />
+          </Box>
+        </Box>
+        <TokenAmountInput
+          token={token}
+          value={amount}
+          onChange={setAmount}
+        />
+        <Box
+          mt="12px"
+          display="flex"
+          justifyContent="space-between"
+        >
+          <Text
+            color={useColorModeValue(colors.gray500, colors.blue700)}
+            fontSize="14px"
+            fontWeight="400"
+            lineHeight="20px"
+          >
+            Available: {uusdcToUsdc(balance as bigint)}
+          </Text>
+          <Text
+            color={useColorModeValue(colors.gray500, colors.blue700)}
+            fontSize="14px"
+            fontWeight="400"
+            lineHeight="20px"
+          >
+            {+token.balance > 0 ? '≈' : ''} ${token.value(price)}
+          </Text>
+        </Box>
+        <Box
+          my="12px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <ArrowDownIcon />
+        </Box>
+        <Box>
+          <Box
+            mb="1rem"
+            display="flex"
+            fontSize="14px"
+            fontWeight="600"
+            lineHeight="20px"
+            justifyContent="space-between"
+            color={useColorModeValue(colors.gray500, colors.blue700)}
+          >
+            Destination
+            <Text
+              fontSize="20px"
+              fontWeight="600"
+              attributes={{ marginRight: "20px" }}
+            >
+              {address && destChain && route ? uusdcToUsdc(route.amountOut) : ""}
+            </Text>
+          </Box>
+          <AddressInput
+            value={destAddress}
+            onChange={setDestAddress}
+          />
+          <PrimaryButton
+            mt="1rem"
+            disabled={!destAddress || !route}
+            onClick={onTransfer}
+          >
+            Bridge
+          </PrimaryButton>
+          <Box
+            mt="1rem"
+            display="flex"
+            alignItems="center"
+            visibility={destChain ? "visible" : "hidden"}
+          >
+            <Image
+              width={18}
+              height={18}
+              src={token.chain.logo_uri!}
+              alt={token.chain.chain_name!}
+            />
+            <Text
+              color={useColorModeValue(colors.gray500, colors.blue700)}
+              attributes={{ mx: "5px" }}
+            >
+              →
+            </Text>
+            {destChain ?
+              <Box
+                width={18}
+                height={18}
+                display="flex"
+                overflow="hidden"
+                borderRadius="10px"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Image
+                  width={18}
+                  height={18}
+                  src={destChain?.logo_uri!}
+                  alt={destChain?.chain_name!}
+                />
+              </Box> : null}
+            <Box display="flex" flex="1" justifyContent="right" visibility={route ? "visible" : "hidden"}>
+              <Text
+                color={useColorModeValue(colors.gray500, colors.blue700)}
+                fontSize="14px"
+                fontWeight="400"
+                lineHeight="20px"
+              >
+                ${calcFeeFromRoute(route!, price)} Fee
+              </Text>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Layout>
+  );
+}
+
+type AmountButtonProps = {
+  amount: number;
+  maxText?: string;
+  onClick?: (amount: number, max: boolean) => void;
+};
+
+function AmountButton({
+  amount,
+  maxText,
+  onClick = () => {},
+}: AmountButtonProps) {
+  return (
+    <Box
+      px="7px"
+      py="4px"
+      minWidth="40px"
+      cursor="pointer"
+      textAlign="center"
+      borderRadius="4px"
+      backgroundColor={useColorModeValue(colors.gray700, colors.blue300)}
+    >
+      <Text
+        fontSize="14px"
+        fontWeight="600"
+        lineHeight="20px"
+        color={useColorModeValue(colors.gray400, colors.blue700)}
+      >
+        {maxText ? maxText : amount}
+      </Text>
+    </Box>
+  );
+}
+
+type TokenAmountInputProps = {
+  token: UsdcToken;
+  value?: string;
+  onChange?: (value: string) => void;
+};
+
+function TokenAmountInput({
+  token,
+  value = "0",
+  onChange = () => {},
+}: TokenAmountInputProps) {
+  return (
+    <Box
+      px="20px"
+      height="96px"
+      display="flex"
+      alignItems="center"
+      borderWidth="1px"
+      borderStyle="solid"
+      borderRadius="8px"
+      borderColor={useColorModeValue(
+        colors.border.light,
+        colors.border.dark,
+      )}
+      backgroundColor={useColorModeValue(colors.white, colors.blue200)}
+    >
+      <Box
+        mr="1rem"
+        width="48px"
+        height="48px"
+        position="relative"
+      >
+        <Image src={token.logo} alt={token.name} width={48} height={48} />
+        <Box
+          position="absolute"
+          right="-4px"
+          bottom="-3px"
+          width="22px"
+          height="22px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          borderRadius="100%"
+          backgroundColor={useColorModeValue(colors.white, colors.blue200)}
+        >
+          <Image
+            src={token.chain.logo_uri!}
+            alt={token.chain.chain_name!}
+            width={18}
+            height={18}
+          />
+        </Box>
+      </Box>
+      <Box flex="1">
+        <Box display="flex">
+          <Text
+            fontSize="20px"
+            fontWeight="600"
+            lineHeight="28px"
+            color={useColorModeValue(colors.blue50, colors.white)}
+          >
+            {token.name}
+          </Text>
+        </Box>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+        >
+          <Text
+            fontSize="14px"
+            fontWeight="400"
+            lineHeight="20px"
+            color={useColorModeValue(colors.gray500, colors.blue700)}
+          >
+            on {token.chain.chain_name}
+          </Text>
+        </Box>
+      </Box>
+      <Box display="flex" alignItems="center" maxWidth="250px">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          style={{
+            fontSize: "24px",
+            fontWeight: "600",
+            textAlign: "right",
+            border: "none",
+            outline: "none",
+            maxWidth: "250px",
+            appearance: "none",
+            backgroundColor: "transparent",
+            color: useColorModeValue(colors.blue50, colors.white),
+          }}
+        />
+      </Box>
+    </Box>
+  );
+}
+
+type AddressInputProps = {
+  value?: string;
+  onChange?: (value: string) => void;
+};
+
+function AddressInput({
+  value = "",
+  onChange = () => {},
+}: AddressInputProps) {
+  return (
+    <Box
+      pl="1rem"
+      height="54px"
+      display="flex"
+      position="relative"
+      alignItems="center"
+      borderWidth="1px"
+      borderStyle="solid"
+      borderRadius="8px"
+      borderColor={useColorModeValue(
+        colors.border.light,
+        colors.border.dark,
+      )}
+      backgroundColor={useColorModeValue(colors.white, colors.blue200)}
+    >
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Paste address"
+        style={{
+          fontSize: "14px",
+          fontWeight: "400",
+          lineHeight: "20px",
+          minWidth: "360px",
+          border: "none",
+          outline: "none",
+          maxWidth: "250px",
+          appearance: "none",
+          paddingTop: "0.5rem",
+          paddingBottom: "0.5rem",
+          backgroundColor: "transparent",
+          color: useColorModeValue(colors.gray500, colors.blue700),
+        }}
+      />
+      {value
+        ? <Box
+            position="absolute"
+            top="17px"
+            right="1rem"
+            cursor="pointer"
+            attributes={{
+              onClick: () => onChange(""),
+            }}
+          >
+            <CloseIcon />
+          </Box>
+        : <ConnectWalletButton />}
+    </Box>
+  );
+}
