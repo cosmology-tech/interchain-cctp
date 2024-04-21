@@ -1,31 +1,13 @@
 import { chains } from 'chain-registry';
 import { Asset, Chain } from '@chain-registry/types';
 import { skipChainById } from "@/skip";
+import { COSMOS_BECH32_PREFIX_TO_CHAIN_ID } from '@/config';
 
 export const USDC_TO_UUSDC = 1e6;
 export function uusdcToUsdc(uusdc: string | bigint = '0') {
   return new Intl.NumberFormat('en-US', {
     maximumSignificantDigits: 6
   }).format(parseInt(uusdc.toString()) / USDC_TO_UUSDC);
-}
-
-export const COSMOS_BECH32_PREFIX_TO_CHAIN_ID = {
-  "cosmos1": "cosmoshub-4",
-  "noble1": "noble-1",
-  "stars1": "stargaze-1",
-  "osmo1": "osmosis-1",
-  "juno1": "juno-1",
-}
-
-export const COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM = {
-  "agoric-3": "ibc/FE98AAD68F02F03565E9FA39A5E627946699B2B07115889ED812D8BA639576A9",
-  "cosmoshub-4": "ibc/F663521BF1836B00F5F177680F74BFB9A8B5654A694D0D2BC249E03CF2509013",
-  "noble-1": "uusdc",
-  "stargaze-1": "ibc/4A1C18CA7F50544760CF306189B810CE4C1CB156C7FC870143D401FE7280E591",
-  "dydx-mainnet-1": "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5",
-  "osmosis-1": "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4",
-  "juno-1": "ibc/4A482FA914A4B9B05801ED81C33713899F322B24F76A06F4B8FE872485EA22FF",
-  "umee-1": "ibc/92BC8E5C50E6664B4DA748B62C1FFBE321967E1F8868EE03B005977F9AA7C0B8"
 }
 
 export function cosmosAddressToSkipChain(address: string) {

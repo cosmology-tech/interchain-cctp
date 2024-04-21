@@ -10,8 +10,8 @@ import {
   colors,
   USDC_CONTRACT_ABI,
   USDC_ETHEREUM_MAINNET,
+  USDC_ARBITRUM_MAINNET,
   USDC_OPTIMISM_MAINNET,
-  USDC_ARBITRUM_MAINNET
 } from "@/config";
 import { BalanceNotAvailable, UsdcToken } from "@/models";
 import { useRouter } from "next/router";
@@ -28,10 +28,11 @@ export default function SelectToken() {
   const { address } = useAccount();
   const [tokens, setTokens] = useState([
     USDC_ETHEREUM_MAINNET,
+    USDC_ARBITRUM_MAINNET,
     USDC_OPTIMISM_MAINNET,
-    USDC_ARBITRUM_MAINNET
   ]);
   const { data } = useReadContracts({
+    enabled: Boolean(address),
     contracts: tokens.map((token) => ({
       abi: USDC_CONTRACT_ABI,
       chainId: token.id,

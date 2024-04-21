@@ -6,9 +6,9 @@ import { RouteResponse } from "@skip-router/core";
 import { useAccount, useReadContract } from "wagmi";
 import { Box, Text, useColorModeValue } from "@interchain-ui/react";
 import { ArrowDownIcon, BackButton, PrimaryButton, ConnectWalletButton, Layout, CloseIcon } from "@/components/common";
-import { USDC_CONTRACT_ABI, USDC_ETHEREUM_MAINNET, USDC_EVM, colors, sizes } from "@/config";
+import { USDC_CONTRACT_ABI, USDC_ETHEREUM_MAINNET, USDC_EVM_MAINNET, COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM, colors, sizes } from "@/config";
 import { UsdcToken } from "@/models";
-import { COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM, USDC_TO_UUSDC, cosmosAddressToSkipChain, uusdcToUsdc } from "@/utils";
+import { USDC_TO_UUSDC, cosmosAddressToSkipChain, uusdcToUsdc } from "@/utils";
 import { usePrice } from "@/hooks";
 import { SkipChain, useSkip } from "@/skip";
 
@@ -20,19 +20,18 @@ function calcFeeFromRoute(route: RouteResponse, price = 1) {
 }
 
 export default function SelectAmount() {
+  const skip = useSkip();
+  const router = useRouter();
+  const searchParams = useSearchParams()
+
   const [destChain, setDestChain] = useState<SkipChain | null>(null);   // destination chain
   const [destAddress, setDestAddress] = useState<string>("");           // destination address
   const [amount, setAmount] = useState("0");
   const [route, setRoute] = useState<RouteResponse | null>(null);
+  // @ts-ignore
+  const [token, setToken] = useState<UsdcToken>(USDC_EVM_MAINNET[searchParams.get("source_chain_id") || "1"] ?? USDC_ETHEREUM_MAINNET);           // token to transfer
   const { price = 1 } = usePrice();
   const { address } = useAccount();
-  const skip = useSkip();
-  const router = useRouter();
-  const searchParams = useSearchParams()
-  
-  const sourceChainId = searchParams.get("source_chain_id") || "1";
-  // @ts-ignore
-  const token: UsdcToken = USDC_EVM[sourceChainId] ?? USDC_ETHEREUM_MAINNET;
 
   const { data: balance } = useReadContract({
     abi: USDC_CONTRACT_ABI,
@@ -43,9 +42,9 @@ export default function SelectAmount() {
   });
 
   useEffect(() => {
-    token.balance = uusdcToUsdc(balance as bigint);
+    setToken(new UsdcToken({ ...token, balance: uusdcToUsdc(balance as bigint)}))
   }, [balance])
-
+  
   useEffect(() => {
     const chain = cosmosAddressToSkipChain(destAddress);
     setDestChain(chain ? chain : null);
@@ -82,6 +81,10 @@ export default function SelectAmount() {
     } catch(e) {
       console.error('Error:', e);
     }
+  }
+
+  function onAmountButtonClick(amount: number, max: boolean) {
+    setAmount(max ? token.balance : String(amount))
   }
 
   return (
@@ -122,16 +125,32 @@ export default function SelectAmount() {
           >
             Amount
           </Text>
-          <Box
+          {+token.balance > 0 ? <Box
             gap="10px"
             display="flex"
           >
-            <AmountButton amount={125} />
-            <AmountButton amount={250} />
-            <AmountButton amount={500} />
-            <AmountButton amount={800} />
-            <AmountButton amount={1000} maxText={"Max"} />
-          </Box>
+            <AmountButton
+              amount={+token.balance * 0.10}
+              onClick={onAmountButtonClick}
+            />
+            <AmountButton
+              amount={+token.balance * 0.25}
+              onClick={onAmountButtonClick}
+            />
+            <AmountButton
+              amount={+token.balance * 0.50}
+              onClick={onAmountButtonClick}
+            />
+            <AmountButton
+              amount={+token.balance * 0.80}
+              onClick={onAmountButtonClick}
+            />
+            <AmountButton
+              amount={+token.balance * 1.00}
+              onClick={onAmountButtonClick}
+              maxText={"Max"}
+            />
+          </Box> : null}
         </Box>
         <TokenAmountInput
           token={token}
@@ -263,13 +282,14 @@ function AmountButton({
 }: AmountButtonProps) {
   return (
     <Box
-      px="7px"
+      px="8px"
       py="4px"
       minWidth="40px"
       cursor="pointer"
       textAlign="center"
       borderRadius="4px"
       backgroundColor={useColorModeValue(colors.gray700, colors.blue300)}
+      attributes={{ onClick: () => onClick(amount, !!maxText) }}
     >
       <Text
         fontSize="14px"
