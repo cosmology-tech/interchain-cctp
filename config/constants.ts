@@ -7,7 +7,7 @@ import {
   avalancheFuji,
   base,
   baseSepolia,
-  mainnet,
+  mainnet as ethereum,
   optimism,
   optimismSepolia,
   polygon,
@@ -38,8 +38,8 @@ export const USDC_BASE_MAINNET = new UsdcToken({
 });
 
 export const USDC_ETHEREUM_MAINNET = new UsdcToken({
-  id: mainnet.id,
-  chain: skipChainById(mainnet.id),
+  id: ethereum.id,
+  chain: skipChainById(ethereum.id),
   contract: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
 });
 
@@ -69,8 +69,8 @@ export const USDC_AVALANCHE_MAINNET = new UsdcToken({
 
 export const USDC_EVM_MAINNET = {
   [base.id]: USDC_BASE_MAINNET,
-  [mainnet.id]: USDC_ETHEREUM_MAINNET,
   [polygon.id]: USDC_POLYGON_MAINNET,
+  [ethereum.id]: USDC_ETHEREUM_MAINNET,
   [optimism.id]: USDC_OPTIMISM_MAINNET,
   [arbitrum.id]: USDC_ARBITRUM_MAINNET,
   [avalanche.id]: USDC_AVALANCHE_MAINNET,
@@ -127,6 +127,19 @@ export const COSMOS_BECH32_PREFIX_TO_CHAIN_ID = {
   "migaloo1": "migaloo-1",
 };
 
+export const COSMOS_CHAIN_ID_TO_CHAIN_NAME = {
+  "juno-1": "juno",
+  "noble-1": "noble",
+  "agoric-3": "agoric",
+  "archway-1": "archway",
+  "cosmoshub-4": "cosmoshub",
+  "injective-1": "injective",
+  "stargaze-1": "stargaze",
+  "dydx-mainnet-1": "dydx",
+  "osmosis-1": "osmosis",
+  "migaloo-1": "migaloo",
+};
+
 export const COSMOS_CHAIN_ID_TO_PRETTY_NAME = {
   "juno-1": "Juno",
   "noble-1": "Noble",
@@ -161,3 +174,19 @@ export const COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM = {
   "injective-1":
     "ibc/2CBC2EA121AE42563B08028466F37B600F2D7D4282342DE938283CC3FB2BC00E",
 };
+
+
+/** @see https://docs.axelar.dev/learn/txduration#common-finality-time-for-interchain-transactions */
+const finalityTimeMap: Record<string, string> = {
+  [`${ethereum.id}`]: "16 minutes",
+  [`${avalanche.id}`]: "3 seconds",
+  [`${polygon.id}`]: "~5 minutes",
+  [`${optimism.id}`]: "30 minutes",
+  [`${arbitrum.id}`]: "~20 minutes",
+  [`${base.id}`]: "24 minutes",
+};
+
+/** @see https://docs.axelar.dev/learn/txduration#common-finality-time-for-interchain-transactions */
+export function getFinalityTime(id: string | number) {
+  return finalityTimeMap[`${id}`] || "~30 minutes";
+}

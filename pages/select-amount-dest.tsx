@@ -1,35 +1,62 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useSearchParams } from 'next/navigation';
+import { useChains } from "@cosmos-kit/react";
+import { useSearchParams } from "next/navigation";
 import { RouteResponse } from "@skip-router/core";
 import { useAccount, useReadContract } from "wagmi";
 import { Box, Text, useColorModeValue } from "@interchain-ui/react";
-import { ArrowDownIcon, BackButton, PrimaryButton, ConnectWalletButton, Layout, CloseIcon } from "@/components/common";
-import { USDC_CONTRACT_ABI, USDC_ETHEREUM_MAINNET, USDC_EVM_MAINNET, COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM, colors, sizes } from "@/config";
+import {
+  ArrowDownIcon,
+  BackButton,
+  CloseIcon,
+  ClockIcon,
+  ConnectWalletButton,
+  Layout,
+  PrimaryButton,
+} from "@/components/common";
+import {
+  colors,
+  COSMOS_CHAIN_ID_TO_CHAIN_NAME,
+  COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM,
+  getFinalityTime,
+  sizes,
+  USDC_CONTRACT_ABI,
+  USDC_ETHEREUM_MAINNET,
+  USDC_EVM_MAINNET,
+} from "@/config";
 import { UsdcToken } from "@/models";
-import { USDC_TO_UUSDC, cosmosAddressToSkipChain, uusdcToUsdc } from "@/utils";
+import {
+  cosmosAddressToSkipChain,
+  isValidAddress,
+  USDC_TO_UUSDC,
+  uusdcToUsdc,
+} from "@/utils";
 import { usePrice } from "@/hooks";
 import { SkipChain, useSkip } from "@/skip";
 
 function calcFeeFromRoute(route: RouteResponse, price = 1) {
   if (!route) return "0";
-  return new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 4
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 4,
   }).format((+route.amountIn - +route.amountOut) / USDC_TO_UUSDC * price);
 }
 
 export default function SelectAmount() {
   const skip = useSkip();
   const router = useRouter();
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams();
+  const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME));
 
-  const [destChain, setDestChain] = useState<SkipChain | null>(null);   // destination chain
-  const [destAddress, setDestAddress] = useState<string>("");           // destination address
+  const [destChain, setDestChain] = useState<SkipChain | null>(null); // destination chain
+  const [destAddress, setDestAddress] = useState<string>(""); // destination address
   const [amount, setAmount] = useState("0");
   const [route, setRoute] = useState<RouteResponse | null>(null);
-  // @ts-ignore
-  const [token, setToken] = useState<UsdcToken>(USDC_EVM_MAINNET[searchParams.get("source_chain_id") || "1"] ?? USDC_ETHEREUM_MAINNET);           // token to transfer
+  
+  const [token, setToken] = useState<UsdcToken>(
+    // @ts-ignore
+    USDC_EVM_MAINNET[searchParams.get("source_chain_id") || "1"] ?? USDC_ETHEREUM_MAINNET,
+  ); // token to transfer
   const { price = 1 } = usePrice();
   const { address } = useAccount();
 
@@ -37,54 +64,70 @@ export default function SelectAmount() {
     abi: USDC_CONTRACT_ABI,
     chainId: token.id,
     address: token.contract,
-    functionName: 'balanceOf',
-    args: [address]
+    functionName: "balanceOf",
+    args: [address],
   });
 
   useEffect(() => {
-    setToken(new UsdcToken({ ...token, balance: uusdcToUsdc(balance as bigint)}))
-  }, [balance])
-  
+    cosmos.cosmoshub.connect();
+  }, [])
+
+  useEffect(() => {
+    setToken(
+      new UsdcToken({ ...token, balance: uusdcToUsdc(balance as bigint) }),
+    );
+  }, [balance]);
+
   useEffect(() => {
     const chain = cosmosAddressToSkipChain(destAddress);
     setDestChain(chain ? chain : null);
-  }, [destAddress])
+  }, [destAddress]);
 
   useEffect(() => {
     if (+amount > 0 && destChain) {
       skip.route({
+        allowMultiTx: true,
         amountIn: `${parseInt(String(+amount * USDC_TO_UUSDC))}`,
         sourceAssetChainID: String(token.id),
         sourceAssetDenom: token.contract!,
         destAssetChainID: destChain.chain_id!,
         // @ts-ignore
         destAssetDenom: COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[destChain.chain_id!],
-        bridges: ["IBC", "CCTP"]
+        bridges: ["IBC", "CCTP", "HYPERLANE"],
       })
-      .then(setRoute)
-      .catch(console.log);
+        .then(setRoute)
+        .catch(console.log);
     } else {
       setRoute(null);
     }
-  }, [amount, destChain])
+  }, [amount, destChain]);
 
   async function onTransfer() {
     if (!route || !address || !destAddress) return;
+    const userAddresses = route.chainIDs.reduce((acc, chainID) => {
+      // evm
+      if (chainID == token.id) return { ...acc, [chainID]: address };
+      // cosmos
+      // @ts-ignore
+      return { ...acc, [chainID]: cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chainID]].address };
+    }, {} as Record<string, string>)
+
     try {
       skip.executeRoute({
         route,
-        userAddresses: { [String(token.id)]: address!, [destChain!.chain_id!]: destAddress },
+        userAddresses,
         onTransactionTracked: async (txStatus) => {
-          console.log('Transaction status:', txStatus);
-        }
+          console.log("Transaction status:", txStatus);
+        },
       })
-    } catch(e) {
-      console.error('Error:', e);
+      router.push('/sign-in-metamask')
+    } catch (e) {
+      console.error("Error:", e);
     }
   }
 
   function onAmountButtonClick(amount: number, max: boolean) {
-    setAmount(max ? token.balance : String(amount))
+    setAmount(max ? token.balance : String(amount));
   }
 
   return (
@@ -102,7 +145,7 @@ export default function SelectAmount() {
           alignItems="center"
           color={useColorModeValue(colors.blue50, colors.white)}
         >
-          <BackButton onClick={() => router.push('/select-token')} />
+          <BackButton onClick={() => router.push("/select-token")} />
           <Text
             fontSize="20px"
             fontWeight="600"
@@ -125,32 +168,36 @@ export default function SelectAmount() {
           >
             Amount
           </Text>
-          {+token.balance > 0 ? <Box
-            gap="10px"
-            display="flex"
-          >
-            <AmountButton
-              amount={+token.balance * 0.10}
-              onClick={onAmountButtonClick}
-            />
-            <AmountButton
-              amount={+token.balance * 0.25}
-              onClick={onAmountButtonClick}
-            />
-            <AmountButton
-              amount={+token.balance * 0.50}
-              onClick={onAmountButtonClick}
-            />
-            <AmountButton
-              amount={+token.balance * 0.80}
-              onClick={onAmountButtonClick}
-            />
-            <AmountButton
-              amount={+token.balance * 1.00}
-              onClick={onAmountButtonClick}
-              maxText={"Max"}
-            />
-          </Box> : null}
+          {+token.balance > 0
+            ? (
+              <Box
+                gap="10px"
+                display="flex"
+              >
+                <AmountButton
+                  amount={+token.balance * 0.10}
+                  onClick={onAmountButtonClick}
+                />
+                <AmountButton
+                  amount={+token.balance * 0.25}
+                  onClick={onAmountButtonClick}
+                />
+                <AmountButton
+                  amount={+token.balance * 0.50}
+                  onClick={onAmountButtonClick}
+                />
+                <AmountButton
+                  amount={+token.balance * 0.80}
+                  onClick={onAmountButtonClick}
+                />
+                <AmountButton
+                  amount={+token.balance * 1.00}
+                  onClick={onAmountButtonClick}
+                  maxText={"Max"}
+                />
+              </Box>
+            )
+            : null}
         </Box>
         <TokenAmountInput
           token={token}
@@ -176,7 +223,7 @@ export default function SelectAmount() {
             fontWeight="400"
             lineHeight="20px"
           >
-            {+token.balance > 0 ? '≈' : ''} ${token.value(price)}
+            {+token.balance > 0 ? "≈" : ""} ${token.value(price)}
           </Text>
         </Box>
         <Box
@@ -203,7 +250,9 @@ export default function SelectAmount() {
               fontWeight="600"
               attributes={{ marginRight: "20px" }}
             >
-              {address && destChain && route ? uusdcToUsdc(route.amountOut) : ""}
+              {address && destChain && route
+                ? uusdcToUsdc(route.amountOut)
+                : ""}
             </Text>
           </Box>
           <AddressInput
@@ -212,7 +261,8 @@ export default function SelectAmount() {
           />
           <PrimaryButton
             mt="1rem"
-            disabled={!destAddress || !route}
+            disabled={!route || !destAddress || !isValidAddress(destAddress) ||
+              +amount > +token.balance}
             onClick={onTransfer}
           >
             Bridge
@@ -235,24 +285,47 @@ export default function SelectAmount() {
             >
               →
             </Text>
-            {destChain ?
-              <Box
-                width={18}
-                height={18}
-                display="flex"
-                overflow="hidden"
-                borderRadius="10px"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Image
+
+            {destChain
+              ? (
+                <Box
                   width={18}
                   height={18}
-                  src={destChain?.logo_uri!}
-                  alt={destChain?.chain_name!}
-                />
-              </Box> : null}
-            <Box display="flex" flex="1" justifyContent="right" visibility={route ? "visible" : "hidden"}>
+                  display="flex"
+                  overflow="hidden"
+                  borderRadius="10px"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <Image
+                    width={18}
+                    height={18}
+                    src={destChain?.logo_uri!}
+                    alt={destChain?.chain_name!}
+                  />
+                </Box>
+              )
+              : null}
+
+            <Box ml="12px" display="flex" alignItems="center">
+              <ClockIcon />
+              <Text
+                fontSize="14px"
+                fontWeight="400"
+                lineHeight="20px"
+                attributes={{ ml: "5px" }}
+                color={useColorModeValue(colors.gray500, colors.blue700)}
+              >
+                ≈ {getFinalityTime(token.id)}
+              </Text>
+            </Box>
+
+            <Box
+              display="flex"
+              flex="1"
+              justifyContent="right"
+              visibility={route ? "visible" : "hidden"}
+            >
               <Text
                 color={useColorModeValue(colors.gray500, colors.blue700)}
                 fontSize="14px"
@@ -449,7 +522,8 @@ function AddressInput({
         }}
       />
       {value
-        ? <Box
+        ? (
+          <Box
             position="absolute"
             top="17px"
             right="1rem"
@@ -460,6 +534,7 @@ function AddressInput({
           >
             <CloseIcon />
           </Box>
+        )
         : <ConnectWalletButton />}
     </Box>
   );

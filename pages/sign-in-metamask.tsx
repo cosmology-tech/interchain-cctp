@@ -1,11 +1,13 @@
 
 import Image from "next/image"
+import { useRouter } from "next/router";
 import { Layout } from "@/components";
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 import { colors } from "@/config";
 import { AbstractWallet } from "@/components/common/icons/AbstractWallet";
 
 export default function SignInMetaMask() {
+  const router = useRouter();
   return <Layout>
     <Box
       mx="auto"
@@ -59,7 +61,7 @@ export default function SignInMetaMask() {
             fontSize="14px"
             fontWeight="600"
             lineHeight="20px"
-            attributes={{ cursor: "pointer" }}
+            attributes={{ cursor: "pointer", onClick: () => router.back() }}
             color={useColorModeValue(colors.gray500, colors.blue700)}
           >
             Cancel

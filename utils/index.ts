@@ -23,6 +23,18 @@ export function shortenAddress(address: string, partlen = 8) {
   return `${address.slice(0, partlen)}...${address.slice(-partlen)}`;
 }
 
+export function isValidAddress(address: string) {
+  return isValidEvmAddress(address) || isValidCosmosAddress(address);
+}
+
+export function isValidEvmAddress(address: string) {
+  return address.startsWith("0x") && address.length === 42;
+}
+
+export function isValidCosmosAddress(address: string) {
+  return address.length > 40 && Object.keys(COSMOS_BECH32_PREFIX_TO_CHAIN_ID).some(prefix => address.startsWith(prefix));
+}
+
 export function getLogo(from: Asset | Chain) {
   return from.logo_URIs?.svg || from.logo_URIs?.png || from.logo_URIs?.jpeg;
 }
