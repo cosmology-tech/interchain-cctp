@@ -59,7 +59,8 @@ export default function SelectAmount() {
         sourceAssetDenom: token.contract!,
         destAssetChainID: destChain.chain_id!,
         // @ts-ignore
-        destAssetDenom: COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[destChain.chain_id!]
+        destAssetDenom: COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[destChain.chain_id!],
+        bridges: ["IBC", "CCTP"]
       })
       .then(setRoute)
       .catch(console.log);

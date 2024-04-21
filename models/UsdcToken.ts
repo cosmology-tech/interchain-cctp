@@ -30,6 +30,10 @@ export class UsdcToken {
     return this.balance === BalanceNotAvailable;
   }
 
+  get isTestNet() {
+    return this.chain.is_testnet;
+  }
+
   value(price: number) {
     return this.isBalanceNotAvailable
       ? BalanceNotAvailable
