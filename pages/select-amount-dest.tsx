@@ -207,6 +207,7 @@ export default function SelectAmount() {
         <Box
           mt="12px"
           display="flex"
+          alignItems="center"
           justifyContent="space-between"
         >
           <Text
@@ -217,6 +218,11 @@ export default function SelectAmount() {
           >
             Available: {uusdcToUsdc(balance as bigint)}
           </Text>
+          {+amount > +token.balance ? <Text
+            color="$red500"
+            fontSize="12px"
+            fontWeight="400"
+          >Insufficient balance</Text> : null}
           <Text
             color={useColorModeValue(colors.gray500, colors.blue700)}
             fontSize="14px"

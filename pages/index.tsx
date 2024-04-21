@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Layout } from "@/components";
-import { colors } from "@/config";
+import { COSMOS_CHAIN_ID_TO_CHAIN_NAME, colors } from "@/config";
 import { Box, Text, useColorModeValue } from "@interchain-ui/react";
+import { useChains } from "@cosmos-kit/react";
 
 export default function Home() {
   return (
@@ -190,6 +191,7 @@ function Wallet({
 
 function WalletList() {
   const router = useRouter();
+  const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME))
   return (
     <Box mt="4rem" mb="10rem" display="flex" mx="100px" gap="24px">
       <Wallet
@@ -202,6 +204,11 @@ function WalletList() {
         logo="/logos/keplr.svg"
         name="Keplr"
         text="Connect"
+        onClick={() => {
+          cosmos.cosmoshub.connect().then(() => {
+            router.push("/select-token");
+          });
+        }}
       />
       <Wallet
         logo="/logos/capsule.svg"
