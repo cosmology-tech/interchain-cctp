@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useAccount, useReadContracts } from "wagmi";
-import { MetaMaskInpageProvider } from "@metamask/providers";
+import { useAccount, useDisconnect, useReadContracts } from "wagmi";
 import { Box, Stack, Text, useColorModeValue } from "@interchain-ui/react";
 import { shortenAddress, uusdcToUsdc } from "@/utils";
 import { CopyIcon, ExitIcon, Layout } from "@/components/common";
@@ -17,15 +16,11 @@ import { BalanceNotAvailable, UsdcToken } from "@/models";
 import { useRouter } from "next/router";
 import { usePrice } from "@/hooks";
 
-declare global {
-  interface Window {
-    ethereum: MetaMaskInpageProvider;
-  }
-}
-
 export default function SelectToken() {
+  const router = useRouter();
   const { price = 1 } = usePrice();
   const { address } = useAccount();
+  const { disconnect } = useDisconnect();
   const [tokens, setTokens] = useState([
     USDC_ETHEREUM_MAINNET,
     USDC_ARBITRUM_MAINNET,
@@ -65,7 +60,14 @@ export default function SelectToken() {
         >
           Select token to bridge
         </Box>
-        <Address address={address}  />
+        <Address
+          address={address}
+          onDisconnect={() => {
+            console.log('disconnect')
+            disconnect();
+            router.push('/')
+          }}
+        />
         <UsdcTokenList tokens={tokens} price={price} />
       </Box>
     </Layout>
@@ -74,9 +76,10 @@ export default function SelectToken() {
 
 type AddressProps = {
   address?: string;
+  onDisconnect?: () => void;
 };
 
-function Address({ address = '' }: AddressProps) {
+function Address({ address = '', onDisconnect = () => {} }: AddressProps) {
   return (
     <Box display="flex" alignItems="center" gap="8px">
       <Image
@@ -94,14 +97,10 @@ function Address({ address = '' }: AddressProps) {
         {shortenAddress(address)}
       </Text>
       <Box cursor="pointer" height="16px" mx="6px">
-        <CopyIcon
-          color={useColorModeValue(colors.gray500, colors.blue600)}
-        />
+        <CopyIcon />
       </Box>
-      <Box cursor="pointer" height="16px">
-        <ExitIcon
-          color={useColorModeValue(colors.gray500, colors.blue600)}
-        />
+      <Box cursor="pointer" height="16px" attributes={{ onClick: onDisconnect }}>
+        <ExitIcon />
       </Box>
     </Box>
   );

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useChains } from "@cosmos-kit/react";
+import { useChains, useWallet } from "@cosmos-kit/react";
 import { useSearchParams } from "next/navigation";
 import { RouteResponse } from "@skip-router/core";
 import { useAccount, useReadContract } from "wagmi";
@@ -9,9 +9,10 @@ import { Box, Text, useColorModeValue } from "@interchain-ui/react";
 import {
   ArrowDownIcon,
   BackButton,
-  CloseIcon,
   ClockIcon,
+  CloseIcon,
   ConnectWalletButton,
+  ExitIcon,
   Layout,
   PrimaryButton,
 } from "@/components/common";
@@ -46,16 +47,18 @@ export default function SelectAmount() {
   const skip = useSkip();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const wallet = useWallet(); // cosmos wallet, here refers to Keplr
   const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME));
 
   const [destChain, setDestChain] = useState<SkipChain | null>(null); // destination chain
   const [destAddress, setDestAddress] = useState<string>(""); // destination address
   const [amount, setAmount] = useState("0");
   const [route, setRoute] = useState<RouteResponse | null>(null);
-  
+
   const [token, setToken] = useState<UsdcToken>(
     // @ts-ignore
-    USDC_EVM_MAINNET[searchParams.get("source_chain_id") || "1"] ?? USDC_ETHEREUM_MAINNET,
+    USDC_EVM_MAINNET[searchParams.get("source_chain_id") || "1"] ??
+      USDC_ETHEREUM_MAINNET,
   ); // token to transfer
   const { price = 1 } = usePrice();
   const { address } = useAccount();
@@ -67,10 +70,6 @@ export default function SelectAmount() {
     functionName: "balanceOf",
     args: [address],
   });
-
-  useEffect(() => {
-    cosmos.cosmoshub.connect();
-  }, [])
 
   useEffect(() => {
     setToken(
@@ -107,10 +106,16 @@ export default function SelectAmount() {
     const userAddresses = route.chainIDs.reduce((acc, chainID) => {
       // evm
       if (chainID == token.id) return { ...acc, [chainID]: address };
+
+      if (typeof +chainID === "number") {
+        return { ...acc, [chainID]: destAddress };
+      }
       // cosmos
-      // @ts-ignore
-      return { ...acc, [chainID]: cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chainID]].address };
-    }, {} as Record<string, string>)
+      return {
+        ...acc,
+        [chainID]: cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chainID]].address,
+      };
+    }, {} as Record<string, string>);
 
     try {
       skip.executeRoute({
@@ -119,8 +124,8 @@ export default function SelectAmount() {
         onTransactionTracked: async (txStatus) => {
           console.log("Transaction status:", txStatus);
         },
-      })
-      router.push('/sign-in-metamask')
+      });
+      router.push("/sign-in-metamask");
     } catch (e) {
       console.error("Error:", e);
     }
@@ -129,6 +134,38 @@ export default function SelectAmount() {
   function onAmountButtonClick(amount: number, max: boolean) {
     setAmount(max ? token.balance : String(amount));
   }
+
+  const KeplrAccount = (
+    <Box mb="16px" display="flex" alignItems="center">
+      <Image
+        width="16"
+        height="16"
+        src={"/logos/keplr.svg"}
+        alt="Keplr"
+      />
+      <Text
+        fontSize="12px"
+        fontWeight="400"
+        color={useColorModeValue(colors.gray500, colors.blue600)}
+        attributes={{ ml: "10px", mr: "8px" }}
+      >
+        {cosmos.cosmoshub.username}
+      </Text>
+      <Box
+        width="16px"
+        height="16px"
+        cursor="pointer"
+        attributes={{
+          onClick: () => {
+            wallet.mainWallet?.disconnect();
+            cosmos.cosmoshub.disconnect();
+          },
+        }}
+      >
+        <ExitIcon />
+      </Box>
+    </Box>
+  );
 
   return (
     <Layout>
@@ -218,11 +255,17 @@ export default function SelectAmount() {
           >
             Available: {uusdcToUsdc(balance as bigint)}
           </Text>
-          {+amount > +token.balance ? <Text
-            color="$red500"
-            fontSize="12px"
-            fontWeight="400"
-          >Insufficient balance</Text> : null}
+          {+amount > +token.balance
+            ? (
+              <Text
+                color="$red500"
+                fontSize="12px"
+                fontWeight="400"
+              >
+                Insufficient balance
+              </Text>
+            )
+            : null}
           <Text
             color={useColorModeValue(colors.gray500, colors.blue700)}
             fontSize="14px"
@@ -242,7 +285,7 @@ export default function SelectAmount() {
         </Box>
         <Box>
           <Box
-            mb="1rem"
+            mb="12px"
             display="flex"
             fontSize="14px"
             fontWeight="600"
@@ -261,10 +304,22 @@ export default function SelectAmount() {
                 : ""}
             </Text>
           </Box>
+          {wallet.mainWallet?.isWalletConnected ? KeplrAccount : null}
           <AddressInput
             value={destAddress}
             onChange={setDestAddress}
+            onConnect={() => cosmos.cosmoshub.connect()}
+            isConnected={wallet.mainWallet?.isWalletConnected}
           />
+
+          <Box mt="12px">
+            <AddressSelected
+              logo={"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/info/logo.png"}
+              name={"Optimism"}
+              addr={"0xe72a851567b56a0C4F825sg4d0020c905D1194cf"}
+            />
+          </Box>
+
           <PrimaryButton
             mt="1rem"
             disabled={!route || !destAddress || !isValidAddress(destAddress) ||
@@ -485,11 +540,15 @@ function TokenAmountInput({
 type AddressInputProps = {
   value?: string;
   onChange?: (value: string) => void;
+  onConnect?: () => void;
+  isConnected?: boolean;
 };
 
 function AddressInput({
   value = "",
+  isConnected = false,
   onChange = () => {},
+  onConnect = () => {},
 }: AddressInputProps) {
   return (
     <Box
@@ -541,7 +600,71 @@ function AddressInput({
             <CloseIcon />
           </Box>
         )
-        : <ConnectWalletButton />}
+        : isConnected
+        ? null
+        : <ConnectWalletButton onClick={() => onConnect()} />}
     </Box>
   );
+}
+
+type AddressSelectedProps = {
+  logo: string;
+  name: string;
+  addr: string;
+}
+
+function AddressSelected({
+  logo,
+  name,
+  addr,
+}: AddressSelectedProps) {
+  return (
+    <Box
+      px="14px"
+      height="64px"
+      borderRadius="8px"
+      display="flex"
+      alignItems="center"
+      borderStyle="solid"
+      borderWidth="1px"
+      borderColor={useColorModeValue(
+        colors.border.light,
+        colors.border.dark,
+      )}
+      backgroundColor={useColorModeValue(colors.white, colors.blue300)}
+    >
+      <Image
+        width={26}
+        height={26}
+        src={logo}
+        alt={name}
+      />
+      <Box flex="1" ml="12px">
+        <Box
+          fontSize="14px"
+          fontWeight="600"
+          lineHeight="20px"
+          color={useColorModeValue(colors.gray50, colors.blue700)}
+        >
+          {name}
+        </Box>
+        <Box
+          fontSize="10px"
+          fontWeight="400"
+          lineHeight="14px"
+          color={useColorModeValue(colors.gray500, colors.blue700)}
+        >
+          {addr}
+        </Box>
+      </Box>
+      <Box
+        fontSize="12px"
+        fontWeight="500"
+        cursor="pointer"
+        color={colors.gray600}
+      >
+        Change
+      </Box>
+    </Box>
+  )
 }

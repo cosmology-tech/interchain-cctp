@@ -4,6 +4,8 @@ import { ChevronDown, Layout } from "@/components";
 import { COSMOS_CHAIN_ID_TO_CHAIN_NAME, colors } from "@/config";
 import { Box, Text, useColorModeValue } from "@interchain-ui/react";
 import { useChains } from "@cosmos-kit/react";
+import { useEffect } from "react";
+import { useAccount, useConnect } from "wagmi";
 
 export default function Home() {
   return (
@@ -192,22 +194,33 @@ function Wallet({
 function WalletList() {
   const router = useRouter();
   const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME))
+  const { address } = useAccount()
+  const { connectAsync, isSuccess, connectors } = useConnect();
+  
   return (
     <Box mt="4rem" mb="10rem" display="flex" mx="100px" gap="24px">
       <Wallet
         logo="/logos/metamask.svg"
         name="MetaMask"
         text="Connect"
-        onClick={() => router.push("/select-token")}
+        onClick={() => {
+          address ? router.push("/select-token") :
+          connectAsync({ connector: connectors[0] }) 
+            .then((isSuccess) => {
+              if (isSuccess) {
+                router.push("/select-token")
+              }
+            })
+        }}
       />
       <Wallet
         logo="/logos/keplr.svg"
         name="Keplr"
         text="Connect"
         onClick={() => {
-          cosmos.cosmoshub.connect().then(() => {
-            router.push("/select-token");
-          });
+          cosmos.cosmohub?.address
+          ? router.push("/select-token")
+          : cosmos.cosmoshub.connect()
         }}
       />
       <Wallet

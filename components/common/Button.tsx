@@ -36,7 +36,9 @@ export function BackButton({
   );
 }
 
-export function ConnectWalletButton() {
+export function ConnectWalletButton({
+  onClick = () => {},
+}: ButtonProps) {
   return (
     <Box
       top="8px"
@@ -56,6 +58,7 @@ export function ConnectWalletButton() {
       borderWidth="1px"
       borderStyle="solid"
       borderColor={useColorModeValue("#5064E2", colors.blue600)}
+      attributes={{ onClick }}
     >
       Connect wallet
     </Box>

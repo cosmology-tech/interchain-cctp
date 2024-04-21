@@ -121,7 +121,6 @@ export const COSMOS_BECH32_PREFIX_TO_CHAIN_ID = {
   "osmo1": "osmosis-1",
   "juno1": "juno-1",
   "inj1": "injective-1",
-  "dydx1": "dydx-mainnet-1",
   "agoric1": "agoric-3",
   "archway1": "archway-1",
   "migaloo1": "migaloo-1",
@@ -135,7 +134,6 @@ export const COSMOS_CHAIN_ID_TO_CHAIN_NAME = {
   "cosmoshub-4": "cosmoshub",
   "injective-1": "injective",
   "stargaze-1": "stargaze",
-  "dydx-mainnet-1": "dydx",
   "osmosis-1": "osmosis",
   "migaloo-1": "migaloo",
 };
@@ -148,7 +146,6 @@ export const COSMOS_CHAIN_ID_TO_PRETTY_NAME = {
   "cosmoshub-4": "Cosmos Hub",
   "injective-1": "Injective",
   "stargaze-1": "Stargaze",
-  "dydx-mainnet-1": "DyDx",
   "osmosis-1": "Osmosis",
   "migaloo-1": "Migaloo",
 };
