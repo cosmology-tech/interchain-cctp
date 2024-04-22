@@ -5,7 +5,7 @@ import { Footer } from "./Footer";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <Box maxWidth="936px" mx="auto">
+    <Box maxWidth="936px" mx="auto" pb="5rem">
       <Head>
         <title>Noble Express</title>
         <meta
