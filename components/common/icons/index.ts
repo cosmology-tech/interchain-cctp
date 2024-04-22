@@ -4,5 +4,6 @@ export * from "./ExitIcon";
 export * from "./CloseIcon";
 export * from "./ClockIcon";
 export * from "./ArrowIcon";
+export * from "./SearchIcon";
 
 

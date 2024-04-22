@@ -15,10 +15,12 @@ import {
   ExitIcon,
   Layout,
   PrimaryButton,
+  SearchIcon,
 } from "@/components/common";
 import {
   colors,
   COSMOS_CHAIN_ID_TO_CHAIN_NAME,
+  COSMOS_CHAIN_ID_TO_PRETTY_NAME,
   COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM,
   getFinalityTime,
   sizes,
@@ -34,7 +36,7 @@ import {
   uusdcToUsdc,
 } from "@/utils";
 import { usePrice } from "@/hooks";
-import { SkipChain, useSkip } from "@/skip";
+import { SkipChain, SkipChains, useSkip } from "@/skip";
 
 function calcFeeFromRoute(route: RouteResponse, price = 1) {
   if (!route) return "0";
@@ -318,6 +320,10 @@ export default function SelectAmount() {
               name={"Optimism"}
               addr={"0xe72a851567b56a0C4F825sg4d0020c905D1194cf"}
             />
+          </Box>
+
+          <Box mt="12px">
+            <ChainCombo chains={SkipChains.slice(7, 15)} />
           </Box>
 
           <PrimaryButton
@@ -664,6 +670,100 @@ function AddressSelected({
         color={colors.gray600}
       >
         Change
+      </Box>
+    </Box>
+  )
+}
+
+type ChainComboProps = {
+  value?: string;
+  chains?: SkipChain[];
+  onChange?: (value: string) => void;
+  onSelect?: (chain: SkipChain) => void;
+}
+
+export function ChainCombo({
+  value = "",
+  chains = [],
+  onChange = () => {},
+  onSelect = () => {},
+}: ChainComboProps) {
+  const color = useColorModeValue(colors.gray500, colors.blue700)
+  return (
+    <Box
+      borderRadius="8px"
+      borderWidth="1xp"
+      borderStyle="solid"
+      borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
+      backgroundColor={useColorModeValue(colors.white, colors.blue200)}
+    >
+      <Box
+        px="12px"
+        height="52px"
+        display="flex"
+        alignItems="center"
+        borderBottomWidth="1px"
+        borderBottomStyle="solid"
+        borderBottomColor={useColorModeValue(colors.border.light, colors.border.dark)}
+      >
+        <SearchIcon />
+        <input
+          type="text"
+          value=""
+          onChange={(e) => {}}
+          placeholder="Search network"
+          style={{
+            fontSize: "14px",
+            fontWeight: "400",
+            lineHeight: "20px",
+            minWidth: "360px",
+            border: "none",
+            outline: "none",
+            appearance: "none",
+            paddingTop: "0.5rem",
+            paddingLeft: "0.5rem",
+            paddingBottom: "0.5rem",
+            backgroundColor: "transparent",
+            color: useColorModeValue(colors.gray500, colors.blue700),
+          }}
+        />
+      </Box>
+      <Box
+        py="10px"
+        maxHeight="220px"
+        overflow="auto"
+      >
+        {chains.map((chain) =>
+          <Box
+            px="18px"
+            py="7px"
+            cursor="pointer"
+            key={chain.chain_id}
+            display="flex"
+            alignItems="center"
+          >
+            <Box
+              width={26}
+              height={26}
+              display="flex"
+              overflow="hidden"
+              borderRadius="100%"
+            >
+              <Image 
+                width={26}
+                height={26}
+                src={chain.logo_uri!}
+                alt={chain.chain_name!}
+              />
+            </Box>
+            <Box
+              ml="12px"
+              color={color}
+            >
+              {COSMOS_CHAIN_ID_TO_PRETTY_NAME[chain.chain_id] ?? chain.chain_name}
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   )

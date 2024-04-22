@@ -41,7 +41,7 @@ export function ConnectWalletButton({
 }: ButtonProps) {
   return (
     <Box
-      top="8px"
+      top="7px"
       right="8px"
       width="130px"
       height="38px"
