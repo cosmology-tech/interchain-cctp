@@ -28,11 +28,14 @@ import {
   USDC_CONTRACT_ABI,
   USDC_ETHEREUM_MAINNET,
   USDC_EVM_MAINNET,
+  USDC_EVM_MAINNET_CHAINS,
 } from "@/config";
 import { UsdcToken } from "@/models";
 import {
   cosmosAddressToSkipChain,
   isValidAddress,
+  isValidCosmosAddress,
+  isValidEvmAddress,
   USDC_TO_UUSDC,
   uusdcToUsdc,
 } from "@/utils";
@@ -48,7 +51,14 @@ function calcFeeFromRoute(route: RouteResponse, price = 1) {
 
 function filterChains(chains: SkipChain[], search: string) {
   if (!search.trim()) return [];
-  return chains.filter(chain => chain.chain_name!.toLowerCase().startsWith(search))
+  return chains.filter(chain => chain.chain_name!.toLowerCase().startsWith(search.toLowerCase()))
+}
+
+function getDestChainDenom(chain: SkipChain) {
+  // @ts-ignore
+  if (chain.chain_type === 'evm') return USDC_EVM_MAINNET[chain.chain_id!].contract
+  // @ts-ignore
+  if (chain.chain_type === 'cosmos') return COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[chain.chain_id!]
 }
 
 export default function SelectAmount() {
@@ -58,12 +68,15 @@ export default function SelectAmount() {
   const wallet = useWallet(); // cosmos wallet, here refers to Keplr
   const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME));
 
+  console.log('cosmos.noble', cosmos.noble)
+
   const [chains, setChains] = useState<SkipChain[]>([]);
   const [destChain, setDestChain] = useState<SkipChain | null>(null); // destination chain
   const [destChainSearch, setDestChainSearch] = useState("");
   const [destAddress, setDestAddress] = useState<string>(""); // destination address
 
-  const [showChainCombo, setShowChainCombo] = useState(true)
+  const [showChainCombo, setShowChainCombo] = useState(false)
+  const [showAddrInput, setShowAddrInput] = useState(true)
   const [showAddrSelected, setShowAddrSelected] = useState(false)
 
   const [amount, setAmount] = useState("0");
@@ -85,6 +98,9 @@ export default function SelectAmount() {
     args: [address],
   });
 
+  console.log('destChain', destChain);
+  console.log('destAddress', destAddress);
+
   useEffect(() => {
     setToken(
       new UsdcToken({ ...token, balance: uusdcToUsdc(balance as bigint) })
@@ -92,15 +108,26 @@ export default function SelectAmount() {
   }, [balance]);
 
   useEffect(() => {
-    const chain = cosmosAddressToSkipChain(destAddress);
-    setDestChain(chain ? chain : null);
-  }, [destAddress]);
+    if (isValidEvmAddress(destAddress)) {
+      setShowChainCombo(true)
+      if (destChainSearch.trim()) {
+        setChains(filterChains(USDC_EVM_MAINNET_CHAINS.filter(chain => chain.chain_id != token.id), destChainSearch.trim()))
+      }
+    } else if (isValidCosmosAddress(destAddress)) {
+      const chain = cosmosAddressToSkipChain(destAddress);
+      if (chain) {
+        setDestChain(chain);
+      }
+    }
+  }, [destAddress, destChainSearch]);
 
   useEffect(() => {
-    if (cosmos.cosmoshub.isWalletConnected && destChainSearch.trim()) {
-      setChains(filterChains(COSMOS_CHAINS, destChainSearch.trim()));
-    } else {
-      setChains([])
+    if (cosmos.cosmoshub.isWalletConnected) {
+      setShowAddrInput(false)
+      setShowChainCombo(true)
+      if (destChainSearch.trim()) {
+        setChains(filterChains(COSMOS_CHAINS, destChainSearch.trim()));
+      }
     }
   }, [cosmos.cosmoshub.isWalletConnected, destChainSearch]);
 
@@ -109,14 +136,16 @@ export default function SelectAmount() {
       skip
         .route({
           allowMultiTx: true,
+          allowUnsafe: true,
+          smartRelay: true,
           amountIn: `${parseInt(String(+amount * USDC_TO_UUSDC))}`,
           sourceAssetChainID: String(token.id),
           sourceAssetDenom: token.contract!,
           destAssetChainID: destChain.chain_id!,
           // @ts-ignore
-          destAssetDenom:
-            COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[destChain.chain_id!],
+          destAssetDenom: getDestChainDenom(destChain),
           bridges: ["IBC", "CCTP", "HYPERLANE"],
+          experimentalFeatures: ['cctp', 'hyperlane']
         })
         .then(setRoute)
         .catch(console.log);
@@ -127,18 +156,18 @@ export default function SelectAmount() {
 
   async function onTransfer() {
     if (!route || !address || !destAddress) return;
+    console.log('route.chainIDs', route.chainIDs)
     const userAddresses = route.chainIDs.reduce((acc, chainID) => {
       // evm
-      if (chainID == token.id) return { ...acc, [chainID]: address };
-
-      if (typeof +chainID === "number") {
-        return { ...acc, [chainID]: destAddress };
+      if (chainID == token.id) {
+        acc[chainID] = address
+      } else if (/^\d+/.test(chainID)) {
+        acc[chainID] = destAddress;
+      } else {
+        // @ts-ignore
+        acc[chainID] = cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chainID]].address;
       }
-      // cosmos
-      return {
-        ...acc,
-        [chainID]: cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chainID]].address,
-      };
+      return acc;
     }, {} as Record<string, string>);
 
     try {
@@ -161,8 +190,31 @@ export default function SelectAmount() {
 
   function onChainSelect(chain: SkipChain) {
     setDestChain(chain)
+    setShowAddrInput(false)
     setShowChainCombo(false)
     setShowAddrSelected(true)
+    if (!destAddress) {
+      setDestAddress(cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chain.chain_id]].address)
+    }
+  }
+
+  function onChangeChain() {
+    if (destChain?.chain_type === 'cosmos') {
+      setShowChainCombo(true)
+      setShowAddrSelected(false)
+      setChains([])
+      setDestChain(null)
+      setDestAddress("")
+      setDestChainSearch("")
+    }
+    if (destChain?.chain_type === 'evm') {
+      setShowAddrInput(true)
+      setShowChainCombo(true)
+      setShowAddrSelected(false)
+      setChains([])
+      setDestChain(null)
+      setDestChainSearch("")
+    }
   }
 
   const KeplrAccount = (
@@ -183,7 +235,13 @@ export default function SelectAmount() {
         attributes={{
           onClick: () => {
             wallet.mainWallet?.disconnect();
-            cosmos.cosmoshub.disconnect();
+            cosmos.cosmoshub?.disconnect();
+            setDestChain(null);
+            setDestAddress("");
+            setDestChainSearch("");
+            setShowChainCombo(false);
+            setShowAddrInput(true);
+            setShowAddrSelected(false);
           },
         }}
       >
@@ -311,20 +369,25 @@ export default function SelectAmount() {
             </Text>
           </Box>
           {wallet.mainWallet?.isWalletConnected ? KeplrAccount : null}
-          {cosmos.cosmoshub?.isWalletConnected ? null : (
-            <AddressInput
-              value={destAddress}
-              onChange={setDestAddress}
-              onConnect={() => cosmos.cosmoshub.connect()}
-              isConnected={wallet.mainWallet?.isWalletConnected}
-            />
-          )}
-
+          {showAddrInput
+            ? <AddressInput
+                value={destAddress}
+                onClear={() => {
+                  setDestAddress("")
+                  setShowChainCombo(false)
+                }}
+                onChange={setDestAddress}
+                onConnect={() => cosmos.cosmoshub.connect()}
+                isConnected={wallet.mainWallet?.isWalletConnected}
+              />
+            : null
+          }
           {showAddrSelected ? <Box mt="12px">
             <AddressSelected
               logo={destChain?.logo_uri!}
               name={COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ?? destChain?.chain_name}
               addr={cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id]]?.address || destAddress}
+              onChange={onChangeChain}
             />
           </Box> : null}
 
@@ -547,6 +610,7 @@ function TokenAmountInput({
 
 type AddressInputProps = {
   value?: string;
+  onClear?: () => void;
   onChange?: (value: string) => void;
   onConnect?: () => void;
   isConnected?: boolean;
@@ -555,6 +619,7 @@ type AddressInputProps = {
 function AddressInput({
   value = "",
   isConnected = false,
+  onClear = () => {},
   onChange = () => {},
   onConnect = () => {},
 }: AddressInputProps) {
@@ -597,9 +662,7 @@ function AddressInput({
           top="17px"
           right="1rem"
           cursor="pointer"
-          attributes={{
-            onClick: () => onChange(""),
-          }}
+          attributes={{ onClick: onClear }}
         >
           <CloseIcon />
         </Box>
@@ -614,9 +677,10 @@ type AddressSelectedProps = {
   logo: string;
   name: string;
   addr: string;
+  onChange: () => void
 };
 
-function AddressSelected({ logo, name, addr }: AddressSelectedProps) {
+function AddressSelected({ logo, name, addr, onChange = () => {} }: AddressSelectedProps) {
   return (
     <Box
       px="14px"
@@ -653,6 +717,7 @@ function AddressSelected({ logo, name, addr }: AddressSelectedProps) {
         fontWeight="500"
         cursor="pointer"
         color={colors.gray600}
+        attributes={{ onClick: onChange }}
       >
         Change
       </Box>
