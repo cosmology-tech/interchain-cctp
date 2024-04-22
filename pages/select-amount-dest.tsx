@@ -68,8 +68,6 @@ export default function SelectAmount() {
   const wallet = useWallet(); // cosmos wallet, here refers to Keplr
   const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME));
 
-  console.log('cosmos.noble', cosmos.noble)
-
   const [chains, setChains] = useState<SkipChain[]>([]);
   const [destChain, setDestChain] = useState<SkipChain | null>(null); // destination chain
   const [destChainSearch, setDestChainSearch] = useState("");
@@ -98,9 +96,6 @@ export default function SelectAmount() {
     args: [address],
   });
 
-  console.log('destChain', destChain);
-  console.log('destAddress', destAddress);
-
   useEffect(() => {
     setToken(
       new UsdcToken({ ...token, balance: uusdcToUsdc(balance as bigint) })
@@ -122,14 +117,14 @@ export default function SelectAmount() {
   }, [destAddress, destChainSearch]);
 
   useEffect(() => {
-    if (cosmos.cosmoshub.isWalletConnected) {
+    if (wallet.mainWallet?.isWalletConnected) {
       setShowAddrInput(false)
       setShowChainCombo(true)
       if (destChainSearch.trim()) {
         setChains(filterChains(COSMOS_CHAINS, destChainSearch.trim()));
       }
     }
-  }, [cosmos.cosmoshub.isWalletConnected, destChainSearch]);
+  }, [wallet.mainWallet?.isWalletConnected, destChainSearch]);
 
   useEffect(() => {
     if (+amount > 0 && destChain) {
@@ -156,7 +151,6 @@ export default function SelectAmount() {
 
   async function onTransfer() {
     if (!route || !address || !destAddress) return;
-    console.log('route.chainIDs', route.chainIDs)
     const userAddresses = route.chainIDs.reduce((acc, chainID) => {
       // evm
       if (chainID == token.id) {
@@ -189,6 +183,7 @@ export default function SelectAmount() {
   }
 
   function onChainSelect(chain: SkipChain) {
+    setChains([])
     setDestChain(chain)
     setShowAddrInput(false)
     setShowChainCombo(false)
@@ -234,12 +229,13 @@ export default function SelectAmount() {
         cursor="pointer"
         attributes={{
           onClick: () => {
-            wallet.mainWallet?.disconnect();
             cosmos.cosmoshub?.disconnect();
-            setDestChain(null);
-            setDestAddress("");
-            setDestChainSearch("");
-            setShowChainCombo(false);
+            wallet.mainWallet?.disconnect();
+            // setChains([])
+            // setDestChain(null);
+            // setDestAddress("");
+            // setDestChainSearch("");
+            // setShowChainCombo(false);
             setShowAddrInput(true);
             setShowAddrSelected(false);
           },
@@ -693,7 +689,17 @@ function AddressSelected({ logo, name, addr, onChange = () => {} }: AddressSelec
       borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
       backgroundColor={useColorModeValue(colors.white, colors.blue300)}
     >
-      <Image width={26} height={26} src={logo} alt={name} />
+      <Box
+        width="26"
+        height="26"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        overflow="hidden"
+        borderRadius="100%"
+      >
+        <Image width={26} height={26} src={logo} alt={name} />
+      </Box>
       <Box flex="1" ml="12px">
         <Box
           fontSize="14px"
