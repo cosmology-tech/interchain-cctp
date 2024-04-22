@@ -62,6 +62,10 @@ export default function SelectAmount() {
   const [destChain, setDestChain] = useState<SkipChain | null>(null); // destination chain
   const [destChainSearch, setDestChainSearch] = useState("");
   const [destAddress, setDestAddress] = useState<string>(""); // destination address
+
+  const [showChainCombo, setShowChainCombo] = useState(true)
+  const [showAddrSelected, setShowAddrSelected] = useState(false)
+
   const [amount, setAmount] = useState("0");
   const [route, setRoute] = useState<RouteResponse | null>(null);
 
@@ -153,6 +157,12 @@ export default function SelectAmount() {
 
   function onAmountButtonClick(amount: number, max: boolean) {
     setAmount(max ? token.balance : String(amount));
+  }
+
+  function onChainSelect(chain: SkipChain) {
+    setDestChain(chain)
+    setShowChainCombo(false)
+    setShowAddrSelected(true)
   }
 
   const KeplrAccount = (
@@ -310,21 +320,22 @@ export default function SelectAmount() {
             />
           )}
 
-          {/* <Box mt="12px">
+          {showAddrSelected ? <Box mt="12px">
             <AddressSelected
-              logo={"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/info/logo.png"}
-              name={"Optimism"}
-              addr={"0xe72a851567b56a0C4F825sg4d0020c905D1194cf"}
+              logo={destChain?.logo_uri!}
+              name={COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ?? destChain?.chain_name}
+              addr={cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id]]?.address || destAddress}
             />
-          </Box> */}
+          </Box> : null}
 
-          <Box mt="12px">
+          {showChainCombo ? <Box mt="12px">
             <ChainCombo
               value={destChainSearch}
-              onChange={setDestChainSearch}
               chains={chains}
+              onSelect={onChainSelect}
+              onChange={setDestChainSearch}
             />
-          </Box>
+          </Box> : null}
 
           <PrimaryButton
             mt="1rem"
