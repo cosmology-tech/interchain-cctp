@@ -1,5 +1,5 @@
 import { UsdcToken } from "@/models";
-import { skipChainById } from "../skip/chains";
+import { skipChainById, SkipChains } from "../skip/chains";
 import {
   arbitrum,
   arbitrumSepolia,
@@ -75,6 +75,12 @@ export const USDC_EVM_MAINNET = {
   [arbitrum.id]: USDC_ARBITRUM_MAINNET,
   [avalanche.id]: USDC_AVALANCHE_MAINNET,
 };
+
+export const USDC_EVM_MAINNET_CHAIN_IDS = Object.keys(USDC_EVM_MAINNET);
+
+export const USDC_EVM_MAINNET_CHAINS = SkipChains.filter((chain) =>
+  USDC_EVM_MAINNET_CHAIN_IDS.includes(chain.chain_id!)
+);
 
 export const USDC_BASE_TESTNET = new UsdcToken({
   id: "84532",
@@ -172,6 +178,11 @@ export const COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM = {
     "ibc/2CBC2EA121AE42563B08028466F37B600F2D7D4282342DE938283CC3FB2BC00E",
 };
 
+export const COSMOS_CHAIN_IDS = Object.keys(COSMOS_CHAIN_ID_TO_CHAIN_NAME);
+
+export const COSMOS_CHAINS = SkipChains.filter((chain) =>
+  COSMOS_CHAIN_IDS.includes(chain.chain_id!)
+).sort((a, b) => a.chain_name!.localeCompare(b.chain_name!))
 
 /** @see https://docs.axelar.dev/learn/txduration#common-finality-time-for-interchain-transactions */
 const finalityTimeMap: Record<string, string> = {

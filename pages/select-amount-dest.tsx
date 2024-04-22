@@ -22,6 +22,7 @@ import {
   COSMOS_CHAIN_ID_TO_CHAIN_NAME,
   COSMOS_CHAIN_ID_TO_PRETTY_NAME,
   COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM,
+  COSMOS_CHAINS,
   getFinalityTime,
   sizes,
   USDC_CONTRACT_ABI,
@@ -42,7 +43,12 @@ function calcFeeFromRoute(route: RouteResponse, price = 1) {
   if (!route) return "0";
   return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 4,
-  }).format((+route.amountIn - +route.amountOut) / USDC_TO_UUSDC * price);
+  }).format(((+route.amountIn - +route.amountOut) / USDC_TO_UUSDC) * price);
+}
+
+function filterChains(chains: SkipChain[], search: string) {
+  if (!search.trim()) return [];
+  return chains.filter(chain => chain.chain_name!.toLowerCase().startsWith(search))
 }
 
 export default function SelectAmount() {
@@ -52,7 +58,9 @@ export default function SelectAmount() {
   const wallet = useWallet(); // cosmos wallet, here refers to Keplr
   const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME));
 
+  const [chains, setChains] = useState<SkipChain[]>([]);
   const [destChain, setDestChain] = useState<SkipChain | null>(null); // destination chain
+  const [destChainSearch, setDestChainSearch] = useState("");
   const [destAddress, setDestAddress] = useState<string>(""); // destination address
   const [amount, setAmount] = useState("0");
   const [route, setRoute] = useState<RouteResponse | null>(null);
@@ -60,7 +68,7 @@ export default function SelectAmount() {
   const [token, setToken] = useState<UsdcToken>(
     // @ts-ignore
     USDC_EVM_MAINNET[searchParams.get("source_chain_id") || "1"] ??
-      USDC_ETHEREUM_MAINNET,
+      USDC_ETHEREUM_MAINNET
   ); // token to transfer
   const { price = 1 } = usePrice();
   const { address } = useAccount();
@@ -75,7 +83,7 @@ export default function SelectAmount() {
 
   useEffect(() => {
     setToken(
-      new UsdcToken({ ...token, balance: uusdcToUsdc(balance as bigint) }),
+      new UsdcToken({ ...token, balance: uusdcToUsdc(balance as bigint) })
     );
   }, [balance]);
 
@@ -85,17 +93,27 @@ export default function SelectAmount() {
   }, [destAddress]);
 
   useEffect(() => {
+    if (cosmos.cosmoshub.isWalletConnected && destChainSearch.trim()) {
+      setChains(filterChains(COSMOS_CHAINS, destChainSearch.trim()));
+    } else {
+      setChains([])
+    }
+  }, [cosmos.cosmoshub.isWalletConnected, destChainSearch]);
+
+  useEffect(() => {
     if (+amount > 0 && destChain) {
-      skip.route({
-        allowMultiTx: true,
-        amountIn: `${parseInt(String(+amount * USDC_TO_UUSDC))}`,
-        sourceAssetChainID: String(token.id),
-        sourceAssetDenom: token.contract!,
-        destAssetChainID: destChain.chain_id!,
-        // @ts-ignore
-        destAssetDenom: COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[destChain.chain_id!],
-        bridges: ["IBC", "CCTP", "HYPERLANE"],
-      })
+      skip
+        .route({
+          allowMultiTx: true,
+          amountIn: `${parseInt(String(+amount * USDC_TO_UUSDC))}`,
+          sourceAssetChainID: String(token.id),
+          sourceAssetDenom: token.contract!,
+          destAssetChainID: destChain.chain_id!,
+          // @ts-ignore
+          destAssetDenom:
+            COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[destChain.chain_id!],
+          bridges: ["IBC", "CCTP", "HYPERLANE"],
+        })
         .then(setRoute)
         .catch(console.log);
     } else {
@@ -139,12 +157,7 @@ export default function SelectAmount() {
 
   const KeplrAccount = (
     <Box mb="16px" display="flex" alignItems="center">
-      <Image
-        width="16"
-        height="16"
-        src={"/logos/keplr.svg"}
-        alt="Keplr"
-      />
+      <Image width="16" height="16" src={"/logos/keplr.svg"} alt="Keplr" />
       <Text
         fontSize="12px"
         fontWeight="400"
@@ -185,11 +198,7 @@ export default function SelectAmount() {
           color={useColorModeValue(colors.blue50, colors.white)}
         >
           <BackButton onClick={() => router.push("/select-token")} />
-          <Text
-            fontSize="20px"
-            fontWeight="600"
-            lineHeight="28px"
-          >
+          <Text fontSize="20px" fontWeight="600" lineHeight="28px">
             Select amount and destination
           </Text>
         </Box>
@@ -207,42 +216,33 @@ export default function SelectAmount() {
           >
             Amount
           </Text>
-          {+token.balance > 0
-            ? (
-              <Box
-                gap="10px"
-                display="flex"
-              >
-                <AmountButton
-                  amount={+token.balance * 0.10}
-                  onClick={onAmountButtonClick}
-                />
-                <AmountButton
-                  amount={+token.balance * 0.25}
-                  onClick={onAmountButtonClick}
-                />
-                <AmountButton
-                  amount={+token.balance * 0.50}
-                  onClick={onAmountButtonClick}
-                />
-                <AmountButton
-                  amount={+token.balance * 0.80}
-                  onClick={onAmountButtonClick}
-                />
-                <AmountButton
-                  amount={+token.balance * 1.00}
-                  onClick={onAmountButtonClick}
-                  maxText={"Max"}
-                />
-              </Box>
-            )
-            : null}
+          {+token.balance > 0 ? (
+            <Box gap="10px" display="flex">
+              <AmountButton
+                amount={+token.balance * 0.1}
+                onClick={onAmountButtonClick}
+              />
+              <AmountButton
+                amount={+token.balance * 0.25}
+                onClick={onAmountButtonClick}
+              />
+              <AmountButton
+                amount={+token.balance * 0.5}
+                onClick={onAmountButtonClick}
+              />
+              <AmountButton
+                amount={+token.balance * 0.8}
+                onClick={onAmountButtonClick}
+              />
+              <AmountButton
+                amount={+token.balance * 1.0}
+                onClick={onAmountButtonClick}
+                maxText={"Max"}
+              />
+            </Box>
+          ) : null}
         </Box>
-        <TokenAmountInput
-          token={token}
-          value={amount}
-          onChange={setAmount}
-        />
+        <TokenAmountInput token={token} value={amount} onChange={setAmount} />
         <Box
           mt="12px"
           display="flex"
@@ -257,17 +257,11 @@ export default function SelectAmount() {
           >
             Available: {uusdcToUsdc(balance as bigint)}
           </Text>
-          {+amount > +token.balance
-            ? (
-              <Text
-                color="$red500"
-                fontSize="12px"
-                fontWeight="400"
-              >
-                Insufficient balance
-              </Text>
-            )
-            : null}
+          {+amount > +token.balance ? (
+            <Text color="$red500" fontSize="12px" fontWeight="400">
+              Insufficient balance
+            </Text>
+          ) : null}
           <Text
             color={useColorModeValue(colors.gray500, colors.blue700)}
             fontSize="14px"
@@ -307,29 +301,39 @@ export default function SelectAmount() {
             </Text>
           </Box>
           {wallet.mainWallet?.isWalletConnected ? KeplrAccount : null}
-          <AddressInput
-            value={destAddress}
-            onChange={setDestAddress}
-            onConnect={() => cosmos.cosmoshub.connect()}
-            isConnected={wallet.mainWallet?.isWalletConnected}
-          />
+          {cosmos.cosmoshub?.isWalletConnected ? null : (
+            <AddressInput
+              value={destAddress}
+              onChange={setDestAddress}
+              onConnect={() => cosmos.cosmoshub.connect()}
+              isConnected={wallet.mainWallet?.isWalletConnected}
+            />
+          )}
 
-          <Box mt="12px">
+          {/* <Box mt="12px">
             <AddressSelected
               logo={"https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/info/logo.png"}
               name={"Optimism"}
               addr={"0xe72a851567b56a0C4F825sg4d0020c905D1194cf"}
             />
-          </Box>
+          </Box> */}
 
           <Box mt="12px">
-            <ChainCombo chains={SkipChains.slice(7, 15)} />
+            <ChainCombo
+              value={destChainSearch}
+              onChange={setDestChainSearch}
+              chains={chains}
+            />
           </Box>
 
           <PrimaryButton
             mt="1rem"
-            disabled={!route || !destAddress || !isValidAddress(destAddress) ||
-              +amount > +token.balance}
+            disabled={
+              !route ||
+              !destAddress ||
+              !isValidAddress(destAddress) ||
+              +amount > +token.balance
+            }
             onClick={onTransfer}
           >
             Bridge
@@ -353,26 +357,24 @@ export default function SelectAmount() {
               →
             </Text>
 
-            {destChain
-              ? (
-                <Box
+            {destChain ? (
+              <Box
+                width={18}
+                height={18}
+                display="flex"
+                overflow="hidden"
+                borderRadius="10px"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Image
                   width={18}
                   height={18}
-                  display="flex"
-                  overflow="hidden"
-                  borderRadius="10px"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Image
-                    width={18}
-                    height={18}
-                    src={destChain?.logo_uri!}
-                    alt={destChain?.chain_name!}
-                  />
-                </Box>
-              )
-              : null}
+                  src={destChain?.logo_uri!}
+                  alt={destChain?.chain_name!}
+                />
+              </Box>
+            ) : null}
 
             <Box ml="12px" display="flex" alignItems="center">
               <ClockIcon />
@@ -463,18 +465,10 @@ function TokenAmountInput({
       borderWidth="1px"
       borderStyle="solid"
       borderRadius="8px"
-      borderColor={useColorModeValue(
-        colors.border.light,
-        colors.border.dark,
-      )}
+      borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
       backgroundColor={useColorModeValue(colors.white, colors.blue200)}
     >
-      <Box
-        mr="1rem"
-        width="48px"
-        height="48px"
-        position="relative"
-      >
+      <Box mr="1rem" width="48px" height="48px" position="relative">
         <Image src={token.logo} alt={token.name} width={48} height={48} />
         <Box
           position="absolute"
@@ -507,10 +501,7 @@ function TokenAmountInput({
             {token.name}
           </Text>
         </Box>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-        >
+        <Box display="flex" justifyContent="space-between">
           <Text
             fontSize="14px"
             fontWeight="400"
@@ -566,10 +557,7 @@ function AddressInput({
       borderWidth="1px"
       borderStyle="solid"
       borderRadius="8px"
-      borderColor={useColorModeValue(
-        colors.border.light,
-        colors.border.dark,
-      )}
+      borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
       backgroundColor={useColorModeValue(colors.white, colors.blue200)}
     >
       <input
@@ -592,23 +580,21 @@ function AddressInput({
           color: useColorModeValue(colors.gray500, colors.blue700),
         }}
       />
-      {value
-        ? (
-          <Box
-            position="absolute"
-            top="17px"
-            right="1rem"
-            cursor="pointer"
-            attributes={{
-              onClick: () => onChange(""),
-            }}
-          >
-            <CloseIcon />
-          </Box>
-        )
-        : isConnected
-        ? null
-        : <ConnectWalletButton onClick={() => onConnect()} />}
+      {value ? (
+        <Box
+          position="absolute"
+          top="17px"
+          right="1rem"
+          cursor="pointer"
+          attributes={{
+            onClick: () => onChange(""),
+          }}
+        >
+          <CloseIcon />
+        </Box>
+      ) : isConnected ? null : (
+        <ConnectWalletButton onClick={() => onConnect()} />
+      )}
     </Box>
   );
 }
@@ -617,13 +603,9 @@ type AddressSelectedProps = {
   logo: string;
   name: string;
   addr: string;
-}
+};
 
-function AddressSelected({
-  logo,
-  name,
-  addr,
-}: AddressSelectedProps) {
+function AddressSelected({ logo, name, addr }: AddressSelectedProps) {
   return (
     <Box
       px="14px"
@@ -633,18 +615,10 @@ function AddressSelected({
       alignItems="center"
       borderStyle="solid"
       borderWidth="1px"
-      borderColor={useColorModeValue(
-        colors.border.light,
-        colors.border.dark,
-      )}
+      borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
       backgroundColor={useColorModeValue(colors.white, colors.blue300)}
     >
-      <Image
-        width={26}
-        height={26}
-        src={logo}
-        alt={name}
-      />
+      <Image width={26} height={26} src={logo} alt={name} />
       <Box flex="1" ml="12px">
         <Box
           fontSize="14px"
@@ -672,7 +646,7 @@ function AddressSelected({
         Change
       </Box>
     </Box>
-  )
+  );
 }
 
 type ChainComboProps = {
@@ -680,7 +654,7 @@ type ChainComboProps = {
   chains?: SkipChain[];
   onChange?: (value: string) => void;
   onSelect?: (chain: SkipChain) => void;
-}
+};
 
 export function ChainCombo({
   value = "",
@@ -688,7 +662,52 @@ export function ChainCombo({
   onChange = () => {},
   onSelect = () => {},
 }: ChainComboProps) {
-  const color = useColorModeValue(colors.gray500, colors.blue700)
+  const color = useColorModeValue(colors.gray500, colors.blue700);
+
+  const Chains = (
+    <Box
+      py="10px"
+      maxHeight="220px"
+      overflow="auto"
+      borderTopWidth="1px"
+      borderTopStyle="solid"
+      borderTopColor={useColorModeValue(
+        colors.border.light,
+        colors.border.dark
+      )}
+    >
+      {chains.map((chain) => (
+        <Box
+          px="18px"
+          py="7px"
+          cursor="pointer"
+          key={chain.chain_id}
+          display="flex"
+          alignItems="center"
+          attributes={{ onClick: () => onSelect(chain) }}
+        >
+          <Box
+            width={26}
+            height={26}
+            display="flex"
+            overflow="hidden"
+            borderRadius="100%"
+          >
+            <Image
+              width={26}
+              height={26}
+              src={chain.logo_uri!}
+              alt={chain.chain_name!}
+            />
+          </Box>
+          <Box ml="12px" color={color}>
+            {COSMOS_CHAIN_ID_TO_PRETTY_NAME[chain.chain_id] ?? chain.chain_name}
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+  
   return (
     <Box
       borderRadius="8px"
@@ -697,20 +716,12 @@ export function ChainCombo({
       borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
       backgroundColor={useColorModeValue(colors.white, colors.blue200)}
     >
-      <Box
-        px="12px"
-        height="52px"
-        display="flex"
-        alignItems="center"
-        borderBottomWidth="1px"
-        borderBottomStyle="solid"
-        borderBottomColor={useColorModeValue(colors.border.light, colors.border.dark)}
-      >
+      <Box px="12px" height="52px" display="flex" alignItems="center">
         <SearchIcon />
         <input
           type="text"
-          value=""
-          onChange={(e) => {}}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           placeholder="Search network"
           style={{
             fontSize: "14px",
@@ -728,43 +739,7 @@ export function ChainCombo({
           }}
         />
       </Box>
-      <Box
-        py="10px"
-        maxHeight="220px"
-        overflow="auto"
-      >
-        {chains.map((chain) =>
-          <Box
-            px="18px"
-            py="7px"
-            cursor="pointer"
-            key={chain.chain_id}
-            display="flex"
-            alignItems="center"
-          >
-            <Box
-              width={26}
-              height={26}
-              display="flex"
-              overflow="hidden"
-              borderRadius="100%"
-            >
-              <Image 
-                width={26}
-                height={26}
-                src={chain.logo_uri!}
-                alt={chain.chain_name!}
-              />
-            </Box>
-            <Box
-              ml="12px"
-              color={color}
-            >
-              {COSMOS_CHAIN_ID_TO_PRETTY_NAME[chain.chain_id] ?? chain.chain_name}
-            </Box>
-          </Box>
-        )}
-      </Box>
+      {chains.length ? Chains : null}
     </Box>
-  )
+  );
 }
