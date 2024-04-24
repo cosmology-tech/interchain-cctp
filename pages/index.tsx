@@ -2,19 +2,32 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Layout } from "@/components";
 import { COSMOS_CHAIN_ID_TO_CHAIN_NAME, colors } from "@/config";
-import { Box, Text, useColorModeValue } from "@interchain-ui/react";
+import {
+  Box,
+  NobleSelectWalletButton,
+  Text,
+  useColorModeValue,
+} from "@interchain-ui/react";
+import { Button as AriaButton } from "react-aria-components";
 import { useChains } from "@cosmos-kit/react";
-import { useEffect } from "react";
 import { useAccount, useConnect } from "wagmi";
+
+import { Tooltip } from "@/components/common/Tooltip/Tooltip";
+import { FaqAccordion } from "@/components/common/FaqAccordion/FaqAccordion";
+import { buttonReset } from "@/styles/Shared.css";
 
 export default function Home() {
   return (
     <Layout>
       <Box minHeight="50rem">
         <Title />
+
         <Subtitle />
-        <Coins />
+
+        <ChainList />
+
         <WalletList />
+
         <FaqList />
       </Box>
     </Layout>
@@ -39,12 +52,7 @@ function Title() {
       >
         Send
       </Text>
-      <Image
-        src="/coins/usdc.svg"
-        alt="USDC"
-        width={48}
-        height={48}
-      />
+      <Image src="/coins/usdc.svg" alt="USDC" width={48} height={48} />
       <Text
         color={useColorModeValue(colors.gray50, colors.white)}
         fontSize="48px"
@@ -72,65 +80,285 @@ function Subtitle() {
   );
 }
 
-function Coins() {
+interface ChainItemProps {
+  name: string;
+  src: string;
+  alt?: string;
+  width: number;
+  height: number;
+}
+
+function ChainItem(props: ChainItemProps) {
   return (
     <Box
       display="flex"
+      justifyContent="flex-start"
       alignItems="center"
-      justifyContent="center"
-      cursor="pointer"
+      gap="$6"
+      width="182px"
     >
       <Image
-        src="/coins/ethereum.svg"
-        alt="Etheruem"
-        width={28}
-        height={28}
+        src={props.src}
+        alt={props.alt ?? props.name}
+        width={props.width}
+        height={props.height}
       />
-      <Image
-        src={useColorModeValue(
-          "/coins/optimism-light.svg",
-          "/coins/optimism-dark.svg",
-        )}
-        alt="Optimism"
-        width={33}
-        height={32}
-        style={{ position: "relative", left: "-6px" }}
-      />
-      <Image
-        src={useColorModeValue("/coins/dydx-light.svg", "/coins/dydx-dark.svg")}
-        alt="dYdX"
-        width={+useColorModeValue("33", "30")}
-        height={+useColorModeValue("32", "29")}
-        style={{ position: "relative", left: "-15px" }}
-      />
-      <Image
-        src={useColorModeValue(
-          "/coins/arbitrum-light.svg",
-          "/coins/arbitrum-dark.svg",
-        )}
-        alt="Arbitrum"
-        width={+useColorModeValue("32", "28")}
-        height={+useColorModeValue("32", "28")}
-        style={{ position: "relative", left: "-23px" }}
-      />
-      <Image
-        src={useColorModeValue(
-          "/coins/noble-light.svg",
-          "/coins/noble-dark.svg",
-        )}
-        alt="Noble"
-        width={+useColorModeValue("33", "29")}
-        height={+useColorModeValue("32", "28")}
-        style={{ position: "relative", left: "-32px" }}
-      />
+
       <Text
-        color={useColorModeValue(colors.gray500, colors.blue700)}
-        lineHeight="20px"
-        fontWeight="500"
-        attributes={{ marginLeft: "-30px" }}
+        as="span"
+        fontSize="$sm"
+        fontWeight="$normal"
+        color={useColorModeValue("$gray700", "$text")}
       >
-        +16
+        {props.name}
       </Text>
+    </Box>
+  );
+}
+
+function ChainList() {
+  return (
+    <Box
+      textAlign="center"
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+    >
+      <Tooltip.Trigger delay={0.2}>
+        <AriaButton className={buttonReset}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            cursor="pointer"
+          >
+            <Image
+              src="/coins/ethereum.svg"
+              alt="Ethereum"
+              width={28}
+              height={28}
+            />
+            <Image
+              src={useColorModeValue(
+                "/coins/optimism-light.svg",
+                "/coins/optimism-dark.svg"
+              )}
+              alt="Optimism"
+              width={33}
+              height={32}
+              style={{ position: "relative", left: "-6px" }}
+            />
+            <Image
+              src={useColorModeValue(
+                "/coins/dydx-light.svg",
+                "/coins/dydx-dark.svg"
+              )}
+              alt="dYdX"
+              width={32}
+              height={32}
+              style={{ position: "relative", left: "-15px" }}
+            />
+            <Image
+              src={useColorModeValue(
+                "/coins/arbitrum-light.svg",
+                "/coins/arbitrum-dark.svg"
+              )}
+              alt="Arbitrum"
+              width={32}
+              height={32}
+              style={{ position: "relative", left: "-23px" }}
+            />
+            <Image
+              src={useColorModeValue(
+                "/coins/noble-light.svg",
+                "/coins/noble-dark.svg"
+              )}
+              alt="Noble"
+              width={32}
+              height={32}
+              style={{ position: "relative", left: "-32px" }}
+            />
+
+            <Text
+              color={useColorModeValue(colors.gray500, colors.blue700)}
+              lineHeight="20px"
+              fontWeight="500"
+              attributes={{ marginLeft: "-30px" }}
+            >
+              +16
+            </Text>
+          </Box>
+        </AriaButton>
+
+        <Tooltip placement="bottom">
+          <Box
+            display="grid"
+            gridTemplateColumns="repeat(3, 1fr)"
+            gridTemplateRows="minmax(28px, auto)"
+            gridAutoFlow="row dense"
+            columnGap="8px"
+            rowGap="12px"
+          >
+            <ChainItem
+              name="Ethereum"
+              src="/coins/ethereum.svg"
+              alt="Ethereum"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="Optimism"
+              src={useColorModeValue(
+                "/coins/optimism-light.svg",
+                "/coins/optimism-dark.svg"
+              )}
+              alt="Optimism"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="dYdX"
+              src={useColorModeValue(
+                "/coins/dydx-light.svg",
+                "/coins/dydx-dark.svg"
+              )}
+              alt="dYdX"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="Arbitrum"
+              src={useColorModeValue(
+                "/coins/arbitrum-light.svg",
+                "/coins/arbitrum-dark.svg"
+              )}
+              alt="Arbitrum"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="Noble"
+              src={useColorModeValue(
+                "/coins/noble-light.svg",
+                "/coins/noble-dark.svg"
+              )}
+              alt="Noble"
+              width={28}
+              height={28}
+            />
+            {/* Second column */}
+            <ChainItem
+              name="Ethereum"
+              src="/coins/ethereum.svg"
+              alt="Ethereum"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="Optimism"
+              src={useColorModeValue(
+                "/coins/optimism-light.svg",
+                "/coins/optimism-dark.svg"
+              )}
+              alt="Optimism"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="dYdX"
+              src={useColorModeValue(
+                "/coins/dydx-light.svg",
+                "/coins/dydx-dark.svg"
+              )}
+              alt="dYdX"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="Arbitrum"
+              src={useColorModeValue(
+                "/coins/arbitrum-light.svg",
+                "/coins/arbitrum-dark.svg"
+              )}
+              alt="Arbitrum"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="Noble"
+              src={useColorModeValue(
+                "/coins/noble-light.svg",
+                "/coins/noble-dark.svg"
+              )}
+              alt="Noble"
+              width={28}
+              height={28}
+            />
+
+            {/* Third column */}
+
+            <ChainItem
+              name="Ethereum"
+              src="/coins/ethereum.svg"
+              alt="Ethereum"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="Optimism"
+              src={useColorModeValue(
+                "/coins/optimism-light.svg",
+                "/coins/optimism-dark.svg"
+              )}
+              alt="Optimism"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="dYdX"
+              src={useColorModeValue(
+                "/coins/dydx-light.svg",
+                "/coins/dydx-dark.svg"
+              )}
+              alt="dYdX"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="Arbitrum"
+              src={useColorModeValue(
+                "/coins/arbitrum-light.svg",
+                "/coins/arbitrum-dark.svg"
+              )}
+              alt="Arbitrum"
+              width={28}
+              height={28}
+            />
+
+            <ChainItem
+              name="Noble"
+              src={useColorModeValue(
+                "/coins/noble-light.svg",
+                "/coins/noble-dark.svg"
+              )}
+              alt="Noble"
+              width={28}
+              height={28}
+            />
+          </Box>
+        </Tooltip>
+      </Tooltip.Trigger>
     </Box>
   );
 }
@@ -164,12 +392,7 @@ function Wallet({
       backgroundColor={useColorModeValue(colors.white, colors.blue200)}
       attributes={{ onClick }}
     >
-      <Image
-        src={logo}
-        alt={name}
-        width={42}
-        height={42}
-      />
+      <Image src={logo} alt={name} width={42} height={42} />
       <Text
         fontSize="16px"
         fontWeight="600"
@@ -193,53 +416,97 @@ function Wallet({
 
 function WalletList() {
   const router = useRouter();
-  const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME))
-  const { address } = useAccount()
+  const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME));
+  const { address } = useAccount();
   const { connectAsync, isSuccess, connectors } = useConnect();
-  
+
+  const handleConnectMetamask = () => {
+    if (address) {
+      return router.push("/select-token");
+    }
+    connectAsync({ connector: connectors[0] }).then((isSuccess) => {
+      if (isSuccess) {
+        router.push("/select-token");
+      }
+    });
+  };
+
+  const handleConnectKeplr = () => {
+    if (cosmos.cosmohub?.address) {
+      return router.push("/select-token");
+    }
+    cosmos.cosmoshub.connect();
+  };
+
   return (
-    <Box mt="4rem" mb="10rem" display="flex" mx="100px" gap="24px">
-      <Wallet
-        logo="/logos/metamask.svg"
-        name="MetaMask"
-        text="Connect"
-        onClick={() => {
-          address ? router.push("/select-token") :
-          connectAsync({ connector: connectors[0] }) 
-            .then((isSuccess) => {
-              if (isSuccess) {
-                router.push("/select-token")
-              }
-            })
-        }}
+    <Box
+      pt="72px"
+      pb="200px"
+      px="$12"
+      display="flex"
+      gap="24px"
+      flexWrap="wrap"
+      justifyContent="center"
+      alignItems="center"
+    >
+      <NobleSelectWalletButton
+        logoUrl={"/logos/metamask.svg"}
+        logoAlt="metamask"
+        title="MetaMask"
+        subTitle="Connect"
+        onClick={handleConnectMetamask}
       />
-      <Wallet
-        logo="/logos/keplr.svg"
-        name="Keplr"
-        text="Connect"
-        onClick={() => {
-          cosmos.cosmohub?.address
-          ? router.push("/select-token")
-          : cosmos.cosmoshub.connect()
-        }}
+
+      <NobleSelectWalletButton
+        logoUrl={"/logos/keplr.svg"}
+        logoAlt="keplr"
+        title="Keplr"
+        subTitle="Connect"
+        onClick={handleConnectKeplr}
       />
-      <Wallet
-        logo="/logos/capsule.svg"
-        name="Capsule"
-        text="Log in"
+
+      <NobleSelectWalletButton
+        logoUrl={"/logos/capsule.svg"}
+        logoAlt="keplr"
+        title="Capsule"
+        subTitle="Log in"
+      />
+
+      <NobleSelectWalletButton
+        logoUrl={"/logos/phantom.svg"}
+        logoAlt="phantom"
+        title="Phantom"
+        subTitle="Soon"
+        disabled
       />
     </Box>
   );
 }
 
+const faqs = [
+  {
+    question: "Which networks are supported?",
+    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
+  },
+  {
+    question: "Are there any fees?",
+    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
+  },
+  {
+    question: "What tokens can I send?",
+    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
+  },
+  {
+    question: "How does Noble Express work?",
+    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
+  },
+  {
+    question: "What is Noble?",
+    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
+  },
+];
+
 function FaqList() {
-  const faqs = [
-    { question: "Which networks are supported?" },
-    { question: "Are there any fees?" },
-    { question: "What tokens can I send?" },
-    { question: "How does Noble Express work?" },
-    { question: "What is Noble?" },
-  ];
   return (
     <Box mb="7rem">
       <Text
@@ -251,46 +518,21 @@ function FaqList() {
       >
         Frequently asked questions
       </Text>
+
       <Box
         mt="30px"
         display="grid"
         gap="12px 1.5rem"
         gridTemplateColumns="repeat(2, minmax(0, 1fr))"
       >
-        {faqs.map((faq, index) => <Faq key={index} question={faq.question} />)}
+        {faqs.map((faq) => (
+          <FaqAccordion
+            key={faq.question}
+            answer={faq.answer}
+            question={faq.question}
+          />
+        ))}
       </Box>
-    </Box>
-  );
-}
-
-type FaqProps = {
-  question: string;
-};
-
-function Faq({ question }: FaqProps) {
-  return (
-    <Box
-      px="20px"
-      height="70px"
-      cursor="pointer"
-      borderWidth="1px"
-      borderStyle="solid"
-      borderRadius="8px"
-      display="flex"
-      alignItems="center"
-      borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
-      backgroundColor={useColorModeValue(colors.white, colors.blue200)}
-    >
-      <Text
-        color={useColorModeValue(colors.gray100, colors.white)}
-        fontSize="16px"
-        fontWeight="500"
-        lineHeight="20px"
-        attributes={{ flex: 1 }}
-      >
-        {question}
-      </Text>
-      <ChevronDown color={useColorModeValue(colors.gray400, colors.gray600)} />
     </Box>
   );
 }
