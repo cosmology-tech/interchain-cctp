@@ -497,41 +497,59 @@ const faqs = [
     answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
   },
   {
-    question: "How does Noble Express work?",
+    question: "What is Noble?",
     answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
   },
   {
-    question: "What is Noble?",
+    question: "How does Noble Express work?",
     answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
   },
 ];
 
+const midIndex = Math.ceil(faqs.length / 2);
+const firstHalfFAQ = faqs.slice(0, midIndex);
+const secondHalfFAQ = faqs.slice(midIndex);
+
 function FaqList() {
   return (
-    <Box mb="7rem">
+    <Box mb="266px" px="$12">
       <Text
-        color={useColorModeValue(colors.gray200, colors.white)}
-        fontSize="24px"
-        fontWeight="500"
-        lineHeight="28px"
-        textAlign="center"
+        as="p"
+        color="$text"
+        fontSize="$3xl"
+        fontWeight="$medium"
+        textAlign="left"
+        attributes={{
+          marginBottom: "32px",
+        }}
       >
         Frequently asked questions
       </Text>
 
       <Box
-        mt="30px"
-        display="grid"
-        gap="12px 1.5rem"
-        gridTemplateColumns="repeat(2, minmax(0, 1fr))"
+        display="flex"
+        gap="$10"
+        flexWrap={{ mobile: "wrap", tablet: "nowrap" }}
       >
-        {faqs.map((faq) => (
-          <FaqAccordion
-            key={faq.question}
-            answer={faq.answer}
-            question={faq.question}
-          />
-        ))}
+        <Box display="flex" flexDirection="column" gap="$6">
+          {firstHalfFAQ.map((faq) => (
+            <FaqAccordion
+              key={faq.question}
+              answer={faq.answer}
+              question={faq.question}
+            />
+          ))}
+        </Box>
+
+        <Box display="flex" flexDirection="column" gap="$6">
+          {secondHalfFAQ.map((faq) => (
+            <FaqAccordion
+              key={faq.question}
+              answer={faq.answer}
+              question={faq.question}
+            />
+          ))}
+        </Box>
       </Box>
     </Box>
   );
