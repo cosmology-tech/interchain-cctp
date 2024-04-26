@@ -1,9 +1,19 @@
 import * as React from "react";
-import { Box, Text, Accordion, NobleButton } from "@interchain-ui/react";
+import cls from "clsx";
+import {
+  Box,
+  Text,
+  Accordion,
+  NobleButton,
+  useTheme,
+} from "@interchain-ui/react";
 import { ChevronDown } from "../icons/Chevron";
 import * as styles from "./FaqAccordion.css";
+import * as sharedStyles from "@/styles/Shared.css";
 
 export interface FaqAccordionProps {
+  isExpanded: boolean;
+  toggleExpand: () => void;
   question: string;
   answer: string;
   children?: React.ReactNode;
@@ -52,17 +62,17 @@ function Trigger({
 }
 
 export function FaqAccordion(props: FaqAccordionProps) {
-  const [isExpanded, setIsExpanded] = React.useState<boolean>(false);
-
+  const { theme } = useTheme();
   return (
     <Accordion
       renderTrigger={
-        <Trigger isExpanded={isExpanded}>{props.question}</Trigger>
+        <Trigger isExpanded={props.isExpanded}>{props.question}</Trigger>
       }
       renderContent={
         <Box
           bg="$cardBg"
           paddingLeft="$10"
+          paddingRight="$10"
           paddingTop="$10"
           paddingBottom="$10"
           borderRadius="$lg"
@@ -75,12 +85,15 @@ export function FaqAccordion(props: FaqAccordionProps) {
           fontSize="$sm"
           fontWeight="$normal"
           color="$textSecondary"
+          maxHeight="150px"
+          overflowY="auto"
+          className={sharedStyles.scrollBar[theme]}
         >
           {props.answer}
         </Box>
       }
-      isExpanded={isExpanded}
-      onToggle={() => setIsExpanded((prev) => !prev)}
+      isExpanded={props.isExpanded}
+      onToggle={() => props.toggleExpand()}
     />
   );
 }

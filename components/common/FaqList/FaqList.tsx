@@ -1,29 +1,39 @@
 import * as React from "react";
+import cls from "clsx";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { Box, Text, useColorModeValue } from "@interchain-ui/react";
-import { Button as AriaButton } from "react-aria-components";
+import {
+  Button as AriaButton,
+  ButtonProps as AriaButtonProps,
+} from "react-aria-components";
 import { FaqAccordion } from "@/components/common/FaqAccordion/FaqAccordion";
+import { LayoutContext } from "@/contexts/layout.context";
 import { buttonReset } from "@/styles/Shared.css";
 import * as styles from "./FaqList.css";
 
 const faqs = [
   {
+    id: 1,
     question: "Which networks are supported?",
     answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
   },
   {
+    id: 2,
     question: "Are there any fees?",
     answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
   },
   {
+    id: 3,
     question: "What tokens can I send?",
     answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
   },
   {
+    id: 4,
     question: "What is Noble?",
     answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
   },
   {
+    id: 5,
     question: "How does Noble Express work?",
     answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
   },
@@ -37,12 +47,46 @@ interface FaqListProps {
   isDefaultExpanded?: boolean;
 }
 
-export function FaqList(props: FaqListProps) {
-  const [isExpanded, setIsExpanded] = React.useState<boolean>(
-    !!props.isDefaultExpanded
-  );
-
+export function FaqTriggerButton(
+  props: AriaButtonProps & {
+    isHightlighted?: boolean;
+  }
+) {
   const contractedColor = useColorModeValue("$text", "$gray600");
+  const { isHightlighted, ...ariaProps } = props;
+
+  return (
+    <AriaButton {...ariaProps} className={cls(buttonReset, props.className)}>
+      <Text
+        as="span"
+        color={props.isHightlighted ? "$text" : contractedColor}
+        fontSize="$3xl"
+        fontWeight="$medium"
+        textAlign="left"
+        attributes={{
+          transition: "all 200ms",
+        }}
+      >
+        Frequently asked questions
+      </Text>
+    </AriaButton>
+  );
+}
+
+export function FaqList(props: FaqListProps) {
+  // const [isExpanded, setIsExpanded] = React.useState<boolean>(
+  //   !!props.isDefaultExpanded
+  // );
+
+  const [activeFaqId, setActiveFaqId] = React.useState<number | null>(null);
+
+  const { isFaqExpanded, setIsFaqExpanded } = React.useContext(LayoutContext);
+
+  const handleExpand = (faqId: number) => {
+    setActiveFaqId((prevActiveFaqId) => {
+      return prevActiveFaqId === faqId ? null : faqId;
+    });
+  };
 
   return (
     <Box
@@ -50,47 +94,36 @@ export function FaqList(props: FaqListProps) {
       attributes={{
         id: "faq-list",
       }}
-      //   minHeight={{
-      //     mobile: "600px",
-      //     tablet: "unset",
-      //   }}
     >
       <LayoutGroup>
-        <motion.div
-          layout
-          transition={{
-            type: "spring",
-            stiffness: 700,
-            damping: 30,
-          }}
-          data-expanded={isExpanded}
-          className={styles.buttonContainer}
-        >
-          <AriaButton
-            className={buttonReset}
-            onPress={() => {
-              setIsExpanded((prevIsExpanded) => !prevIsExpanded);
-            }}
-          >
-            <Text
-              as="span"
-              color={isExpanded ? "$text" : contractedColor}
-              fontSize="$3xl"
-              fontWeight="$medium"
-              textAlign="left"
-              attributes={{
-                marginBottom: isExpanded ? "32px" : "58px",
+        <AnimatePresence>
+          {isFaqExpanded && (
+            <motion.div
+              transition={{
+                type: "spring",
+                stiffness: 700,
+                damping: 30,
               }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, height: 0 }}
             >
-              Frequently asked questions
-            </Text>
-          </AriaButton>
-        </motion.div>
+              <Box marginBottom="32px">
+                <FaqTriggerButton
+                  isHightlighted={isFaqExpanded}
+                  onPress={() => {
+                    setIsFaqExpanded(!isFaqExpanded);
+                  }}
+                />
+              </Box>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </LayoutGroup>
 
       <LayoutGroup>
         <AnimatePresence>
-          {isExpanded && (
+          {isFaqExpanded && (
             <motion.div
               transition={{
                 type: "spring",
@@ -110,12 +143,14 @@ export function FaqList(props: FaqListProps) {
                 }}
                 flexWrap={{ mobile: "wrap", tablet: "nowrap" }}
                 attributes={{
-                  "data-expanded": isExpanded,
+                  "data-expanded": isFaqExpanded,
                 }}
               >
                 <Box display="flex" flexDirection="column" gap="$6">
                   {firstHalfFAQ.map((faq) => (
                     <FaqAccordion
+                      isExpanded={activeFaqId === faq.id}
+                      toggleExpand={() => handleExpand(faq.id)}
                       key={faq.question}
                       answer={faq.answer}
                       question={faq.question}
@@ -126,6 +161,8 @@ export function FaqList(props: FaqListProps) {
                 <Box display="flex" flexDirection="column" gap="$6">
                   {secondHalfFAQ.map((faq) => (
                     <FaqAccordion
+                      isExpanded={activeFaqId === faq.id}
+                      toggleExpand={() => handleExpand(faq.id)}
                       key={faq.question}
                       answer={faq.answer}
                       question={faq.question}

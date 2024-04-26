@@ -1,12 +1,14 @@
+import * as React from "react";
 import Image from "next/image";
-import { useRouter } from "next/router";
+import { motion, AnimatePresence } from "framer-motion";
 import { Box, Link, Text, useColorModeValue } from "@interchain-ui/react";
 import { colors } from "@/config";
-import { FaqList } from "@/components/common/FaqList/FaqList";
+import { FaqTriggerButton } from "@/components/common/FaqList";
+import { LayoutContext } from "@/contexts/layout.context";
+import { ChevronDown } from "@/components/common/icons/Chevron";
 
 export function Footer() {
-  const { pathname } = useRouter();
-  const isHomePath = pathname === "/";
+  const { isFaqExpanded, setIsFaqExpanded } = React.useContext(LayoutContext);
 
   return (
     <Box
@@ -15,10 +17,31 @@ export function Footer() {
         mobile: "relative",
         tablet: "absolute",
       }}
-      bottom="102px"
+      bottom="0"
       width="$full"
     >
-      <FaqList isDefaultExpanded={isHomePath} />
+      <AnimatePresence>
+        {!isFaqExpanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <Box
+              display="flex"
+              width="$full"
+              gap="$8"
+              justifyContent="center"
+              alignItems="center"
+              marginBottom="58px"
+            >
+              <FaqTriggerButton onPress={() => setIsFaqExpanded(true)} />
+
+              <ChevronDown />
+            </Box>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Box
         position="relative"

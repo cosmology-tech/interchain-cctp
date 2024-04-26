@@ -14,21 +14,20 @@ import { useChains } from "@cosmos-kit/react";
 import { useAccount, useConnect } from "wagmi";
 import { Tooltip } from "@/components/common/Tooltip";
 import { buttonReset } from "@/styles/Shared.css";
+import { FaqList } from "@/components/common/FaqList/FaqList";
 
 export default function Home() {
   return (
     <Layout>
-      <NobleProvider>
-        <Box>
-          <Title />
+      <Title />
 
-          <Subtitle />
+      <Subtitle />
 
-          <ChainList />
+      <ChainList />
 
-          <WalletList />
-        </Box>
-      </NobleProvider>
+      <WalletList />
+
+      <FaqList isDefaultExpanded />
     </Layout>
   );
 }

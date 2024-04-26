@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { style, createVar, styleVariants } from "@vanilla-extract/css";
 
 export const buttonReset = style({
   backgroundColor: "transparent",
@@ -8,6 +8,7 @@ export const buttonReset = style({
   position: "relative",
   userSelect: "none",
   whiteSpace: "nowrap",
+  padding: 0,
   verticalAlign: "middle",
   lineHeight: 1.2,
   transitionProperty:
@@ -21,4 +22,43 @@ export const buttonReset = style({
       outline: "none",
     },
   },
+});
+
+export const scrollBarThumbBgVar = createVar();
+
+const scrollBarBase = style({
+  // Firefox
+  scrollbarWidth: "thin" /* "auto" or "thin" */,
+  scrollbarColor: `${scrollBarThumbBgVar} transparent` /* scroll thumb and track */,
+  selectors: {
+    "&::-webkit-scrollbar": {
+      width: "8px",
+    },
+    "&::-webkit-scrollbar-track": {
+      background: "transparent",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      backgroundColor: scrollBarThumbBgVar,
+      borderRadius: "4px",
+    },
+  },
+});
+
+export const scrollBar = styleVariants({
+  light: [
+    style({
+      vars: {
+        [scrollBarThumbBgVar]: "#6D6D88",
+      },
+    }),
+    scrollBarBase,
+  ],
+  dark: [
+    style({
+      vars: {
+        [scrollBarThumbBgVar]: "#4E5DBC",
+      },
+    }),
+    scrollBarBase,
+  ],
 });
