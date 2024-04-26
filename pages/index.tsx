@@ -4,6 +4,7 @@ import { ChevronDown, Layout } from "@/components";
 import { COSMOS_CHAIN_ID_TO_CHAIN_NAME, colors } from "@/config";
 import {
   Box,
+  NobleProvider,
   NobleSelectWalletButton,
   Text,
   useColorModeValue,
@@ -19,17 +20,19 @@ import { buttonReset } from "@/styles/Shared.css";
 export default function Home() {
   return (
     <Layout>
-      <Box minHeight="50rem">
-        <Title />
+      <NobleProvider>
+        <Box minHeight="50rem">
+          <Title />
 
-        <Subtitle />
+          <Subtitle />
 
-        <ChainList />
+          <ChainList />
 
-        <WalletList />
+          <WalletList />
 
-        <FaqList />
-      </Box>
+          <FaqList />
+        </Box>
+      </NobleProvider>
     </Layout>
   );
 }
@@ -39,6 +42,7 @@ function Title() {
     <Box
       mt="3rem"
       display="flex"
+      flexWrap="wrap"
       gap="10px"
       flex="1"
       alignItems="center"
@@ -52,14 +56,32 @@ function Title() {
       >
         Send
       </Text>
-      <Image src="/coins/usdc.svg" alt="USDC" width={48} height={48} />
+
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        flexWrap="nowrap"
+      >
+        <Image src="/coins/usdc.svg" alt="USDC" width={48} height={48} />
+        &nbsp;
+        <Text
+          color={useColorModeValue(colors.gray50, colors.white)}
+          fontSize="48px"
+          fontWeight="500"
+          lineHeight="53px"
+        >
+          USDC
+        </Text>
+      </Box>
+
       <Text
         color={useColorModeValue(colors.gray50, colors.white)}
         fontSize="48px"
         fontWeight="500"
         lineHeight="53px"
       >
-        USDC Anywhere
+        Anywhere
       </Text>
     </Box>
   );
@@ -193,8 +215,14 @@ function ChainList() {
         <Tooltip placement="bottom">
           <Box
             display="grid"
-            gridTemplateColumns="repeat(3, 1fr)"
-            gridTemplateRows="minmax(28px, auto)"
+            gridTemplateColumns={{
+              mobile: "repeat(2, 1fr)",
+              tablet: "repeat(3, 1fr)",
+            }}
+            gridTemplateRows={{
+              mobile: "minmax(28px, auto)",
+              tablet: "minmax(28px, auto)",
+            }}
             gridAutoFlow="row dense"
             columnGap="8px"
             rowGap="12px"
@@ -512,7 +540,7 @@ const secondHalfFAQ = faqs.slice(midIndex);
 
 function FaqList() {
   return (
-    <Box mb="266px" px="$12">
+    <Box mb="112px">
       <Text
         as="p"
         color="$text"
@@ -528,7 +556,10 @@ function FaqList() {
 
       <Box
         display="flex"
-        gap="$10"
+        gap={{
+          mobile: "$6",
+          tablet: "$10",
+        }}
         flexWrap={{ mobile: "wrap", tablet: "nowrap" }}
       >
         <Box display="flex" flexDirection="column" gap="$6">

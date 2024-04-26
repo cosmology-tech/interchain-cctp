@@ -30,7 +30,7 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider>
-      <NobleProvider themeMode={theme}>
+      <NobleProvider>
         <ChainProvider
           chains={chains}
           assetLists={assets}
