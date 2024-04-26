@@ -14,8 +14,8 @@ export function ChevronDown({ color }: ChevronProps) {
       <path
         d="M18 9L12 15L6 9"
         stroke={color || "#4D5270"}
-        stroke-width="2"
-        stroke-linecap="square"
+        strokeWidth="2"
+        strokeLinecap="square"
       />
     </svg>
   );

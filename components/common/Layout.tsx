@@ -1,11 +1,21 @@
+import * as React from "react";
+import { useRouter } from "next/router";
 import Head from "next/head";
-import { Box } from "@interchain-ui/react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { Container } from "./Container";
+import { LayoutContext } from "@/contexts/layout.context";
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const isHomePage = router.pathname === "/";
+
+  const [isFaqExpanded, setIsFaqExpanded] = React.useState(() =>
+    isHomePage ? true : false
+  );
+
   return (
-    <Box maxWidth="936px" mx="auto" pb="5rem">
+    <>
       <Head>
         <title>Noble Express</title>
         <meta
@@ -14,9 +24,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
         <link rel="icon" href="/favicon.png" />
       </Head>
-      <Header />
-      {children}
-      <Footer />
-    </Box>
+
+      <LayoutContext.Provider
+        value={{
+          isFaqExpanded,
+          setIsFaqExpanded,
+        }}
+      >
+        <Container>
+          <Header />
+
+          {children}
+
+          <Footer />
+        </Container>
+      </LayoutContext.Provider>
+    </>
   );
 }

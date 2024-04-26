@@ -5,5 +5,5 @@ export * from "./CloseIcon";
 export * from "./ClockIcon";
 export * from "./ArrowIcon";
 export * from "./SearchIcon";
-
-
+export * from "./MoonIcon";
+export * from "./SunIcon";
