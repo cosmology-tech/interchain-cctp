@@ -42,6 +42,8 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
               <SkipProvider>
                 <Box
                   minHeight="100dvh"
+                  display="flex"
+                  flexDirection="column"
                   backgroundColor={useColorModeValue("#F6F6FE", "#020418")}
                 >
                   <Component {...pageProps} />

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Layout } from "@/components";
+import { Layout } from "@/components";
 import { COSMOS_CHAIN_ID_TO_CHAIN_NAME, colors } from "@/config";
 import {
   Box,
@@ -12,16 +12,14 @@ import {
 import { Button as AriaButton } from "react-aria-components";
 import { useChains } from "@cosmos-kit/react";
 import { useAccount, useConnect } from "wagmi";
-
-import { Tooltip } from "@/components/common/Tooltip/Tooltip";
-import { FaqAccordion } from "@/components/common/FaqAccordion/FaqAccordion";
+import { Tooltip } from "@/components/common/Tooltip";
 import { buttonReset } from "@/styles/Shared.css";
 
 export default function Home() {
   return (
     <Layout>
       <NobleProvider>
-        <Box minHeight="50rem">
+        <Box>
           <Title />
 
           <Subtitle />
@@ -29,8 +27,6 @@ export default function Home() {
           <ChainList />
 
           <WalletList />
-
-          <FaqList />
         </Box>
       </NobleProvider>
     </Layout>
@@ -507,81 +503,6 @@ function WalletList() {
         subTitle="Soon"
         disabled
       />
-    </Box>
-  );
-}
-
-const faqs = [
-  {
-    question: "Which networks are supported?",
-    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
-  },
-  {
-    question: "Are there any fees?",
-    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
-  },
-  {
-    question: "What tokens can I send?",
-    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
-  },
-  {
-    question: "What is Noble?",
-    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
-  },
-  {
-    question: "How does Noble Express work?",
-    answer: `Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar.`,
-  },
-];
-
-const midIndex = Math.ceil(faqs.length / 2);
-const firstHalfFAQ = faqs.slice(0, midIndex);
-const secondHalfFAQ = faqs.slice(midIndex);
-
-function FaqList() {
-  return (
-    <Box mb="112px">
-      <Text
-        as="p"
-        color="$text"
-        fontSize="$3xl"
-        fontWeight="$medium"
-        textAlign="left"
-        attributes={{
-          marginBottom: "32px",
-        }}
-      >
-        Frequently asked questions
-      </Text>
-
-      <Box
-        display="flex"
-        gap={{
-          mobile: "$6",
-          tablet: "$10",
-        }}
-        flexWrap={{ mobile: "wrap", tablet: "nowrap" }}
-      >
-        <Box display="flex" flexDirection="column" gap="$6">
-          {firstHalfFAQ.map((faq) => (
-            <FaqAccordion
-              key={faq.question}
-              answer={faq.answer}
-              question={faq.question}
-            />
-          ))}
-        </Box>
-
-        <Box display="flex" flexDirection="column" gap="$6">
-          {secondHalfFAQ.map((faq) => (
-            <FaqAccordion
-              key={faq.question}
-              answer={faq.answer}
-              question={faq.question}
-            />
-          ))}
-        </Box>
-      </Box>
     </Box>
   );
 }

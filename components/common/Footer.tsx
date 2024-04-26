@@ -1,10 +1,25 @@
 import Image from "next/image";
+import { useRouter } from "next/router";
 import { Box, Link, Text, useColorModeValue } from "@interchain-ui/react";
 import { colors } from "@/config";
+import { FaqList } from "@/components/common/FaqList/FaqList";
 
 export function Footer() {
+  const { pathname } = useRouter();
+  const isHomePath = pathname === "/";
+
   return (
-    <Box as="footer" paddingBottom="102px">
+    <Box
+      as="footer"
+      position={{
+        mobile: "relative",
+        tablet: "absolute",
+      }}
+      bottom="102px"
+      width="$full"
+    >
+      <FaqList isDefaultExpanded={isHomePath} />
+
       <Box
         position="relative"
         display="flex"

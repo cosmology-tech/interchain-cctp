@@ -10,7 +10,7 @@ const originVar = createVar();
 
 const slide = keyframes({
   from: { transform: originVar, opacity: 0 },
-  "100%": { transform: "translateY(0)", opacity: 1 },
+  to: { transform: "translateY(0)", opacity: 1 },
 });
 
 const baseTooltip = style({
