@@ -12,6 +12,7 @@ import {
   Box,
   ThemeProvider,
   NobleProvider,
+  Toaster,
   useColorModeValue,
   useTheme,
 } from "@interchain-ui/react";
@@ -47,6 +48,8 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
                   backgroundColor={useColorModeValue("#F6F6FE", "#020418")}
                 >
                   <Component {...pageProps} />
+
+                  <Toaster position={"top-right"} closeButton={true} />
                 </Box>
               </SkipProvider>
             </QueryClientProvider>
