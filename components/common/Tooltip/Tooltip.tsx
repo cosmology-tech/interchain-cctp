@@ -32,9 +32,9 @@ export function Tooltip({ children, ...props }: TooltipProps) {
             d="M1 1 L4 4 L7 1"
             fill="currentColor"
             stroke="currentColor"
-            stroke-width="1"
-            stroke-linejoin="round"
-            stroke-linecap="round"
+            strokeWidth="1"
+            strokeLinejoin="round"
+            strokeLinecap="round"
           />
         </svg>
       </OverlayArrow>
