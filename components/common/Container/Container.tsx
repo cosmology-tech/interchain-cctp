@@ -50,6 +50,7 @@ export const Container = ({ children }: { children: React.ReactNode }) => {
         position="relative"
         maxWidth="936px"
         height="$full"
+        width="$full"
         mx="auto"
         zIndex={1}
         paddingBottom={{

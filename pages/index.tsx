@@ -4,7 +4,6 @@ import { Layout } from "@/components";
 import { COSMOS_CHAIN_ID_TO_CHAIN_NAME, colors } from "@/config";
 import {
   Box,
-  NobleProvider,
   NobleSelectWalletButton,
   Text,
   useColorModeValue,
