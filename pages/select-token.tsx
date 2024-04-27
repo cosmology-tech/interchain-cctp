@@ -97,6 +97,7 @@ function UsdcTokenList({ tokens = [], price = 1 }: UsdcTokenListProps) {
   const router = useRouter();
   const isMounted = useIsMounted();
 
+  console.log("tokens", tokens);
   return (
     <Stack direction="vertical" space="16px" attributes={{ mt: "24px" }}>
       {tokens.map((token) => (
@@ -121,7 +122,7 @@ function UsdcTokenList({ tokens = [], price = 1 }: UsdcTokenListProps) {
               ? `${token.isBalanceGtZero ? "≈ " : ""}${token.value(price)}`
               : "≈ 0",
           }}
-          onClick={(token) =>
+          onClick={() =>
             router.push(`/select-amount-dest?source_chain_id=${token.id}`)
           }
         />
