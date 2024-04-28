@@ -50,7 +50,12 @@ export default function SignInMetaMask() {
             color={useColorModeValue(colors.blue50, colors.white)}
           >MetaMask</Text>
         </Box>
-        <Box mt="40px">
+        <Box 
+          mt="40px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
           <AbstractWallet />
         </Box>
         <Box
