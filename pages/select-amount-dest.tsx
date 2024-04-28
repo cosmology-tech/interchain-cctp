@@ -310,7 +310,7 @@ export default function SelectAmount() {
         <Box
           mt="12px"
           display="flex"
-          alignItems="center"
+          alignItems="end"
           justifyContent="space-between"
         >
           <Text
