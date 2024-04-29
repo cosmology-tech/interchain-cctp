@@ -10,8 +10,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isHomePage = router.pathname === "/";
 
-  const [isFaqExpanded, setIsFaqExpanded] = React.useState(() =>
+  const [isFaqExpanded, _setIsFaqExpanded] = React.useState(() =>
     isHomePage ? true : false
+  );
+
+  const setIsFaqExpanded = React.useCallback(
+    (isExpanded: boolean) => {
+      _setIsFaqExpanded(isExpanded);
+
+      const faqList = document.getElementById("faq-list");
+
+      if (faqList && isExpanded) {
+        faqList.scrollIntoView({ behavior: "smooth" });
+      }
+    },
+    [_setIsFaqExpanded]
   );
 
   return (

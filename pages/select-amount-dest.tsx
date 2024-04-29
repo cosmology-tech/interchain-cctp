@@ -16,6 +16,7 @@ import {
   Layout,
   PrimaryButton,
   SearchIcon,
+  FaqList,
 } from "@/components/common";
 import {
   colors,
@@ -51,17 +52,21 @@ function calcFeeFromRoute(route: RouteResponse, price = 1) {
 
 function filterChains(chains: SkipChain[], search: string) {
   if (!search.trim()) return [];
-  return chains.filter(chain => chain.chain_name!.toLowerCase().startsWith(search.toLowerCase()))
+  return chains.filter((chain) =>
+    chain.chain_name!.toLowerCase().startsWith(search.toLowerCase())
+  );
 }
 
 function getDestChainDenom(chain: SkipChain) {
   // @ts-ignore
-  if (chain.chain_type === 'evm') return USDC_EVM_MAINNET[chain.chain_id!].contract
+  if (chain.chain_type === "evm")
+    return USDC_EVM_MAINNET[chain.chain_id!].contract;
   // @ts-ignore
-  if (chain.chain_type === 'cosmos') return COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[chain.chain_id!]
+  if (chain.chain_type === "cosmos")
+    return COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[chain.chain_id!];
 }
 
-export default function SelectAmount() {
+export default function SelectAmountPage() {
   const skip = useSkip();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,9 +78,9 @@ export default function SelectAmount() {
   const [destChainSearch, setDestChainSearch] = useState("");
   const [destAddress, setDestAddress] = useState<string>(""); // destination address
 
-  const [showChainCombo, setShowChainCombo] = useState(false)
-  const [showAddrInput, setShowAddrInput] = useState(true)
-  const [showAddrSelected, setShowAddrSelected] = useState(false)
+  const [showChainCombo, setShowChainCombo] = useState(false);
+  const [showAddrInput, setShowAddrInput] = useState(true);
+  const [showAddrSelected, setShowAddrSelected] = useState(false);
 
   const [amount, setAmount] = useState("0");
   const [route, setRoute] = useState<RouteResponse | null>(null);
@@ -104,9 +109,16 @@ export default function SelectAmount() {
 
   useEffect(() => {
     if (isValidEvmAddress(destAddress)) {
-      setShowChainCombo(true)
+      setShowChainCombo(true);
       if (destChainSearch.trim()) {
-        setChains(filterChains(USDC_EVM_MAINNET_CHAINS.filter(chain => chain.chain_id != token.id), destChainSearch.trim()))
+        setChains(
+          filterChains(
+            USDC_EVM_MAINNET_CHAINS.filter(
+              (chain) => chain.chain_id != token.id
+            ),
+            destChainSearch.trim()
+          )
+        );
       }
     } else if (isValidCosmosAddress(destAddress)) {
       const chain = cosmosAddressToSkipChain(destAddress);
@@ -118,8 +130,8 @@ export default function SelectAmount() {
 
   useEffect(() => {
     if (wallet.mainWallet?.isWalletConnected) {
-      setShowAddrInput(false)
-      setShowChainCombo(true)
+      setShowAddrInput(false);
+      setShowChainCombo(true);
       if (destChainSearch.trim()) {
         setChains(filterChains(COSMOS_CHAINS, destChainSearch.trim()));
       }
@@ -140,7 +152,7 @@ export default function SelectAmount() {
           // @ts-ignore
           destAssetDenom: getDestChainDenom(destChain),
           bridges: ["IBC", "CCTP", "HYPERLANE"],
-          experimentalFeatures: ['cctp', 'hyperlane']
+          experimentalFeatures: ["cctp", "hyperlane"],
         })
         .then(setRoute)
         .catch(console.log);
@@ -154,7 +166,7 @@ export default function SelectAmount() {
     const userAddresses = route.chainIDs.reduce((acc, chainID) => {
       // evm
       if (chainID == token.id) {
-        acc[chainID] = address
+        acc[chainID] = address;
       } else if (/^\d+/.test(chainID)) {
         acc[chainID] = destAddress;
       } else {
@@ -183,32 +195,34 @@ export default function SelectAmount() {
   }
 
   function onChainSelect(chain: SkipChain) {
-    setChains([])
-    setDestChain(chain)
-    setShowAddrInput(false)
-    setShowChainCombo(false)
-    setShowAddrSelected(true)
+    setChains([]);
+    setDestChain(chain);
+    setShowAddrInput(false);
+    setShowChainCombo(false);
+    setShowAddrSelected(true);
     if (!destAddress) {
-      setDestAddress(cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chain.chain_id]].address)
+      setDestAddress(
+        cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chain.chain_id]].address
+      );
     }
   }
 
   function onChangeChain() {
-    if (destChain?.chain_type === 'cosmos') {
-      setShowChainCombo(true)
-      setShowAddrSelected(false)
-      setChains([])
-      setDestChain(null)
-      setDestAddress("")
-      setDestChainSearch("")
+    if (destChain?.chain_type === "cosmos") {
+      setShowChainCombo(true);
+      setShowAddrSelected(false);
+      setChains([]);
+      setDestChain(null);
+      setDestAddress("");
+      setDestChainSearch("");
     }
-    if (destChain?.chain_type === 'evm') {
-      setShowAddrInput(true)
-      setShowChainCombo(true)
-      setShowAddrSelected(false)
-      setChains([])
-      setDestChain(null)
-      setDestChainSearch("")
+    if (destChain?.chain_type === "evm") {
+      setShowAddrInput(true);
+      setShowChainCombo(true);
+      setShowAddrSelected(false);
+      setChains([]);
+      setDestChain(null);
+      setDestChainSearch("");
     }
   }
 
@@ -249,10 +263,10 @@ export default function SelectAmount() {
   return (
     <Layout>
       <Box
-        minHeight="50rem"
         maxWidth={sizes.main.maxWidth}
         mx="auto"
-        mt="3.5rem"
+        paddingTop="84px"
+        paddingBottom="120px"
       >
         <Box
           mb="2.5rem"
@@ -365,36 +379,45 @@ export default function SelectAmount() {
             </Text>
           </Box>
           {wallet.mainWallet?.isWalletConnected ? KeplrAccount : null}
-          {showAddrInput
-            ? <AddressInput
-                value={destAddress}
-                onClear={() => {
-                  setDestAddress("")
-                  setShowChainCombo(false)
-                }}
-                onChange={setDestAddress}
-                onConnect={() => cosmos.cosmoshub.connect()}
-                isConnected={wallet.mainWallet?.isWalletConnected}
+          {showAddrInput ? (
+            <AddressInput
+              value={destAddress}
+              onClear={() => {
+                setDestAddress("");
+                setShowChainCombo(false);
+              }}
+              onChange={setDestAddress}
+              onConnect={() => cosmos.cosmoshub.connect()}
+              isConnected={wallet.mainWallet?.isWalletConnected}
+            />
+          ) : null}
+          {showAddrSelected ? (
+            <Box mt="12px">
+              <AddressSelected
+                logo={destChain?.logo_uri!}
+                name={
+                  COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ??
+                  destChain?.chain_name
+                }
+                addr={
+                  cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id]]
+                    ?.address || destAddress
+                }
+                onChange={onChangeChain}
               />
-            : null
-          }
-          {showAddrSelected ? <Box mt="12px">
-            <AddressSelected
-              logo={destChain?.logo_uri!}
-              name={COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ?? destChain?.chain_name}
-              addr={cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id]]?.address || destAddress}
-              onChange={onChangeChain}
-            />
-          </Box> : null}
+            </Box>
+          ) : null}
 
-          {showChainCombo ? <Box mt="12px">
-            <ChainCombo
-              value={destChainSearch}
-              chains={chains}
-              onSelect={onChainSelect}
-              onChange={setDestChainSearch}
-            />
-          </Box> : null}
+          {showChainCombo ? (
+            <Box mt="12px">
+              <ChainCombo
+                value={destChainSearch}
+                chains={chains}
+                onSelect={onChainSelect}
+                onChange={setDestChainSearch}
+              />
+            </Box>
+          ) : null}
 
           <PrimaryButton
             mt="1rem"
@@ -477,6 +500,8 @@ export default function SelectAmount() {
           </Box>
         </Box>
       </Box>
+
+      <FaqList />
     </Layout>
   );
 }
@@ -673,10 +698,15 @@ type AddressSelectedProps = {
   logo: string;
   name: string;
   addr: string;
-  onChange: () => void
+  onChange: () => void;
 };
 
-function AddressSelected({ logo, name, addr, onChange = () => {} }: AddressSelectedProps) {
+function AddressSelected({
+  logo,
+  name,
+  addr,
+  onChange = () => {},
+}: AddressSelectedProps) {
   return (
     <Box
       px="14px"
@@ -789,7 +819,7 @@ export function ChainCombo({
       ))}
     </Box>
   );
-  
+
   return (
     <Box
       borderRadius="8px"
