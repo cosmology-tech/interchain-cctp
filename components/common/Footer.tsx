@@ -18,6 +18,7 @@ export function Footer() {
         tablet: "absolute",
       }}
       bottom="0"
+      left="0"
       width="$full"
     >
       <AnimatePresence>
