@@ -74,10 +74,6 @@ export function FaqTriggerButton(
 }
 
 export function FaqList(props: FaqListProps) {
-  // const [isExpanded, setIsExpanded] = React.useState<boolean>(
-  //   !!props.isDefaultExpanded
-  // );
-
   const [activeFaqId, setActiveFaqId] = React.useState<number | null>(null);
 
   const { isFaqExpanded, setIsFaqExpanded } = React.useContext(LayoutContext);
