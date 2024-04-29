@@ -1,18 +1,26 @@
-import { useState, useEffect } from "react";
-import { useAccount, useDisconnect, useReadContracts } from "wagmi";
-import { Box, Stack, NobleSelectTokenButton } from "@interchain-ui/react";
-import { uusdcToUsdc } from "@/utils";
-import { WalletAddress, Layout, FaqList } from "@/components/common";
+import { useState, useEffect } from 'react';
+import {
+  useAccount,
+  useDisconnect,
+  useReadContracts,
+  type UseReadContractsParameters
+} from 'wagmi';
+import { Box, Stack, NobleSelectTokenButton } from '@interchain-ui/react';
+import { uusdcToUsdc } from '@/utils';
+import { WalletAddress, Layout, FaqList } from '@/components/common';
 import {
   sizes,
   USDC_CONTRACT_ABI,
   USDC_ETHEREUM_MAINNET,
   USDC_ARBITRUM_MAINNET,
   USDC_OPTIMISM_MAINNET,
-} from "@/config";
-import { BalanceNotAvailable, UsdcToken } from "@/models";
-import { useRouter } from "next/router";
-import { usePrice, useIsMounted } from "@/hooks";
+  USDC_ARBITRUM_TESTNET,
+  USDC_ETHEREUM_TESTNET,
+  USDC_OPTIMISM_TESTNET
+} from '@/config';
+import { BalanceNotAvailable, UsdcToken } from '@/models';
+import { useRouter } from 'next/router';
+import { usePrice, useIsMounted } from '@/hooks';
 
 export default function SelectTokenPage() {
   const router = useRouter();
@@ -22,19 +30,21 @@ export default function SelectTokenPage() {
   const isMounted = useIsMounted();
   const [tokens, setTokens] = useState([
     USDC_ETHEREUM_MAINNET,
-    USDC_ARBITRUM_MAINNET,
     USDC_OPTIMISM_MAINNET,
+    // USDC_ARBITRUM_MAINNET,
+    USDC_ETHEREUM_TESTNET,
+    USDC_OPTIMISM_TESTNET
+    // USDC_ARBITRUM_TESTNET,
   ]);
 
   const { data } = useReadContracts({
-    enabled: Boolean(address),
     contracts: tokens.map((token) => ({
       abi: USDC_CONTRACT_ABI,
-      chainId: token.id,
+      chainId: token.id as number,
       address: token.contract,
-      functionName: "balanceOf",
-      args: [address],
-    })),
+      functionName: 'balanceOf',
+      args: [address]
+    })) as UseReadContractsParameters['contracts']
   });
 
   useEffect(() => {
@@ -44,10 +54,7 @@ export default function SelectTokenPage() {
           ({ result, status }, index) =>
             new UsdcToken({
               ...tokens[index],
-              balance:
-                status === "success"
-                  ? uusdcToUsdc(result as bigint)
-                  : BalanceNotAvailable,
+              balance: status === 'success' ? uusdcToUsdc(result as bigint) : BalanceNotAvailable
             })
         )
       );
@@ -56,12 +63,7 @@ export default function SelectTokenPage() {
 
   return (
     <Layout>
-      <Box
-        maxWidth={sizes.main.maxWidth}
-        mx="auto"
-        paddingTop="84px"
-        paddingBottom="120px"
-      >
+      <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
         <Box mb="48px" fontSize="20px" fontWeight="$semibold" color="$text">
           Select token to bridge
         </Box>
@@ -71,9 +73,8 @@ export default function SelectTokenPage() {
             walletType="metamask"
             address={address}
             onDisconnect={() => {
-              console.log("disconnect");
               disconnect();
-              router.push("/");
+              router.push('/');
             }}
           />
         ) : null}
@@ -91,15 +92,14 @@ type UsdcTokenListProps = {
   price?: number;
 };
 
-const placeholder = "--";
+const placeholder = '--';
 
 function UsdcTokenList({ tokens = [], price = 1 }: UsdcTokenListProps) {
   const router = useRouter();
   const isMounted = useIsMounted();
 
-  console.log("tokens", tokens);
   return (
-    <Stack direction="vertical" space="16px" attributes={{ mt: "24px" }}>
+    <Stack direction="vertical" space="16px" attributes={{ mt: '24px' }}>
       {tokens.map((token) => (
         <NobleSelectTokenButton
           key={token.id}
@@ -107,24 +107,18 @@ function UsdcTokenList({ tokens = [], price = 1 }: UsdcTokenListProps) {
           token={{
             mainLogoUrl: token.logo,
             mainLogoAlt: token.name,
-            subLogoUrl: token.chain.logo_uri ?? "",
+            subLogoUrl: token.chain.logo_uri ?? '',
             subLogoAlt: token.chain.chain_name,
             symbol: token.name,
             network: `On ${token.chain.chain_name}`,
             tokenAmount: isMounted()
-              ? `${
-                  token.isBalanceNotAvailable
-                    ? placeholder
-                    : token.balance ?? placeholder
-                }`
+              ? `${token.isBalanceNotAvailable ? placeholder : token.balance ?? placeholder}`
               : placeholder,
             notionalValue: isMounted()
-              ? `${token.isBalanceGtZero ? "≈ " : ""}${token.value(price)}`
-              : "≈ 0",
+              ? `${token.isBalanceGtZero ? '≈ ' : ''}${token.value(price)}`
+              : '≈ 0'
           }}
-          onClick={() =>
-            router.push(`/select-amount-dest?source_chain_id=${token.id}`)
-          }
+          onClick={() => router.push(`/select-amount-dest?source_chain_id=${token.id}`)}
         />
       ))}
     </Stack>

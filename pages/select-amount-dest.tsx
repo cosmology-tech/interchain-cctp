@@ -1,11 +1,11 @@
-import Image from "next/image";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { useChains, useWallet } from "@cosmos-kit/react";
-import { useSearchParams } from "next/navigation";
-import { RouteResponse } from "@skip-router/core";
-import { useAccount, useReadContract } from "wagmi";
-import { Box, Text, useColorModeValue } from "@interchain-ui/react";
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { useChains, useWallet } from '@cosmos-kit/react';
+import { useSearchParams } from 'next/navigation';
+import { RouteResponse } from '@skip-router/core';
+import { useAccount, useReadContracts, useSwitchChain } from 'wagmi';
+import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 import {
   ArrowDownIcon,
   BackButton,
@@ -16,8 +16,8 @@ import {
   Layout,
   PrimaryButton,
   SearchIcon,
-  FaqList,
-} from "@/components/common";
+  FaqList
+} from '@/components/common';
 import {
   colors,
   COSMOS_CHAIN_ID_TO_CHAIN_NAME,
@@ -28,42 +28,38 @@ import {
   sizes,
   USDC_CONTRACT_ABI,
   USDC_ETHEREUM_MAINNET,
-  USDC_EVM_MAINNET,
-  USDC_EVM_MAINNET_CHAINS,
-} from "@/config";
-import { UsdcToken } from "@/models";
+  EVM_CHAIN_ID_TO_TOKEN,
+  EVM_CHAINS
+} from '@/config';
+import { UsdcToken } from '@/models';
 import {
   cosmosAddressToSkipChain,
   isValidAddress,
   isValidCosmosAddress,
   isValidEvmAddress,
   USDC_TO_UUSDC,
-  uusdcToUsdc,
-} from "@/utils";
-import { usePrice } from "@/hooks";
-import { SkipChain, SkipChains, useSkip } from "@/skip";
+  uusdcToUsdc
+} from '@/utils';
+import { usePrice } from '@/hooks';
+import { SkipChain, useSkip } from '@/skip';
 
 function calcFeeFromRoute(route: RouteResponse, price = 1) {
-  if (!route) return "0";
-  return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 4,
+  if (!route) return '0';
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 4
   }).format(((+route.amountIn - +route.amountOut) / USDC_TO_UUSDC) * price);
 }
 
 function filterChains(chains: SkipChain[], search: string) {
   if (!search.trim()) return [];
-  return chains.filter((chain) =>
-    chain.chain_name!.toLowerCase().startsWith(search.toLowerCase())
-  );
+  return chains.filter((chain) => chain.chain_name!.toLowerCase().startsWith(search.toLowerCase()));
 }
 
 function getDestChainDenom(chain: SkipChain) {
   // @ts-ignore
-  if (chain.chain_type === "evm")
-    return USDC_EVM_MAINNET[chain.chain_id!].contract;
+  if (chain.chain_type === 'evm') return EVM_CHAIN_ID_TO_TOKEN[chain.chain_id!].contract;
   // @ts-ignore
-  if (chain.chain_type === "cosmos")
-    return COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[chain.chain_id!];
+  if (chain.chain_type === 'cosmos') return COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[chain.chain_id!];
 }
 
 export default function SelectAmountPage() {
@@ -75,36 +71,44 @@ export default function SelectAmountPage() {
 
   const [chains, setChains] = useState<SkipChain[]>([]);
   const [destChain, setDestChain] = useState<SkipChain | null>(null); // destination chain
-  const [destChainSearch, setDestChainSearch] = useState("");
-  const [destAddress, setDestAddress] = useState<string>(""); // destination address
+  const [destChainSearch, setDestChainSearch] = useState('');
+  const [destAddress, setDestAddress] = useState<string>(''); // destination address
 
   const [showChainCombo, setShowChainCombo] = useState(false);
   const [showAddrInput, setShowAddrInput] = useState(true);
   const [showAddrSelected, setShowAddrSelected] = useState(false);
 
-  const [amount, setAmount] = useState("0");
+  const [amount, setAmount] = useState('0');
   const [route, setRoute] = useState<RouteResponse | null>(null);
+  const [txStatus, setTxStatus] = useState<'pending' | 'success'>(); // TODO: remove later
 
+  const sourceChainId = searchParams.get('source_chain_id');
   const [token, setToken] = useState<UsdcToken>(
     // @ts-ignore
-    USDC_EVM_MAINNET[searchParams.get("source_chain_id") || "1"] ??
-      USDC_ETHEREUM_MAINNET
+    EVM_CHAIN_ID_TO_TOKEN[sourceChainId || '1'] ?? USDC_ETHEREUM_MAINNET
   ); // token to transfer
   const { price = 1 } = usePrice();
-  const { address } = useAccount();
+  const { address, chainId: connectedChainId } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
 
-  const { data: balance } = useReadContract({
-    abi: USDC_CONTRACT_ABI,
-    chainId: token.id,
-    address: token.contract,
-    functionName: "balanceOf",
-    args: [address],
+  const isSourceChainConnected = connectedChainId === Number(sourceChainId);
+
+  const { data } = useReadContracts({
+    contracts: [
+      {
+        abi: USDC_CONTRACT_ABI,
+        chainId: token.id as number,
+        address: token.contract,
+        functionName: 'balanceOf',
+        args: [address!]
+      }
+    ]
   });
 
+  const balance = data?.[0].result;
+
   useEffect(() => {
-    setToken(
-      new UsdcToken({ ...token, balance: uusdcToUsdc(balance as bigint) })
-    );
+    setToken(new UsdcToken({ ...token, balance: uusdcToUsdc(balance as bigint) }));
   }, [balance]);
 
   useEffect(() => {
@@ -113,9 +117,7 @@ export default function SelectAmountPage() {
       if (destChainSearch.trim()) {
         setChains(
           filterChains(
-            USDC_EVM_MAINNET_CHAINS.filter(
-              (chain) => chain.chain_id != token.id
-            ),
+            EVM_CHAINS.filter((chain) => chain.chain_id != token.id),
             destChainSearch.trim()
           )
         );
@@ -151,8 +153,8 @@ export default function SelectAmountPage() {
           destAssetChainID: destChain.chain_id!,
           // @ts-ignore
           destAssetDenom: getDestChainDenom(destChain),
-          bridges: ["IBC", "CCTP", "HYPERLANE"],
-          experimentalFeatures: ["cctp", "hyperlane"],
+          bridges: ['IBC', 'CCTP', 'HYPERLANE'],
+          experimentalFeatures: ['cctp', 'hyperlane']
         })
         .then(setRoute)
         .catch(console.log);
@@ -163,6 +165,11 @@ export default function SelectAmountPage() {
 
   async function onTransfer() {
     if (!route || !address || !destAddress) return;
+
+    if (!isSourceChainConnected) {
+      await switchChainAsync({ chainId: Number(sourceChainId) });
+    }
+
     const userAddresses = route.chainIDs.reduce((acc, chainID) => {
       // evm
       if (chainID == token.id) {
@@ -177,16 +184,28 @@ export default function SelectAmountPage() {
     }, {} as Record<string, string>);
 
     try {
-      skip.executeRoute({
+      await skip.executeRoute({
         route,
         userAddresses,
-        onTransactionTracked: async (txStatus) => {
-          console.log("Transaction status:", txStatus);
+        validateGasBalance: route.txsRequired === 1,
+        onTransactionTracked: async (tx) => {
+          console.log('onTransactionTracked:', tx);
         },
+        onTransactionBroadcast: async (tx) => {
+          setTxStatus('pending');
+          console.log('onTransactionBroadcast:', tx);
+        },
+        onTransactionCompleted: async (tx) => {
+          setTxStatus('success');
+          setTimeout(() => {
+            setTxStatus(undefined);
+          }, 10000);
+          console.log('onTransactionCompleted:', tx);
+        }
       });
-      router.push("/sign-in-metamask");
+      // router.push('/sign-in-metamask');
     } catch (e) {
-      console.error("Error:", e);
+      console.error('Error:', e);
     }
   }
 
@@ -201,39 +220,37 @@ export default function SelectAmountPage() {
     setShowChainCombo(false);
     setShowAddrSelected(true);
     if (!destAddress) {
-      setDestAddress(
-        cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chain.chain_id]].address
-      );
+      setDestAddress(cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chain.chain_id]].address);
     }
   }
 
   function onChangeChain() {
-    if (destChain?.chain_type === "cosmos") {
+    if (destChain?.chain_type === 'cosmos') {
       setShowChainCombo(true);
       setShowAddrSelected(false);
       setChains([]);
       setDestChain(null);
-      setDestAddress("");
-      setDestChainSearch("");
+      setDestAddress('');
+      setDestChainSearch('');
     }
-    if (destChain?.chain_type === "evm") {
+    if (destChain?.chain_type === 'evm') {
       setShowAddrInput(true);
       setShowChainCombo(true);
       setShowAddrSelected(false);
       setChains([]);
       setDestChain(null);
-      setDestChainSearch("");
+      setDestChainSearch('');
     }
   }
 
   const KeplrAccount = (
     <Box mb="16px" display="flex" alignItems="center">
-      <Image width="16" height="16" src={"/logos/keplr.svg"} alt="Keplr" />
+      <Image width="16" height="16" src={'/logos/keplr.svg'} alt="Keplr" />
       <Text
         fontSize="12px"
         fontWeight="400"
         color={useColorModeValue(colors.gray500, colors.blue600)}
-        attributes={{ ml: "10px", mr: "8px" }}
+        attributes={{ ml: '10px', mr: '8px' }}
       >
         {cosmos.cosmoshub.username}
       </Text>
@@ -252,7 +269,7 @@ export default function SelectAmountPage() {
             // setShowChainCombo(false);
             setShowAddrInput(true);
             setShowAddrSelected(false);
-          },
+          }
         }}
       >
         <ExitIcon />
@@ -262,12 +279,7 @@ export default function SelectAmountPage() {
 
   return (
     <Layout>
-      <Box
-        maxWidth={sizes.main.maxWidth}
-        mx="auto"
-        paddingTop="84px"
-        paddingBottom="120px"
-      >
+      <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
         <Box
           mb="2.5rem"
           gap="1rem"
@@ -275,17 +287,12 @@ export default function SelectAmountPage() {
           alignItems="center"
           color={useColorModeValue(colors.blue50, colors.white)}
         >
-          <BackButton onClick={() => router.push("/select-token")} />
+          <BackButton onClick={() => router.push('/select-token')} />
           <Text fontSize="20px" fontWeight="600" lineHeight="28px">
             Select amount and destination
           </Text>
         </Box>
-        <Box
-          mb="1rem"
-          display="flex"
-          alignItems="center"
-          justifyContent="space-between"
-        >
+        <Box mb="1rem" display="flex" alignItems="center" justifyContent="space-between">
           <Text
             fontSize="14px"
             fontWeight="600"
@@ -296,37 +303,20 @@ export default function SelectAmountPage() {
           </Text>
           {+token.balance > 0 ? (
             <Box gap="10px" display="flex">
-              <AmountButton
-                amount={+token.balance * 0.1}
-                onClick={onAmountButtonClick}
-              />
-              <AmountButton
-                amount={+token.balance * 0.25}
-                onClick={onAmountButtonClick}
-              />
-              <AmountButton
-                amount={+token.balance * 0.5}
-                onClick={onAmountButtonClick}
-              />
-              <AmountButton
-                amount={+token.balance * 0.8}
-                onClick={onAmountButtonClick}
-              />
+              <AmountButton amount={+token.balance * 0.1} onClick={onAmountButtonClick} />
+              <AmountButton amount={+token.balance * 0.25} onClick={onAmountButtonClick} />
+              <AmountButton amount={+token.balance * 0.5} onClick={onAmountButtonClick} />
+              <AmountButton amount={+token.balance * 0.8} onClick={onAmountButtonClick} />
               <AmountButton
                 amount={+token.balance * 1.0}
                 onClick={onAmountButtonClick}
-                maxText={"Max"}
+                maxText={'Max'}
               />
             </Box>
           ) : null}
         </Box>
         <TokenAmountInput token={token} value={amount} onChange={setAmount} />
-        <Box
-          mt="12px"
-          display="flex"
-          alignItems="end"
-          justifyContent="space-between"
-        >
+        <Box mt="12px" display="flex" alignItems="end" justifyContent="space-between">
           <Text
             color={useColorModeValue(colors.gray500, colors.blue700)}
             fontSize="14px"
@@ -346,15 +336,10 @@ export default function SelectAmountPage() {
             fontWeight="400"
             lineHeight="20px"
           >
-            {+token.balance > 0 ? "≈" : ""} ${token.value(price)}
+            {+token.balance > 0 ? '≈' : ''} ${token.value(price)}
           </Text>
         </Box>
-        <Box
-          my="12px"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
+        <Box my="12px" display="flex" alignItems="center" justifyContent="center">
           <ArrowDownIcon />
         </Box>
         <Box>
@@ -368,14 +353,8 @@ export default function SelectAmountPage() {
             color={useColorModeValue(colors.gray500, colors.blue700)}
           >
             Destination
-            <Text
-              fontSize="20px"
-              fontWeight="600"
-              attributes={{ marginRight: "20px" }}
-            >
-              {address && destChain && route
-                ? uusdcToUsdc(route.amountOut)
-                : ""}
+            <Text fontSize="20px" fontWeight="600" attributes={{ marginRight: '20px' }}>
+              {address && destChain && route ? uusdcToUsdc(route.amountOut) : ''}
             </Text>
           </Box>
           {wallet.mainWallet?.isWalletConnected ? KeplrAccount : null}
@@ -383,7 +362,7 @@ export default function SelectAmountPage() {
             <AddressInput
               value={destAddress}
               onClear={() => {
-                setDestAddress("");
+                setDestAddress('');
                 setShowChainCombo(false);
               }}
               onChange={setDestAddress}
@@ -395,13 +374,9 @@ export default function SelectAmountPage() {
             <Box mt="12px">
               <AddressSelected
                 logo={destChain?.logo_uri!}
-                name={
-                  COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ??
-                  destChain?.chain_name
-                }
+                name={COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ?? destChain?.chain_name}
                 addr={
-                  cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id]]
-                    ?.address || destAddress
+                  cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id]]?.address || destAddress
                 }
                 onChange={onChangeChain}
               />
@@ -422,10 +397,7 @@ export default function SelectAmountPage() {
           <PrimaryButton
             mt="1rem"
             disabled={
-              !route ||
-              !destAddress ||
-              !isValidAddress(destAddress) ||
-              +amount > +token.balance
+              !route || !destAddress || !isValidAddress(destAddress) || +amount > +token.balance
             }
             onClick={onTransfer}
           >
@@ -435,7 +407,7 @@ export default function SelectAmountPage() {
             mt="1rem"
             display="flex"
             alignItems="center"
-            visibility={destChain ? "visible" : "hidden"}
+            visibility={destChain ? 'visible' : 'hidden'}
           >
             <Image
               width={18}
@@ -445,7 +417,7 @@ export default function SelectAmountPage() {
             />
             <Text
               color={useColorModeValue(colors.gray500, colors.blue700)}
-              attributes={{ mx: "5px" }}
+              attributes={{ mx: '5px' }}
             >
               →
             </Text>
@@ -475,7 +447,7 @@ export default function SelectAmountPage() {
                 fontSize="14px"
                 fontWeight="400"
                 lineHeight="20px"
-                attributes={{ ml: "5px" }}
+                attributes={{ ml: '5px' }}
                 color={useColorModeValue(colors.gray500, colors.blue700)}
               >
                 ≈ {getFinalityTime(token.id)}
@@ -486,7 +458,7 @@ export default function SelectAmountPage() {
               display="flex"
               flex="1"
               justifyContent="right"
-              visibility={route ? "visible" : "hidden"}
+              visibility={route ? 'visible' : 'hidden'}
             >
               <Text
                 color={useColorModeValue(colors.gray500, colors.blue700)}
@@ -499,6 +471,15 @@ export default function SelectAmountPage() {
             </Box>
           </Box>
         </Box>
+
+        {/* TODO: remove later */}
+        {txStatus && (
+          <Box textAlign="center" mt="$12">
+            <Text>
+              Tx Status: <Text as="span">{txStatus.toUpperCase()}</Text>
+            </Text>
+          </Box>
+        )}
       </Box>
 
       <FaqList />
@@ -512,11 +493,7 @@ type AmountButtonProps = {
   onClick?: (amount: number, max: boolean) => void;
 };
 
-function AmountButton({
-  amount,
-  maxText,
-  onClick = () => {},
-}: AmountButtonProps) {
+function AmountButton({ amount, maxText, onClick = () => {} }: AmountButtonProps) {
   return (
     <Box
       px="8px"
@@ -546,11 +523,7 @@ type TokenAmountInputProps = {
   onChange?: (value: string) => void;
 };
 
-function TokenAmountInput({
-  token,
-  value = "0",
-  onChange = () => {},
-}: TokenAmountInputProps) {
+function TokenAmountInput({ token, value = '0', onChange = () => {} }: TokenAmountInputProps) {
   return (
     <Box
       px="20px"
@@ -577,12 +550,7 @@ function TokenAmountInput({
           borderRadius="100%"
           backgroundColor={useColorModeValue(colors.white, colors.blue200)}
         >
-          <Image
-            src={token.chain.logo_uri!}
-            alt={token.chain.chain_name!}
-            width={18}
-            height={18}
-          />
+          <Image src={token.chain.logo_uri!} alt={token.chain.chain_name!} width={18} height={18} />
         </Box>
       </Box>
       <Box flex="1">
@@ -613,15 +581,15 @@ function TokenAmountInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           style={{
-            fontSize: "24px",
-            fontWeight: "600",
-            textAlign: "right",
-            border: "none",
-            outline: "none",
-            maxWidth: "250px",
-            appearance: "none",
-            backgroundColor: "transparent",
-            color: useColorModeValue(colors.blue50, colors.white),
+            fontSize: '24px',
+            fontWeight: '600',
+            textAlign: 'right',
+            border: 'none',
+            outline: 'none',
+            maxWidth: '250px',
+            appearance: 'none',
+            backgroundColor: 'transparent',
+            color: useColorModeValue(colors.blue50, colors.white)
           }}
         />
       </Box>
@@ -638,11 +606,11 @@ type AddressInputProps = {
 };
 
 function AddressInput({
-  value = "",
+  value = '',
   isConnected = false,
   onClear = () => {},
   onChange = () => {},
-  onConnect = () => {},
+  onConnect = () => {}
 }: AddressInputProps) {
   return (
     <Box
@@ -663,18 +631,18 @@ function AddressInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder="Paste address"
         style={{
-          fontSize: "14px",
-          fontWeight: "400",
-          lineHeight: "20px",
-          minWidth: "360px",
-          border: "none",
-          outline: "none",
-          maxWidth: "250px",
-          appearance: "none",
-          paddingTop: "0.5rem",
-          paddingBottom: "0.5rem",
-          backgroundColor: "transparent",
-          color: useColorModeValue(colors.gray500, colors.blue700),
+          fontSize: '14px',
+          fontWeight: '400',
+          lineHeight: '20px',
+          minWidth: '360px',
+          border: 'none',
+          outline: 'none',
+          maxWidth: '250px',
+          appearance: 'none',
+          paddingTop: '0.5rem',
+          paddingBottom: '0.5rem',
+          backgroundColor: 'transparent',
+          color: useColorModeValue(colors.gray500, colors.blue700)
         }}
       />
       {value ? (
@@ -701,12 +669,7 @@ type AddressSelectedProps = {
   onChange: () => void;
 };
 
-function AddressSelected({
-  logo,
-  name,
-  addr,
-  onChange = () => {},
-}: AddressSelectedProps) {
+function AddressSelected({ logo, name, addr, onChange = () => {} }: AddressSelectedProps) {
   return (
     <Box
       px="14px"
@@ -769,10 +732,10 @@ type ChainComboProps = {
 };
 
 export function ChainCombo({
-  value = "",
+  value = '',
   chains = [],
   onChange = () => {},
-  onSelect = () => {},
+  onSelect = () => {}
 }: ChainComboProps) {
   const color = useColorModeValue(colors.gray500, colors.blue700);
 
@@ -783,10 +746,7 @@ export function ChainCombo({
       overflow="auto"
       borderTopWidth="1px"
       borderTopStyle="solid"
-      borderTopColor={useColorModeValue(
-        colors.border.light,
-        colors.border.dark
-      )}
+      borderTopColor={useColorModeValue(colors.border.light, colors.border.dark)}
     >
       {chains.map((chain) => (
         <Box
@@ -798,19 +758,8 @@ export function ChainCombo({
           alignItems="center"
           attributes={{ onClick: () => onSelect(chain) }}
         >
-          <Box
-            width={26}
-            height={26}
-            display="flex"
-            overflow="hidden"
-            borderRadius="100%"
-          >
-            <Image
-              width={26}
-              height={26}
-              src={chain.logo_uri!}
-              alt={chain.chain_name!}
-            />
+          <Box width={26} height={26} display="flex" overflow="hidden" borderRadius="100%">
+            <Image width={26} height={26} src={chain.logo_uri!} alt={chain.chain_name!} />
           </Box>
           <Box ml="12px" color={color}>
             {COSMOS_CHAIN_ID_TO_PRETTY_NAME[chain.chain_id] ?? chain.chain_name}
@@ -836,18 +785,18 @@ export function ChainCombo({
           onChange={(e) => onChange(e.target.value)}
           placeholder="Search network"
           style={{
-            fontSize: "14px",
-            fontWeight: "400",
-            lineHeight: "20px",
-            minWidth: "360px",
-            border: "none",
-            outline: "none",
-            appearance: "none",
-            paddingTop: "0.5rem",
-            paddingLeft: "0.5rem",
-            paddingBottom: "0.5rem",
-            backgroundColor: "transparent",
-            color: useColorModeValue(colors.gray500, colors.blue700),
+            fontSize: '14px',
+            fontWeight: '400',
+            lineHeight: '20px',
+            minWidth: '360px',
+            border: 'none',
+            outline: 'none',
+            appearance: 'none',
+            paddingTop: '0.5rem',
+            paddingLeft: '0.5rem',
+            paddingBottom: '0.5rem',
+            backgroundColor: 'transparent',
+            color: useColorModeValue(colors.gray500, colors.blue700)
           }}
         />
       </Box>

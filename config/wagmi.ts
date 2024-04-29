@@ -1,4 +1,4 @@
-import { http, createConfig } from "wagmi";
+import { http, createConfig } from 'wagmi';
 import {
   base,
   mainnet,
@@ -10,9 +10,16 @@ import {
   optimismSepolia,
   avalanche,
   avalancheFuji
-} from "wagmi/chains";
-import { injected } from 'wagmi/connectors'
-import { INFURA_ARBITRUM_MAINNET_URL, INFURA_AVALANCHE_MAINNET_URL, INFURA_AVALANCHE_TESTNET_URL, INFURA_ETHEREUM_MAINNET_URL, INFURA_OPTIMISM_MAINNET_URL, INFURA_POLYGON_MAINNET_URL } from "./constants";
+} from 'wagmi/chains';
+import { injected } from 'wagmi/connectors';
+import {
+  INFURA_ARBITRUM_MAINNET_URL,
+  INFURA_AVALANCHE_MAINNET_URL,
+  INFURA_AVALANCHE_TESTNET_URL,
+  INFURA_ETHEREUM_MAINNET_URL,
+  INFURA_OPTIMISM_MAINNET_URL,
+  INFURA_POLYGON_MAINNET_URL
+} from './constants';
 
 export const config = createConfig({
   chains: [mainnet, sepolia, arbitrum, arbitrumSepolia, optimism, optimismSepolia],
