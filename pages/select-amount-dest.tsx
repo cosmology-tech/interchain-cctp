@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useChains, useWallet } from '@cosmos-kit/react';
+import { useChainWallet, useChains, useWallet } from '@cosmos-kit/react';
 import { useSearchParams } from 'next/navigation';
 import { RouteResponse } from '@skip-router/core';
 import { useAccount, useReadContracts, useSwitchChain } from 'wagmi';
@@ -15,6 +15,7 @@ import {
   NoblePageTitleBar,
   NobleInput,
   NobleTxEstimate,
+  NobleSelectNetworkButton,
   NobleButton,
   NobleChainCombobox
 } from '@interchain-ui/react';
@@ -89,6 +90,7 @@ export default function SelectAmountPage() {
   const [destAddress, setDestAddress] = useState<string>(''); // destination address
 
   const [showChainCombo, setShowChainCombo] = useState(false);
+  // Tracks the selected chain address button
   const [showAddrInput, setShowAddrInput] = useState(true);
   const [showAddrSelected, setShowAddrSelected] = useState(false);
 
@@ -459,24 +461,23 @@ export default function SelectAmountPage() {
           ) : null}
 
           {showAddrSelected ? (
-            <Box mt="12px">
-              <AddressSelected
-                logo={destChain?.logo_uri!}
-                name={COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ?? destChain?.chain_name}
-                addr={
-                  cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id]]?.address || destAddress
-                }
-                onChange={onChangeChain}
-              />
-            </Box>
+            <NobleSelectNetworkButton
+              logoUrl={destChain?.logo_uri!}
+              title={COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ?? destChain?.chain_name}
+              subTitle={cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id!]]?.address!}
+              actionLabel="Change"
+              size="lg"
+              onClick={() => {
+                onChangeChain();
+              }}
+            />
           ) : null}
 
           {showChainCombo ? (
             <NobleChainCombobox
               defaultIsOpen
               onSelectionChange={(chainId) => {
-                const selectedChain = chains.find((c) => c.chain_id === chainId);
-
+                const selectedChain = COSMOS_CHAINS.find((c) => c.chain_id === chainId);
                 if (selectedChain) {
                   onChainSelect(selectedChain);
                 }
@@ -602,67 +603,5 @@ export default function SelectAmountPage() {
 
       <FaqList />
     </Layout>
-  );
-}
-
-type AddressSelectedProps = {
-  logo: string;
-  name: string;
-  addr: string;
-  onChange: () => void;
-};
-
-function AddressSelected({ logo, name, addr, onChange = () => {} }: AddressSelectedProps) {
-  return (
-    <Box
-      px="14px"
-      height="64px"
-      borderRadius="8px"
-      display="flex"
-      alignItems="center"
-      borderStyle="solid"
-      borderWidth="1px"
-      borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
-      backgroundColor={useColorModeValue(colors.white, colors.blue300)}
-    >
-      <Box
-        width="26"
-        height="26"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        overflow="hidden"
-        borderRadius="100%"
-      >
-        <Image width={26} height={26} src={logo} alt={name} />
-      </Box>
-      <Box flex="1" ml="12px">
-        <Box
-          fontSize="14px"
-          fontWeight="600"
-          lineHeight="20px"
-          color={useColorModeValue(colors.gray50, colors.blue700)}
-        >
-          {name}
-        </Box>
-        <Box
-          fontSize="10px"
-          fontWeight="400"
-          lineHeight="14px"
-          color={useColorModeValue(colors.gray500, colors.blue700)}
-        >
-          {addr}
-        </Box>
-      </Box>
-      <Box
-        fontSize="12px"
-        fontWeight="500"
-        cursor="pointer"
-        color={colors.gray600}
-        attributes={{ onClick: onChange }}
-      >
-        Change
-      </Box>
-    </Box>
   );
 }
