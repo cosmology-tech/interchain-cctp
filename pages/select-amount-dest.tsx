@@ -5,7 +5,19 @@ import { useChains, useWallet } from '@cosmos-kit/react';
 import { useSearchParams } from 'next/navigation';
 import { RouteResponse } from '@skip-router/core';
 import { useAccount, useReadContracts, useSwitchChain } from 'wagmi';
-import { Box, Text, useColorModeValue } from '@interchain-ui/react';
+import {
+  Box,
+  Stack,
+  Text,
+  Icon,
+  useColorModeValue,
+  NobleTokenAvatar,
+  NoblePageTitleBar,
+  NobleInput,
+  NobleTxEstimate,
+  NobleButton,
+  NobleChainCombobox
+} from '@interchain-ui/react';
 import {
   ArrowDownIcon,
   BackButton,
@@ -43,6 +55,8 @@ import {
 import { usePrice } from '@/hooks';
 import { SkipChain, useSkip } from '@/skip';
 
+const PARTIAL_PERCENTAGES = [0.1, 0.25, 0.5, 0.8, 1.0];
+
 function calcFeeFromRoute(route: RouteResponse, price = 1) {
   if (!route) return '0';
   return new Intl.NumberFormat('en-US', {
@@ -79,6 +93,7 @@ export default function SelectAmountPage() {
   const [showAddrSelected, setShowAddrSelected] = useState(false);
 
   const [amount, setAmount] = useState('0');
+  const [partialPercent, setPartialPercent] = useState<number | null>(null);
   const [route, setRoute] = useState<RouteResponse | null>(null);
   const [txStatus, setTxStatus] = useState<'pending' | 'success'>(); // TODO: remove later
 
@@ -209,7 +224,8 @@ export default function SelectAmountPage() {
     }
   }
 
-  function onAmountButtonClick(amount: number, max: boolean) {
+  function onAmountButtonClick(amount: number, max: boolean, selectedPartialPercent: number) {
+    setPartialPercent(selectedPartialPercent);
     setAmount(max ? token.balance : String(amount));
   }
 
@@ -277,71 +293,103 @@ export default function SelectAmountPage() {
     </Box>
   );
 
+  const shouldShowPartialButtons = isNaN(+token.balance) ? false : +token.balance > 0;
+
+  const chainWalletAddress = wallet.mainWallet?.getChainWallet('cosmoshub')?.address ?? '';
+
+  const shouldShowEstimates = !!route && !!destChain && !!address;
+
   return (
     <Layout>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
-        <Box
-          mb="2.5rem"
-          gap="1rem"
-          display="flex"
-          alignItems="center"
-          color={useColorModeValue(colors.blue50, colors.white)}
-        >
-          <BackButton onClick={() => router.push('/select-token')} />
-          <Text fontSize="20px" fontWeight="600" lineHeight="28px">
-            Select amount and destination
-          </Text>
-        </Box>
-        <Box mb="1rem" display="flex" alignItems="center" justifyContent="space-between">
-          <Text
-            fontSize="14px"
-            fontWeight="600"
-            lineHeight="20px"
-            color={useColorModeValue(colors.gray500, colors.blue700)}
-          >
-            Amount
-          </Text>
-          {+token.balance > 0 ? (
-            <Box gap="10px" display="flex">
-              <AmountButton amount={+token.balance * 0.1} onClick={onAmountButtonClick} />
-              <AmountButton amount={+token.balance * 0.25} onClick={onAmountButtonClick} />
-              <AmountButton amount={+token.balance * 0.5} onClick={onAmountButtonClick} />
-              <AmountButton amount={+token.balance * 0.8} onClick={onAmountButtonClick} />
-              <AmountButton
-                amount={+token.balance * 1.0}
-                onClick={onAmountButtonClick}
-                maxText={'Max'}
+        <NoblePageTitleBar
+          title="Select amount and destination"
+          onBackButtonClick={() => router.push('/select-token')}
+          mb="$14"
+        />
+
+        <NobleInput
+          id="token-amount"
+          size="md"
+          label="Select amount"
+          placeholder="Enter amount"
+          value={amount}
+          type="number"
+          onChange={(e) => {
+            setAmount(e.target.value);
+          }}
+          inputTextAlign="right"
+          startAddon={
+            <Box display="flex" gap="$8">
+              <NobleTokenAvatar
+                mainLogoUrl={token.logo ?? ''}
+                mainLogoAlt={token.name}
+                subLogoUrl={token.chain.logo_uri ?? ''}
+                subLogoAlt={token.chain.chain_name}
               />
+
+              <Box display="flex" flexDirection="column">
+                <Text as="span" color="$text" fontSize="$xl" fontWeight="$semibold">
+                  {token.name}
+                </Text>
+                <Text as="span" color="$textSecondary" fontSize="$sm" fontWeight="$normal">
+                  On {token.chain.chain_name}
+                </Text>
+              </Box>
             </Box>
-          ) : null}
-        </Box>
-        <TokenAmountInput token={token} value={amount} onChange={setAmount} />
-        <Box mt="12px" display="flex" alignItems="end" justifyContent="space-between">
-          <Text
-            color={useColorModeValue(colors.gray500, colors.blue700)}
-            fontSize="14px"
-            fontWeight="400"
-            lineHeight="20px"
-          >
-            Available: {uusdcToUsdc(balance as bigint)}
-          </Text>
-          {+amount > +token.balance ? (
-            <Text color="$red500" fontSize="12px" fontWeight="400">
-              Insufficient balance
-            </Text>
-          ) : null}
-          <Text
-            color={useColorModeValue(colors.gray500, colors.blue700)}
-            fontSize="14px"
-            fontWeight="400"
-            lineHeight="20px"
-          >
-            {+token.balance > 0 ? '≈' : ''} ${token.value(price)}
-          </Text>
-        </Box>
+          }
+          labelContainerProps={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}
+          labelExtra={
+            shouldShowPartialButtons ? (
+              <Stack space="$4">
+                {PARTIAL_PERCENTAGES.map((percent, index) => {
+                  const amount = +token.balance * percent;
+                  const isMax = index === PARTIAL_PERCENTAGES.length - 1;
+
+                  return (
+                    <NobleButton
+                      key={percent}
+                      variant="tag"
+                      size="xs"
+                      isActive={partialPercent === percent}
+                      onClick={() => onAmountButtonClick(amount, isMax, percent)}
+                    >
+                      {isMax ? 'Max' : `${amount}`}
+                    </NobleButton>
+                  );
+                })}
+              </Stack>
+            ) : null
+          }
+          helperText={
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box display="flex" alignItems="center" justifyContent="center" gap="$6">
+                <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">
+                  Available: {uusdcToUsdc(balance as bigint)}
+                </Text>
+
+                {+amount > +token.balance ? (
+                  <Text color="$textWarning" fontSize="$sm" fontWeight="$normal">
+                    Insufficient balance
+                  </Text>
+                ) : null}
+              </Box>
+
+              <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">
+                {+token.balance > 0 ? '≈' : ''} ${token.value(price)}
+              </Text>
+            </Box>
+          }
+        />
+
         <Box my="12px" display="flex" alignItems="center" justifyContent="center">
           <ArrowDownIcon />
         </Box>
+
         <Box>
           <Box
             mb="12px"
@@ -352,24 +400,64 @@ export default function SelectAmountPage() {
             justifyContent="space-between"
             color={useColorModeValue(colors.gray500, colors.blue700)}
           >
-            Destination
             <Text fontSize="20px" fontWeight="600" attributes={{ marginRight: '20px' }}>
               {address && destChain && route ? uusdcToUsdc(route.amountOut) : ''}
             </Text>
           </Box>
+
           {wallet.mainWallet?.isWalletConnected ? KeplrAccount : null}
+
           {showAddrInput ? (
-            <AddressInput
-              value={destAddress}
-              onClear={() => {
-                setDestAddress('');
-                setShowChainCombo(false);
+            <NobleInput
+              id="destAddress"
+              size="sm"
+              label="Destination"
+              intent={wallet.mainWallet?.isWalletConnected ? 'success' : undefined}
+              readonly={wallet.mainWallet?.isWalletConnected && !!chainWalletAddress}
+              placeholder="Paste address"
+              value={wallet.mainWallet?.isWalletConnected ? chainWalletAddress : destAddress}
+              onChange={(e) => {
+                setDestAddress(e.target.value);
               }}
-              onChange={setDestAddress}
-              onConnect={() => cosmos.cosmoshub.connect()}
-              isConnected={wallet.mainWallet?.isWalletConnected}
+              inputContainerProps={{
+                // Space for the connect button
+                paddingRight: !!chainWalletAddress
+                  ? '8px'
+                  : wallet.mainWallet?.isWalletConnected
+                  ? '150px'
+                  : '8px'
+              }}
+              endAddon={
+                destAddress ? (
+                  <Box position="absolute" right="$4" top="50%" transform="translateY(-50%)">
+                    <NobleButton
+                      variant="text"
+                      onClick={() => {
+                        // Clear address input
+                        setDestAddress('');
+                        setShowChainCombo(false);
+                      }}
+                    >
+                      <Text as="span" fontSize="$2xl" color="$textSecondary">
+                        <Icon name="xCircle" />
+                      </Text>
+                    </NobleButton>
+                  </Box>
+                ) : !wallet.mainWallet?.isWalletConnected ? (
+                  <NobleButton
+                    variant="solid"
+                    size="sm"
+                    onClick={() => {
+                      cosmos.cosmoshub.connect();
+                    }}
+                  >
+                    Connect wallet
+                  </NobleButton>
+                ) : null
+              }
             />
           ) : null}
+
           {showAddrSelected ? (
             <Box mt="12px">
               <AddressSelected
@@ -384,25 +472,55 @@ export default function SelectAmountPage() {
           ) : null}
 
           {showChainCombo ? (
-            <Box mt="12px">
-              <ChainCombo
-                value={destChainSearch}
-                chains={chains}
-                onSelect={onChainSelect}
-                onChange={setDestChainSearch}
-              />
-            </Box>
+            <NobleChainCombobox
+              defaultIsOpen
+              onSelectionChange={(chainId) => {
+                const selectedChain = chains.find((c) => c.chain_id === chainId);
+
+                if (selectedChain) {
+                  onChainSelect(selectedChain);
+                }
+              }}
+              styleProps={{
+                width: '100%'
+              }}
+            >
+              {COSMOS_CHAINS.map((chain) => (
+                <NobleChainCombobox.Item key={chain.chain_id} textValue={chain.chain_name}>
+                  <Box display="flex" justifyContent="flex-start" alignItems="center" gap="13px">
+                    <Box
+                      as="img"
+                      borderRadius="$full"
+                      width="26px"
+                      height="26px"
+                      attributes={{
+                        src: chain.logo_uri!,
+                        alt: chain.chain_name
+                      }}
+                    />
+                    <Text fontSize="$sm" fontWeight="$normal" color="$textSecondary">
+                      {COSMOS_CHAIN_ID_TO_PRETTY_NAME[chain.chain_id] ?? chain.chain_name}
+                    </Text>
+                  </Box>
+                </NobleChainCombobox.Item>
+              ))}
+            </NobleChainCombobox>
           ) : null}
 
-          <PrimaryButton
-            mt="1rem"
+          <NobleButton
+            variant="solid"
+            size="lg"
+            attributes={{
+              marginTop: '20px'
+            }}
+            onClick={() => onTransfer()}
             disabled={
               !route || !destAddress || !isValidAddress(destAddress) || +amount > +token.balance
             }
-            onClick={onTransfer}
           >
             Bridge
-          </PrimaryButton>
+          </NobleButton>
+
           <Box
             mt="1rem"
             display="flex"
@@ -487,181 +605,6 @@ export default function SelectAmountPage() {
   );
 }
 
-type AmountButtonProps = {
-  amount: number;
-  maxText?: string;
-  onClick?: (amount: number, max: boolean) => void;
-};
-
-function AmountButton({ amount, maxText, onClick = () => {} }: AmountButtonProps) {
-  return (
-    <Box
-      px="8px"
-      py="4px"
-      minWidth="40px"
-      cursor="pointer"
-      textAlign="center"
-      borderRadius="4px"
-      backgroundColor={useColorModeValue(colors.gray700, colors.blue300)}
-      attributes={{ onClick: () => onClick(amount, !!maxText) }}
-    >
-      <Text
-        fontSize="14px"
-        fontWeight="600"
-        lineHeight="20px"
-        color={useColorModeValue(colors.gray400, colors.blue700)}
-      >
-        {maxText ? maxText : amount}
-      </Text>
-    </Box>
-  );
-}
-
-type TokenAmountInputProps = {
-  token: UsdcToken;
-  value?: string;
-  onChange?: (value: string) => void;
-};
-
-function TokenAmountInput({ token, value = '0', onChange = () => {} }: TokenAmountInputProps) {
-  return (
-    <Box
-      px="20px"
-      height="96px"
-      display="flex"
-      alignItems="center"
-      borderWidth="1px"
-      borderStyle="solid"
-      borderRadius="8px"
-      borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
-      backgroundColor={useColorModeValue(colors.white, colors.blue200)}
-    >
-      <Box mr="1rem" width="48px" height="48px" position="relative">
-        <Image src={token.logo} alt={token.name} width={48} height={48} />
-        <Box
-          position="absolute"
-          right="-4px"
-          bottom="-3px"
-          width="22px"
-          height="22px"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          borderRadius="100%"
-          backgroundColor={useColorModeValue(colors.white, colors.blue200)}
-        >
-          <Image src={token.chain.logo_uri!} alt={token.chain.chain_name!} width={18} height={18} />
-        </Box>
-      </Box>
-      <Box flex="1">
-        <Box display="flex">
-          <Text
-            fontSize="20px"
-            fontWeight="600"
-            lineHeight="28px"
-            color={useColorModeValue(colors.blue50, colors.white)}
-          >
-            {token.name}
-          </Text>
-        </Box>
-        <Box display="flex" justifyContent="space-between">
-          <Text
-            fontSize="14px"
-            fontWeight="400"
-            lineHeight="20px"
-            color={useColorModeValue(colors.gray500, colors.blue700)}
-          >
-            on {token.chain.chain_name}
-          </Text>
-        </Box>
-      </Box>
-      <Box display="flex" alignItems="center" maxWidth="250px">
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          style={{
-            fontSize: '24px',
-            fontWeight: '600',
-            textAlign: 'right',
-            border: 'none',
-            outline: 'none',
-            maxWidth: '250px',
-            appearance: 'none',
-            backgroundColor: 'transparent',
-            color: useColorModeValue(colors.blue50, colors.white)
-          }}
-        />
-      </Box>
-    </Box>
-  );
-}
-
-type AddressInputProps = {
-  value?: string;
-  onClear?: () => void;
-  onChange?: (value: string) => void;
-  onConnect?: () => void;
-  isConnected?: boolean;
-};
-
-function AddressInput({
-  value = '',
-  isConnected = false,
-  onClear = () => {},
-  onChange = () => {},
-  onConnect = () => {}
-}: AddressInputProps) {
-  return (
-    <Box
-      pl="1rem"
-      height="54px"
-      display="flex"
-      position="relative"
-      alignItems="center"
-      borderWidth="1px"
-      borderStyle="solid"
-      borderRadius="8px"
-      borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
-      backgroundColor={useColorModeValue(colors.white, colors.blue200)}
-    >
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Paste address"
-        style={{
-          fontSize: '14px',
-          fontWeight: '400',
-          lineHeight: '20px',
-          minWidth: '360px',
-          border: 'none',
-          outline: 'none',
-          maxWidth: '250px',
-          appearance: 'none',
-          paddingTop: '0.5rem',
-          paddingBottom: '0.5rem',
-          backgroundColor: 'transparent',
-          color: useColorModeValue(colors.gray500, colors.blue700)
-        }}
-      />
-      {value ? (
-        <Box
-          position="absolute"
-          top="17px"
-          right="1rem"
-          cursor="pointer"
-          attributes={{ onClick: onClear }}
-        >
-          <CloseIcon />
-        </Box>
-      ) : isConnected ? null : (
-        <ConnectWalletButton onClick={() => onConnect()} />
-      )}
-    </Box>
-  );
-}
-
 type AddressSelectedProps = {
   logo: string;
   name: string;
@@ -720,87 +663,6 @@ function AddressSelected({ logo, name, addr, onChange = () => {} }: AddressSelec
       >
         Change
       </Box>
-    </Box>
-  );
-}
-
-type ChainComboProps = {
-  value?: string;
-  chains?: SkipChain[];
-  onChange?: (value: string) => void;
-  onSelect?: (chain: SkipChain) => void;
-};
-
-export function ChainCombo({
-  value = '',
-  chains = [],
-  onChange = () => {},
-  onSelect = () => {}
-}: ChainComboProps) {
-  const color = useColorModeValue(colors.gray500, colors.blue700);
-
-  const Chains = (
-    <Box
-      py="10px"
-      maxHeight="220px"
-      overflow="auto"
-      borderTopWidth="1px"
-      borderTopStyle="solid"
-      borderTopColor={useColorModeValue(colors.border.light, colors.border.dark)}
-    >
-      {chains.map((chain) => (
-        <Box
-          px="18px"
-          py="7px"
-          cursor="pointer"
-          key={chain.chain_id}
-          display="flex"
-          alignItems="center"
-          attributes={{ onClick: () => onSelect(chain) }}
-        >
-          <Box width={26} height={26} display="flex" overflow="hidden" borderRadius="100%">
-            <Image width={26} height={26} src={chain.logo_uri!} alt={chain.chain_name!} />
-          </Box>
-          <Box ml="12px" color={color}>
-            {COSMOS_CHAIN_ID_TO_PRETTY_NAME[chain.chain_id] ?? chain.chain_name}
-          </Box>
-        </Box>
-      ))}
-    </Box>
-  );
-
-  return (
-    <Box
-      borderRadius="8px"
-      borderWidth="1xp"
-      borderStyle="solid"
-      borderColor={useColorModeValue(colors.border.light, colors.border.dark)}
-      backgroundColor={useColorModeValue(colors.white, colors.blue200)}
-    >
-      <Box px="12px" height="52px" display="flex" alignItems="center">
-        <SearchIcon />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Search network"
-          style={{
-            fontSize: '14px',
-            fontWeight: '400',
-            lineHeight: '20px',
-            minWidth: '360px',
-            border: 'none',
-            outline: 'none',
-            appearance: 'none',
-            paddingTop: '0.5rem',
-            paddingLeft: '0.5rem',
-            paddingBottom: '0.5rem',
-            backgroundColor: 'transparent',
-            color: useColorModeValue(colors.gray500, colors.blue700)
-          }}
-        />
-      </Box>
-      {chains.length ? Chains : null}
     </Box>
   );
 }
