@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useChainWallet, useChains, useWallet } from '@cosmos-kit/react';
+import { useChains, useWallet } from '@cosmos-kit/react';
 import { useSearchParams } from 'next/navigation';
 import { RouteResponse } from '@skip-router/core';
 import { useAccount, useReadContracts, useSwitchChain } from 'wagmi';
@@ -19,18 +19,8 @@ import {
   NobleButton,
   NobleChainCombobox
 } from '@interchain-ui/react';
-import {
-  ArrowDownIcon,
-  BackButton,
-  ClockIcon,
-  CloseIcon,
-  ConnectWalletButton,
-  ExitIcon,
-  Layout,
-  PrimaryButton,
-  SearchIcon,
-  FaqList
-} from '@/components/common';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowDownIcon, ClockIcon, ExitIcon, Layout, FaqList } from '@/components/common';
 import {
   colors,
   COSMOS_CHAIN_ID_TO_CHAIN_NAME,
@@ -460,53 +450,72 @@ export default function SelectAmountPage() {
             />
           ) : null}
 
-          {showAddrSelected ? (
-            <NobleSelectNetworkButton
-              logoUrl={destChain?.logo_uri!}
-              title={COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ?? destChain?.chain_name}
-              subTitle={cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id!]]?.address!}
-              actionLabel="Change"
-              size="lg"
-              onClick={() => {
-                onChangeChain();
-              }}
-            />
-          ) : null}
+          <AnimatePresence>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {showChainCombo && !showAddrSelected ? (
+                <NobleChainCombobox
+                  defaultIsOpen
+                  onSelectionChange={(chainId) => {
+                    const selectedChain = COSMOS_CHAINS.find((c) => c.chain_id === chainId);
+                    if (selectedChain) {
+                      onChainSelect(selectedChain);
+                    }
+                  }}
+                  styleProps={{
+                    width: '100%'
+                  }}
+                >
+                  {COSMOS_CHAINS.map((chain) => (
+                    <NobleChainCombobox.Item key={chain.chain_id} textValue={chain.chain_name}>
+                      <Box
+                        display="flex"
+                        justifyContent="flex-start"
+                        alignItems="center"
+                        gap="13px"
+                      >
+                        <Box
+                          as="img"
+                          borderRadius="$full"
+                          width="26px"
+                          height="26px"
+                          attributes={{
+                            src: chain.logo_uri!,
+                            alt: chain.chain_name
+                          }}
+                        />
+                        <Text fontSize="$sm" fontWeight="$normal" color="$textSecondary">
+                          {COSMOS_CHAIN_ID_TO_PRETTY_NAME[chain.chain_id] ?? chain.chain_name}
+                        </Text>
+                      </Box>
+                    </NobleChainCombobox.Item>
+                  ))}
+                </NobleChainCombobox>
+              ) : null}
+            </motion.div>
+          </AnimatePresence>
 
-          {showChainCombo ? (
-            <NobleChainCombobox
-              defaultIsOpen
-              onSelectionChange={(chainId) => {
-                const selectedChain = COSMOS_CHAINS.find((c) => c.chain_id === chainId);
-                if (selectedChain) {
-                  onChainSelect(selectedChain);
-                }
-              }}
-              styleProps={{
-                width: '100%'
-              }}
-            >
-              {COSMOS_CHAINS.map((chain) => (
-                <NobleChainCombobox.Item key={chain.chain_id} textValue={chain.chain_name}>
-                  <Box display="flex" justifyContent="flex-start" alignItems="center" gap="13px">
-                    <Box
-                      as="img"
-                      borderRadius="$full"
-                      width="26px"
-                      height="26px"
-                      attributes={{
-                        src: chain.logo_uri!,
-                        alt: chain.chain_name
-                      }}
-                    />
-                    <Text fontSize="$sm" fontWeight="$normal" color="$textSecondary">
-                      {COSMOS_CHAIN_ID_TO_PRETTY_NAME[chain.chain_id] ?? chain.chain_name}
-                    </Text>
-                  </Box>
-                </NobleChainCombobox.Item>
-              ))}
-            </NobleChainCombobox>
-          ) : null}
+          <AnimatePresence>
+            {showAddrSelected ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <NobleSelectNetworkButton
+                  logoUrl={destChain?.logo_uri!}
+                  title={
+                    COSMOS_CHAIN_ID_TO_PRETTY_NAME[destChain?.chain_id] ?? destChain?.chain_name
+                  }
+                  subTitle={cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[destChain?.chain_id!]]?.address!}
+                  actionLabel="Change"
+                  size="lg"
+                  onClick={() => {
+                    onChangeChain();
+                  }}
+                />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
 
           <NobleButton
             variant="solid"
