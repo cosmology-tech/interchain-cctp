@@ -7,7 +7,7 @@ import {
 } from 'wagmi';
 import { Box, Stack, NobleSelectTokenButton } from '@interchain-ui/react';
 import { uusdcToUsdc } from '@/utils';
-import { WalletAddress, Layout, FaqList } from '@/components/common';
+import { WalletAddress, FaqList } from '@/components/common';
 import {
   sizes,
   USDC_CONTRACT_ABI,
@@ -21,8 +21,14 @@ import {
 import { BalanceNotAvailable, UsdcToken } from '@/models';
 import { useRouter } from 'next/router';
 import { usePrice, useIsMounted } from '@/hooks';
+import { BridgeStep } from '@/pages/bridge';
 
-export default function SelectTokenPage() {
+interface SelectTokenProps {
+  setBridgeStep: (bridgeStep: BridgeStep) => void;
+  setSourceChainId: (sourceChainId: string) => void;
+}
+
+export function SelectToken({ setBridgeStep, setSourceChainId }: SelectTokenProps) {
   const router = useRouter();
   const { price = 1 } = usePrice();
   const { address } = useAccount();
@@ -62,7 +68,7 @@ export default function SelectTokenPage() {
   }, [data]);
 
   return (
-    <Layout>
+    <>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
         <Box mb="48px" fontSize="20px" fontWeight="$semibold" color="$text">
           Select token to bridge
@@ -79,23 +85,34 @@ export default function SelectTokenPage() {
           />
         ) : null}
 
-        <UsdcTokenList tokens={tokens} price={price} />
+        <UsdcTokenList
+          tokens={tokens}
+          price={price}
+          setBridgeStep={setBridgeStep}
+          setSourceChainId={setSourceChainId}
+        />
       </Box>
 
       <FaqList />
-    </Layout>
+    </>
   );
 }
 
 type UsdcTokenListProps = {
   tokens: UsdcToken[];
   price?: number;
+  setBridgeStep: (bridgeStep: BridgeStep) => void;
+  setSourceChainId: (sourceChainId: string) => void;
 };
 
 const placeholder = '--';
 
-function UsdcTokenList({ tokens = [], price = 1 }: UsdcTokenListProps) {
-  const router = useRouter();
+function UsdcTokenList({
+  tokens = [],
+  price = 1,
+  setBridgeStep,
+  setSourceChainId
+}: UsdcTokenListProps) {
   const isMounted = useIsMounted();
 
   return (
@@ -118,7 +135,10 @@ function UsdcTokenList({ tokens = [], price = 1 }: UsdcTokenListProps) {
               ? `${token.isBalanceGtZero ? '≈ ' : ''}${token.value(price)}`
               : '≈ 0'
           }}
-          onClick={() => router.push(`/select-amount-dest?source_chain_id=${token.id}`)}
+          onClick={() => {
+            setBridgeStep('select-amount-dest');
+            setSourceChainId(token.id.toString());
+          }}
         />
       ))}
     </Stack>

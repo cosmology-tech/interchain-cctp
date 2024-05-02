@@ -1,8 +1,6 @@
 import Image from 'next/image';
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useChains, useWallet } from '@cosmos-kit/react';
-import { useSearchParams } from 'next/navigation';
 import { RouteResponse } from '@skip-router/core';
 import { useAccount, useReadContracts, useSwitchChain } from 'wagmi';
 import {
@@ -20,7 +18,7 @@ import {
   NobleChainCombobox
 } from '@interchain-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDownIcon, ClockIcon, ExitIcon, Layout, FaqList } from '@/components/common';
+import { ArrowDownIcon, ClockIcon, ExitIcon, FaqList } from '@/components/common';
 import {
   colors,
   COSMOS_CHAIN_ID_TO_CHAIN_NAME,
@@ -45,6 +43,7 @@ import {
 } from '@/utils';
 import { usePrice } from '@/hooks';
 import { SkipChain, useSkip } from '@/skip';
+import { BridgeStep } from '@/pages/bridge';
 
 const PARTIAL_PERCENTAGES = [0.1, 0.25, 0.5, 0.8, 1.0];
 
@@ -67,10 +66,14 @@ function getDestChainDenom(chain: SkipChain) {
   if (chain.chain_type === 'cosmos') return COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM[chain.chain_id!];
 }
 
-export default function SelectAmountPage() {
+interface SelectAmountDestProps {
+  sourceChainId: string;
+  setBridgeStep: (bridgeStep: BridgeStep) => void;
+}
+
+export function SelectAmountDest({ sourceChainId, setBridgeStep }: SelectAmountDestProps) {
   const skip = useSkip();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+
   const wallet = useWallet(); // cosmos wallet, here refers to Keplr
   const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME));
 
@@ -89,7 +92,6 @@ export default function SelectAmountPage() {
   const [route, setRoute] = useState<RouteResponse | null>(null);
   const [txStatus, setTxStatus] = useState<'pending' | 'success'>(); // TODO: remove later
 
-  const sourceChainId = searchParams.get('source_chain_id');
   const [token, setToken] = useState<UsdcToken>(
     // @ts-ignore
     EVM_CHAIN_ID_TO_TOKEN[sourceChainId || '1'] ?? USDC_ETHEREUM_MAINNET
@@ -210,7 +212,7 @@ export default function SelectAmountPage() {
           console.log('onTransactionCompleted:', tx);
         }
       });
-      // router.push('/sign-in-metamask');
+      // setBridgeStep('sign-tx');
     } catch (e) {
       console.error('Error:', e);
     }
@@ -292,11 +294,11 @@ export default function SelectAmountPage() {
   const shouldShowEstimates = !!route && !!destChain && !!address;
 
   return (
-    <Layout>
+    <>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
         <NoblePageTitleBar
           title="Select amount and destination"
-          onBackButtonClick={() => router.push('/select-token')}
+          onBackButtonClick={() => setBridgeStep('select-token')}
           mb="$14"
         />
 
@@ -611,6 +613,6 @@ export default function SelectAmountPage() {
       </Box>
 
       <FaqList />
-    </Layout>
+    </>
   );
 }
