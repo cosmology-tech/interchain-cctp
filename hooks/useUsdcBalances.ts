@@ -7,7 +7,12 @@ import { useAccount, useConnect } from 'wagmi';
 
 import { SkipChain } from './useSkipChains';
 import { getCosmosChainNameById, shiftDecimals } from '@/utils';
-import { USDC_CONTRACT_ABI, config as wagmiConfig } from '@/config';
+import {
+  COSMOS_CHAIN_NAMES,
+  NOBLE_CHAIN_IDS,
+  USDC_CONTRACT_ABI,
+  config as wagmiConfig
+} from '@/config';
 
 export type EVMAddress = `0x${string}`;
 
@@ -17,15 +22,11 @@ interface Args {
 }
 
 export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
-  const cosmosChainNames = chains
-    .filter((chain) => chain.chainType === 'cosmos')
-    .map((chain) => getCosmosChainNameById(chain.chainID));
-
-  const cosmosChains = useChains(cosmosChainNames);
+  const cosmosChains = useChains(COSMOS_CHAIN_NAMES);
   const { connect: wagmiConnect, connectors } = useConnect();
   const { address: evmAddress, isConnected: isEvmNetworkConnected } = useAccount();
 
-  const isCosmosNetworkConnected = cosmosChainNames.every((chainName) => {
+  const isCosmosNetworkConnected = COSMOS_CHAIN_NAMES.every((chainName) => {
     return cosmosChains[chainName].isWalletConnected;
   });
 
@@ -34,7 +35,7 @@ export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
 
   useEffect(() => {
     if (isCosmosNetworkConnected || isEvmChainsOnly) return;
-    cosmosChainNames.forEach((chainName) => {
+    COSMOS_CHAIN_NAMES.forEach((chainName) => {
       const chainContext = cosmosChains[chainName];
       if (!chainContext.isWalletConnected) {
         chainContext.connect();
@@ -78,7 +79,10 @@ export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
             const { address: cosmosAddress, getStargateClient } =
               cosmosChains[getCosmosChainNameById(chain.chainID)];
             const stargateClient = await getStargateClient();
-            const coin = await stargateClient.getBalance(cosmosAddress!, 'uusdc');
+            const coin = await stargateClient.getBalance(
+              cosmosAddress!,
+              NOBLE_CHAIN_IDS.includes(chain.chainID) ? 'uusdc' : assets[chain.chainID].denom
+            );
             return {
               chainId: chain.chainID,
               usdcBalance: shiftDecimals(coin.amount, -(assets[chain.chainID]?.decimals ?? 6))

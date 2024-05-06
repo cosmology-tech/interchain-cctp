@@ -17,7 +17,7 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { RouteResponse } from '@skip-router/core';
 
 import { ExitIcon } from '@/components/common';
-import { CHAIN_TYPE, ChainType, colors } from '@/config';
+import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, ChainType, colors } from '@/config';
 import {
   cosmosAddressToChainId,
   getCosmosChainNameById,
@@ -49,12 +49,7 @@ export const SelectDestination = ({
   const { disconnect: wagmiDisconnect } = useDisconnect();
 
   const { data: chains = [] } = useSkipChains();
-
-  const cosmosChainNames = chains
-    .filter((chain) => chain.chainType === CHAIN_TYPE.COSMOS)
-    .map((chain) => getCosmosChainNameById(chain.chainID));
-
-  const cosmosChainContexts = useChains(cosmosChainNames);
+  const cosmosChainContexts = useChains(COSMOS_CHAIN_NAMES);
 
   const sourceChainType = (searchParams.get('chain-type') ?? CHAIN_TYPE.EVM) as ChainType;
   const isCosmosWalletConnected = Object.values(cosmosChainContexts)[0].isWalletConnected;
@@ -70,7 +65,7 @@ export const SelectDestination = ({
 
   const handleConnectWallet = () => {
     if (sourceChainType === 'evm') {
-      cosmosChainNames.forEach((chainName) => {
+      COSMOS_CHAIN_NAMES.forEach((chainName) => {
         const chainContext = cosmosChainContexts[chainName];
         if (chainContext.isWalletDisconnected) {
           chainContext.connect();
@@ -162,8 +157,8 @@ export const SelectDestination = ({
   }, [isWalletConnected, destAddress, destChain]);
 
   const showSelectedChain = useMemo(() => {
-    return !!destChain;
-  }, [destChain]);
+    return !!destChain && !(!isWalletConnected && isValidCosmosAddress(destAddress));
+  }, [destChain, destAddress, isWalletConnected]);
 
   const isDestAddressValid = useMemo(() => {
     return isValidEvmAddress(destAddress) || isValidCosmosAddress(destAddress);
@@ -235,7 +230,13 @@ export const SelectDestination = ({
           endAddon={
             destAddress ? (
               <Box position="absolute" right="$4" top="50%" transform="translateY(-50%)">
-                <NobleButton variant="text" onClick={() => setDestAddress('')}>
+                <NobleButton
+                  variant="text"
+                  onClick={() => {
+                    setDestChain(null);
+                    setDestAddress('');
+                  }}
+                >
                   <Text as="span" fontSize="$2xl" color="$textSecondary">
                     <Icon name="xCircle" />
                   </Text>

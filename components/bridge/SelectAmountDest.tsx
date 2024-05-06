@@ -4,9 +4,9 @@ import { useAccount, useSwitchChain } from 'wagmi';
 import { Box, Text, NoblePageTitleBar, NobleButton } from '@interchain-ui/react';
 
 import { ArrowDownIcon, FaqList } from '@/components/common';
-import { COSMOS_CHAIN_ID_TO_CHAIN_NAME, sizes } from '@/config';
+import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
 import { SkipChain, useRoute, useUsdcAssets } from '@/hooks';
-import { isValidAddress, shiftDecimals } from '@/utils';
+import { getCosmosChainNameById, isValidAddress, shiftDecimals } from '@/utils';
 import { useSkipClient } from '@/skip';
 import { BridgeStep, SelectedToken } from '@/pages/bridge';
 import { SelectAmount } from './SelectAmount';
@@ -22,7 +22,7 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
   const { chain: sourceChain, asset: sourceAsset, balance } = selectedToken;
 
   const skipClient = useSkipClient();
-  const cosmos = useChains(Object.values(COSMOS_CHAIN_ID_TO_CHAIN_NAME));
+  const cosmosChainContexts = useChains(COSMOS_CHAIN_NAMES);
 
   const [destChain, setDestChain] = useState<SkipChain | null>(null);
   const [destAddress, setDestAddress] = useState<string>('');
@@ -33,7 +33,6 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
   const { switchChainAsync } = useSwitchChain();
   const { data: assets } = useUsdcAssets();
 
-  const isSourceChainConnected = connectedChainId === Number(sourceChain.chainID);
   const destAsset = assets && destChain ? assets[destChain.chainID] : undefined;
 
   const {
@@ -52,19 +51,18 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
   async function onTransfer() {
     if (!route || !evmAddress || !destAddress) return;
 
-    if (!isSourceChainConnected) {
+    if (
+      sourceChain.chainType === CHAIN_TYPE.EVM &&
+      connectedChainId !== Number(sourceChain.chainID)
+    ) {
       await switchChainAsync({ chainId: Number(sourceChain.chainID) });
     }
 
     const userAddresses = route.chainIDs.reduce((acc, chainID) => {
-      // evm
-      if (chainID == sourceChain.chainID) {
+      if (/^\d+/.test(chainID)) {
         acc[chainID] = evmAddress;
-      } else if (/^\d+/.test(chainID)) {
-        acc[chainID] = destAddress;
       } else {
-        // @ts-ignore
-        acc[chainID] = cosmos[COSMOS_CHAIN_ID_TO_CHAIN_NAME[chainID]].address;
+        acc[chainID] = cosmosChainContexts[getCosmosChainNameById(chainID)].address!;
       }
       return acc;
     }, {} as Record<string, string>);
@@ -96,6 +94,19 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
   }
 
   const shouldShowEstimates = !!route && !!destChain && !!evmAddress;
+  const bridgeButtonText = routeIsFetching
+    ? 'Finding best route...'
+    : routeIsError
+    ? 'No route found'
+    : 'Bridge';
+
+  const isBridgeButtonDisabled =
+    !route ||
+    !destAddress ||
+    !isValidAddress(destAddress) ||
+    +amount > +balance ||
+    routeIsFetching ||
+    routeIsError;
 
   return (
     <>
@@ -134,9 +145,9 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
             marginTop: '20px'
           }}
           onClick={() => onTransfer()}
-          disabled={!route || !destAddress || !isValidAddress(destAddress) || +amount > +balance}
+          disabled={isBridgeButtonDisabled}
         >
-          Bridge
+          {bridgeButtonText}
         </NobleButton>
 
         {shouldShowEstimates && (

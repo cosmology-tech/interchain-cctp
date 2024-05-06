@@ -5,3 +5,4 @@ export * from './useSkipChains';
 export * from './useUsdcAssets';
 export * from './useUsdcBalances';
 export * from './useRoute';
+export * from './useConnectChains';

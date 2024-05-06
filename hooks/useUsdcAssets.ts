@@ -1,7 +1,7 @@
 import { Asset } from '@skip-router/core';
 import { useQuery } from '@tanstack/react-query';
 import { useSkipClient } from '@/skip';
-import { SUPPORTED_CHAIN_IDS, isTestnetMode, DEFAULT_USDC_LOGO } from '@/config';
+import { SUPPORTED_CHAIN_IDS, isTestnetMode, DEFAULT_USDC_LOGO, NOBLE_CHAIN_IDS } from '@/config';
 
 export const useUsdcAssets = () => {
   const skipClient = useSkipClient();
@@ -15,11 +15,13 @@ export const useUsdcAssets = () => {
             chainID: chainId,
             includeEvmAssets: true
           });
+          const usdcAsset = chainAssets[chainId].find(({ symbol }) => symbol === 'USDC');
           return {
             chainId,
             usdcAsset: {
-              ...chainAssets[chainId].find(({ symbol }) => symbol === 'USDC'),
-              logoURI: DEFAULT_USDC_LOGO
+              ...usdcAsset,
+              logoURI: DEFAULT_USDC_LOGO,
+              denom: NOBLE_CHAIN_IDS.includes(chainId) ? 'uusdc' : usdcAsset?.denom
             }
           };
         })

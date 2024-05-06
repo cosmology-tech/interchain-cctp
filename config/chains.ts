@@ -6,7 +6,9 @@ import {
   optimismSepolia,
   sepolia,
   mainnet,
-  Chain as EVMChain
+  Chain as EVMChain,
+  avalancheFuji,
+  baseSepolia
 } from 'wagmi/chains';
 
 import noble from 'chain-registry/mainnet/noble/chain';
@@ -20,7 +22,13 @@ import type { Chain as CosmosChain } from '@chain-registry/types';
 
 // Supported EVM chains
 const EVM_MAINNETS: EVMChain[] = [mainnet, arbitrum, optimism, avalanche];
-const EVM_TESTNETS: EVMChain[] = [sepolia, optimismSepolia, arbitrumSepolia];
+const EVM_TESTNETS: EVMChain[] = [
+  sepolia,
+  optimismSepolia,
+  arbitrumSepolia,
+  avalancheFuji,
+  baseSepolia
+];
 
 // Supported Cosmos chains
 const COSMOS_MAINNETS: CosmosChain[] = [noble, cosmoshub, stargaze, osmosis, juno];
@@ -53,6 +61,8 @@ export const CHAIN_ID_TO_PRETTY_NAME: Record<string, string> = {
   ...COSMOS_CHAIN_ID_TO_PRETTY_NAME
 };
 
+export const COSMOS_CHAIN_NAMES = COSMOS_CHAINS.map((chain) => chain.chain_name);
+
 export const CHAIN_TYPE = {
   EVM: 'evm',
   COSMOS: 'cosmos'
@@ -61,3 +71,5 @@ export const CHAIN_TYPE = {
 export type ChainType = (typeof CHAIN_TYPE)[keyof typeof CHAIN_TYPE];
 
 export const DEFAULT_USDC_LOGO = '/coins/usdc.svg';
+
+export const NOBLE_CHAIN_IDS = [noble.chain_id, nobletestnet.chain_id];

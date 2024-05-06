@@ -3,6 +3,7 @@ import { Asset } from '@skip-router/core';
 import { Box, Stack, Text, NobleTokenAvatar, NobleInput, NobleButton } from '@interchain-ui/react';
 import { calcDollarValue } from '@/utils';
 import { SkipChain, useUsdcPrice } from '@/hooks';
+import BigNumber from 'bignumber.js';
 
 const PARTIAL_PERCENTAGES = [0.1, 0.25, 0.5, 0.8, 1.0];
 
@@ -24,7 +25,11 @@ export const SelectAmount = ({
   const [partialPercent, setPartialPercent] = useState<number | null>(null);
   const { data: usdcPrice } = useUsdcPrice();
 
-  function onAmountButtonClick(amount: number, max: boolean, selectedPartialPercent: number) {
+  function onAmountButtonClick(
+    amount: string | number,
+    max: boolean,
+    selectedPartialPercent: number
+  ) {
     setPartialPercent(selectedPartialPercent);
     setAmount(max ? balance : String(amount));
   }
@@ -71,7 +76,7 @@ export const SelectAmount = ({
         shouldShowPartialButtons ? (
           <Stack space="$4">
             {PARTIAL_PERCENTAGES.map((percent, index) => {
-              const amount = +balance * percent;
+              const amount = BigNumber(balance).times(percent).toFormat(2);
               const isMax = index === PARTIAL_PERCENTAGES.length - 1;
 
               return (
