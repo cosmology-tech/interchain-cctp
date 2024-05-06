@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
-import { colors } from '@/config';
+import { DEFAULT_USDC_LOGO, colors } from '@/config';
 import { ChainList } from './ChainList';
 
 export const HomeHeader = () => {
@@ -34,7 +34,7 @@ function Title() {
       </Text>
 
       <Box display="flex" justifyContent="center" alignItems="center" flexWrap="nowrap">
-        <Image src="/coins/usdc.svg" alt="USDC" width={48} height={48} />
+        <Image src={DEFAULT_USDC_LOGO} alt="USDC" width={48} height={48} />
         &nbsp;
         <Text
           color={useColorModeValue(colors.gray50, colors.white)}

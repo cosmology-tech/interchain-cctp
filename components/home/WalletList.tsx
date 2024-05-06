@@ -1,7 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { useChains } from '@cosmos-kit/react';
 import { useAccount, useConnect } from 'wagmi';
-import { COSMOS_CHAIN_ID_TO_CHAIN_NAME } from '@/config';
+import { CHAIN_TYPE, COSMOS_CHAIN_ID_TO_CHAIN_NAME } from '@/config';
 import { Box, NobleSelectWalletButton } from '@interchain-ui/react';
 
 export function WalletList() {
@@ -11,19 +11,21 @@ export function WalletList() {
   const { connectAsync, isSuccess, connectors } = useConnect();
 
   const handleConnectMetamask = () => {
+    const href = `/bridge?chain-type=${CHAIN_TYPE.EVM}`;
     if (address) {
-      return router.push('/bridge');
+      return router.push(href);
     }
     connectAsync({ connector: connectors[0] }).then((isSuccess) => {
       if (isSuccess) {
-        router.push('/bridge');
+        router.push(href);
       }
     });
   };
 
   const handleConnectKeplr = () => {
-    if (cosmos.cosmohub?.address) {
-      return router.push('/bridge');
+    const href = `/bridge?chain-type=${CHAIN_TYPE.COSMOS}`;
+    if (cosmos.cosmoshub?.address) {
+      return router.push(href);
     }
     cosmos.cosmoshub.connect();
   };

@@ -20,9 +20,11 @@ import {
   INFURA_OPTIMISM_MAINNET_URL,
   INFURA_POLYGON_MAINNET_URL
 } from './constants';
+import { EVM_CHAINS } from './chains';
 
 export const config = createConfig({
-  chains: [mainnet, sepolia, arbitrum, arbitrumSepolia, optimism, optimismSepolia],
+  // @ts-ignore
+  chains: EVM_CHAINS,
   connectors: [injected()],
   transports: {
     [base.id]: http(),

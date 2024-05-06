@@ -3,6 +3,7 @@ import '@interchain-ui/react/styles';
 
 import type { AppProps } from 'next/app';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { SignerOptions, wallets } from 'cosmos-kit';
 import { ChainProvider } from '@cosmos-kit/react';
 import { assets, chains } from 'chain-registry';
@@ -48,8 +49,8 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
                   backgroundColor={useColorModeValue('#F6F6FE', '#020418')}
                 >
                   <Component {...pageProps} />
-
                   <Toaster position={'top-right'} closeButton={true} />
+                  <ReactQueryDevtools initialIsOpen={false} />
                 </Box>
               </SkipProvider>
             </QueryClientProvider>

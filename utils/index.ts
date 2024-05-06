@@ -1,7 +1,10 @@
 import { chains } from 'chain-registry';
 import { Asset, Chain } from '@chain-registry/types';
-import { skipChainById } from "@/skip";
+import { skipChainById } from '@/skip';
 import { COSMOS_BECH32_PREFIX_TO_CHAIN_ID } from '@/config';
+import { COSMOS_CHAINS } from '@/config/chains';
+import BigNumber from 'bignumber.js';
+import { fromBech32 } from '@cosmjs/encoding';
 
 export const USDC_TO_UUSDC = 1e6;
 export function uusdcToUsdc(uusdc: string | bigint = '0') {
@@ -10,13 +13,9 @@ export function uusdcToUsdc(uusdc: string | bigint = '0') {
   }).format(parseInt(uusdc.toString()) / USDC_TO_UUSDC);
 }
 
-export function cosmosAddressToSkipChain(address: string) {
-  for (const prefix of Object.keys(COSMOS_BECH32_PREFIX_TO_CHAIN_ID)) {
-    if (address.startsWith(prefix)) {
-      // @ts-ignore
-      return skipChainById(COSMOS_BECH32_PREFIX_TO_CHAIN_ID[prefix]);
-    }
-  }
+export function cosmosAddressToChainId(address: string) {
+  const { prefix } = fromBech32(address);
+  return COSMOS_CHAINS.find((chain) => chain.bech32_prefix === prefix)!.chain_id;
 }
 
 export function shortenAddress(address: string, partlen = 8) {
@@ -28,11 +27,16 @@ export function isValidAddress(address: string) {
 }
 
 export function isValidEvmAddress(address: string) {
-  return address.startsWith("0x") && address.length === 42;
+  return address.startsWith('0x') && address.length === 42;
 }
 
 export function isValidCosmosAddress(address: string) {
-  return address.length > 40 && Object.keys(COSMOS_BECH32_PREFIX_TO_CHAIN_ID).some(prefix => address.startsWith(prefix));
+  try {
+    const { prefix } = fromBech32(address);
+    return COSMOS_CHAINS.map((chain) => chain.bech32_prefix).includes(prefix);
+  } catch (error) {
+    return false;
+  }
 }
 
 export function getLogo(from: Asset | Chain) {
@@ -40,6 +44,23 @@ export function getLogo(from: Asset | Chain) {
 }
 
 export function getChainLogo(name: string) {
-  const chain = chains.find(chain => chain.chain_name === name)
+  const chain = chains.find((chain) => chain.chain_name === name);
   return chain ? getLogo(chain) : null;
 }
+
+export const getCosmosChainNameById = (chainId: string) => {
+  return COSMOS_CHAINS.find((chain) => chain.chain_id === chainId)!.chain_name;
+};
+
+export const shiftDecimals = (number: string | number | bigint = 0, decimalPlaces: number = -6) => {
+  return BigNumber(Number(number)).shiftedBy(decimalPlaces).toString();
+};
+
+export const calcDollarValue = (
+  amount: string | number,
+  price: number,
+  formatted: boolean = true
+) => {
+  const dollarValue = BigNumber(amount).multipliedBy(price).toFormat(2);
+  return formatted ? `${BigNumber(amount).gt(0) ? '≈' : ''} $${dollarValue}` : dollarValue;
+};

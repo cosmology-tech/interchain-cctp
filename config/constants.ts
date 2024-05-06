@@ -122,7 +122,7 @@ export const EVM_CHAINS = SkipChains.filter((chain) => EVM_CHAIN_IDS.includes(ch
 
 export const COSMOS_BECH32_PREFIX_TO_CHAIN_ID = {
   cosmos1: 'cosmoshub-4',
-  noble1: 'noble-1',
+  // noble1: 'noble-1',
   stars1: 'stargaze-1',
   osmo1: 'osmosis-1',
   juno1: 'juno-1',
@@ -135,7 +135,7 @@ export const COSMOS_BECH32_PREFIX_TO_CHAIN_ID = {
 
 export const COSMOS_CHAIN_ID_TO_CHAIN_NAME = {
   'juno-1': 'juno',
-  'noble-1': 'noble',
+  // 'noble-1': 'noble',
   'agoric-3': 'agoric',
   'archway-1': 'archway',
   'cosmoshub-4': 'cosmoshub',
@@ -148,7 +148,7 @@ export const COSMOS_CHAIN_ID_TO_CHAIN_NAME = {
 
 export const COSMOS_CHAIN_ID_TO_PRETTY_NAME = {
   'juno-1': 'Juno',
-  'noble-1': 'Noble',
+  // 'noble-1': 'Noble',
   'agoric-3': 'Agoric',
   'archway-1': 'Archway',
   'cosmoshub-4': 'Cosmos Hub',
@@ -162,7 +162,7 @@ export const COSMOS_CHAIN_ID_TO_PRETTY_NAME = {
 export const COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM = {
   'agoric-3': 'ibc/FE98AAD68F02F03565E9FA39A5E627946699B2B07115889ED812D8BA639576A9',
   'cosmoshub-4': 'ibc/F663521BF1836B00F5F177680F74BFB9A8B5654A694D0D2BC249E03CF2509013',
-  'noble-1': 'uusdc',
+  // 'noble-1': 'uusdc',
   'grand-1': 'uusdc',
   'stargaze-1': 'ibc/4A1C18CA7F50544760CF306189B810CE4C1CB156C7FC870143D401FE7280E591',
   'dydx-mainnet-1': 'ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5',
