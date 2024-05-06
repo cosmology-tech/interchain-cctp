@@ -295,7 +295,7 @@
   dependencies:
     "@babel/runtime" "^7.21.0"
 
-"@chain-registry/types@0.17.1", "@chain-registry/types@^0.17.0", "@chain-registry/types@^0.17.1":
+"@chain-registry/types@0.17.1", "@chain-registry/types@^0.17.0":
   version "0.17.1"
   resolved "https://registry.yarnpkg.com/@chain-registry/types/-/types-0.17.1.tgz#0ac7bda6178d3917834578627f232a247fe5def8"
   integrity sha512-O0CgrtJgIlqXvZm1CqDZe/7jZz068O/uuCIoyDXCegFHK03rdHacKcDGwEIUuI0MNUf8YV3jdE4xHQMSAX+79w==
@@ -313,6 +313,11 @@
   version "0.25.0"
   resolved "https://registry.yarnpkg.com/@chain-registry/types/-/types-0.25.0.tgz#bcd7afa6732bf646ec5f0334d6f1e51f3bc0f0a1"
   integrity sha512-bbP+aBT1NF+xKXCvT6VA+zLlnagKZqlTepx7qaszej86WBSTXpV7e540WXhk8qEWlUKubg8Y3prx7uoN1HAVPA==
+
+"@chain-registry/types@^0.28.8":
+  version "0.28.8"
+  resolved "https://registry.yarnpkg.com/@chain-registry/types/-/types-0.28.8.tgz#5e455031dc61e183158f0cca402fc397e4db463e"
+  integrity sha512-lnrF04htRoMZRLyy+AUtS0qpHsR6swUKy8FPepPlHTfwiBEbPZuJ05V3cEQ1UhyQhH8IoJo/mXQfdu0UNs4SEg==
 
 "@chain-registry/utils@^1.15.0", "@chain-registry/utils@^1.19.10":
   version "1.19.10"
@@ -4331,6 +4336,18 @@
   resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.29.0.tgz#d0b3d12c07d5a47f42ab0c1ed4f317106f3d4b20"
   integrity sha512-WgPTRs58hm9CMzEr5jpISe8HXa3qKQ8CxewdYZeVnA54JrPY9B1CZiwsCoLpLkf0dGRZq+LcX5OiJb0bEsOFww==
 
+"@tanstack/query-devtools@5.32.1":
+  version "5.32.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-devtools/-/query-devtools-5.32.1.tgz#2c03f2fbe9162b650e697c469c8618c7a05d593f"
+  integrity sha512-7Xq57Ctopiy/4atpb0uNY5VRuCqRS/1fi/WBCKKX6jHMa6cCgDuV/AQuiwRXcKARbq2OkVAOrW2v4xK9nTbcCA==
+
+"@tanstack/react-query-devtools@^5.32.1":
+  version "5.32.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query-devtools/-/react-query-devtools-5.32.1.tgz#d8a4349ef3085991ccd3048a5250f197f6db111a"
+  integrity sha512-NjNRPgCReZxgY5f56gnoTCR47NznHlQR4w2cW/W8B0QY8afkbPPnRlfzofs2SwdFW7F37Ysgjm8jtolPTzfa2Q==
+  dependencies:
+    "@tanstack/query-devtools" "5.32.1"
+
 "@tanstack/react-query@^5.29.2":
   version "5.29.2"
   resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.29.2.tgz#c55ffbfaf9d8cf34212428db2b6c61ca6b545188"
@@ -5720,20 +5737,19 @@ caniuse-lite@^1.0.30001406, caniuse-lite@^1.0.30001587:
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001612.tgz#d34248b4ec1f117b70b24ad9ee04c90e0b8a14ae"
   integrity sha512-lFgnZ07UhaCcsSZgWW0K5j4e69dK1u/ltrL9lTUiFOwNHs12S3UMIEYgBV0Z6C6hRDev7iRnMzzYmKabYdXF9g==
 
-chain-registry@1.25.4:
-  version "1.25.4"
-  resolved "https://registry.yarnpkg.com/chain-registry/-/chain-registry-1.25.4.tgz#6d1546cd6070201809ba255924a407ad71116311"
-  integrity sha512-QxBSg4lLR4CXqDgratAAqelw3K/WdROKNvq+IThuirXMfCcuL6wNPVunlvz3gPPdnyAA6D+dSZ4ky4ZWavDcOg==
-  dependencies:
-    "@babel/runtime" "^7.21.0"
-    "@chain-registry/types" "^0.17.1"
-
 chain-registry@^1.27.0:
   version "1.41.0"
   resolved "https://registry.yarnpkg.com/chain-registry/-/chain-registry-1.41.0.tgz#a58ed274012083009657ffaa11487554a0fcaf29"
   integrity sha512-pSmbsjgYci7/ZZ7mMw4V5bLiqm6p/XJc5QL/p5KoQejejkATbj86RllRP8EP7M+Nzj2mHGP1UATmRqkHVhE9yQ==
   dependencies:
     "@chain-registry/types" "^0.25.0"
+
+chain-registry@^1.46.3:
+  version "1.46.3"
+  resolved "https://registry.yarnpkg.com/chain-registry/-/chain-registry-1.46.3.tgz#f0b0c300e1a65081cecda60b6da1bb7a9ef2e6a4"
+  integrity sha512-8JCleIgk3h4mU8yZhbcThBUrdug7n8aFzvLyNVOZgjHAz1ruVPNtAy2ih6+imEcEj5QjYIMnRvtfW1C4ZI3VEQ==
+  dependencies:
+    "@chain-registry/types" "^0.28.8"
 
 chalk@^2.4.1, chalk@^2.4.2:
   version "2.4.2"
