@@ -4,7 +4,7 @@ import { useAccount, useDisconnect } from 'wagmi';
 import { Box, Stack, NobleSelectTokenButton, Skeleton } from '@interchain-ui/react';
 
 import { calcDollarValue } from '@/utils';
-import { WalletAddress, FaqList } from '@/components/common';
+import { WalletAddress, FaqList, StaggerList } from '@/components/common';
 import { CHAIN_TYPE, DEFAULT_USDC_LOGO, sizes } from '@/config';
 import { useUsdcPrice, useIsMounted, useSkipChains, useUsdcAssets, useUsdcBalances } from '@/hooks';
 import { BridgeStep, SelectedToken } from '@/pages/bridge';
@@ -17,7 +17,7 @@ interface SelectTokenProps {
 // TODO: switch to the network that's selected in metamask
 export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProps) {
   const router = useRouter();
-  const { address } = useAccount();
+  const { address: evmAddress } = useAccount();
   const searchParams = useSearchParams();
   const { disconnect } = useDisconnect();
   const isMounted = useIsMounted();
@@ -31,6 +31,8 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
   const { data: balances } = useUsdcBalances({ chains: displayedChains, assets });
   const { data: usdcPrice } = useUsdcPrice();
 
+  console.log({ balances, displayedChains });
+
   return (
     <>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
@@ -38,10 +40,10 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
           Select token to bridge
         </Box>
 
-        {isMounted() ? (
+        {isMounted ? (
           <WalletAddress
-            walletType="metamask"
-            address={address}
+            walletType={sourceChainType === 'cosmos' ? 'keplr' : 'metamask'}
+            address={sourceChainType === 'cosmos' ? '' : evmAddress}
             onDisconnect={() => {
               disconnect();
               router.push('/');
@@ -52,7 +54,15 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
         {isChainsLoading ? (
           <Skeleton width="$full" height="$20" mt="24px" borderRadius="$md" />
         ) : (
-          <Stack direction="vertical" space="16px" attributes={{ mt: '24px' }}>
+          <StaggerList
+            numItems={displayedChains.length}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              marginTop: '24px'
+            }}
+          >
             {displayedChains.map((chain) => {
               const usdcAsset = assets?.[chain.chainID];
               return (
@@ -84,7 +94,7 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
                 />
               );
             })}
-          </Stack>
+          </StaggerList>
         )}
       </Box>
 

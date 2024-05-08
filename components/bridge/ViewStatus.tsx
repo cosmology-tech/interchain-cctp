@@ -11,7 +11,7 @@ import {
   NobleButton,
   useColorModeValue
 } from '@interchain-ui/react';
-import { FaqList } from '@/components/common/FaqList/FaqList';
+import { FaqList, FadeIn } from '@/components/common';
 
 const USDC_LOGO_URL =
   'https://raw.githubusercontent.com/cosmos/chain-registry/master/_non-cosmos/ethereum/images/usdc.svg';
@@ -130,13 +130,13 @@ const SuccessfulTransactionDetails = () => {
 
 export function ViewStatus() {
   return (
-    <>
+    <FadeIn>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
         <InProgressTransactionDetails />
         {/* <SuccessfulTransactionDetails /> */}
       </Box>
 
       <FaqList />
-    </>
+    </FadeIn>
   );
 }

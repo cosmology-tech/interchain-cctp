@@ -3,7 +3,7 @@ import { useChains } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Box, Text, NoblePageTitleBar, NobleButton } from '@interchain-ui/react';
 
-import { ArrowDownIcon, FaqList } from '@/components/common';
+import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
 import { SkipChain, useRoute, useUsdcAssets } from '@/hooks';
 import { getCosmosChainNameById, isValidAddress, shiftDecimals } from '@/utils';
@@ -109,7 +109,7 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
     routeIsError;
 
   return (
-    <>
+    <FadeIn>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
         <NoblePageTitleBar
           title="Select amount and destination"
@@ -165,6 +165,6 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
       </Box>
 
       <FaqList />
-    </>
+    </FadeIn>
   );
 }

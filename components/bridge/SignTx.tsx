@@ -2,12 +2,14 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 import { colors } from '@/config';
+import { BaseButton, FadeIn } from '@/components/common';
 import { AbstractWallet } from '@/components/common/icons/AbstractWallet';
 
 export function SignTx() {
   const router = useRouter();
+
   return (
-    <>
+    <FadeIn>
       <Box mx="auto" mt="60px" width="300px">
         <Box minHeight="50rem" textAlign="center">
           <Text
@@ -41,18 +43,25 @@ export function SignTx() {
             <AbstractWallet />
           </Box>
           <Box mt="12px" textAlign="center">
-            <Text
-              fontSize="14px"
-              fontWeight="600"
-              lineHeight="20px"
-              attributes={{ cursor: 'pointer', onClick: () => router.back() }}
-              color={useColorModeValue(colors.gray500, colors.blue700)}
+            <BaseButton
+              onPress={() => {
+                router.back();
+              }}
             >
-              Cancel
-            </Text>
+              <Text
+                as="span"
+                fontSize="14px"
+                fontWeight="600"
+                lineHeight="20px"
+                attributes={{ cursor: 'pointer' }}
+                color={useColorModeValue(colors.gray500, colors.blue700)}
+              >
+                Cancel
+              </Text>
+            </BaseButton>
           </Box>
         </Box>
       </Box>
-    </>
+    </FadeIn>
   );
 }

@@ -1,6 +1,6 @@
-import * as React from "react";
-import writeText from "copy-to-clipboard";
-import { useIsMounted } from "./useIsMounted";
+import * as React from 'react';
+import writeText from 'copy-to-clipboard';
+import { useIsMounted } from './useIsMounted';
 
 export interface CopyToClipboardState {
   value?: string;
@@ -20,11 +20,11 @@ export const useCopyToClipboard = (
   const [state, setState] = React.useState<CopyToClipboardState>({
     value: undefined,
     error: undefined,
-    noUserInteraction: true,
+    noUserInteraction: true
   });
 
   const copyToClipboard = React.useCallback((value: string) => {
-    if (!isMounted()) {
+    if (!isMounted) {
       return;
     }
 
@@ -33,26 +33,26 @@ export const useCopyToClipboard = (
 
     try {
       // only strings and numbers casted to strings can be copied to clipboard
-      if (typeof value !== "string" && typeof value !== "number") {
+      if (typeof value !== 'string' && typeof value !== 'number') {
         const error = new Error(
           `Cannot copy typeof ${typeof value} to clipboard, must be a string`
         );
-        if (process.env.NODE_ENV === "development") console.error(error);
+        if (process.env.NODE_ENV === 'development') console.error(error);
         setState({
           value,
           error,
-          noUserInteraction: true,
+          noUserInteraction: true
         });
         return;
       }
       // empty strings are also considered invalid
-      else if (value === "") {
+      else if (value === '') {
         const error = new Error(`Cannot copy empty string to clipboard.`);
-        if (process.env.NODE_ENV === "development") console.error(error);
+        if (process.env.NODE_ENV === 'development') console.error(error);
         setState({
           value,
           error,
-          noUserInteraction: true,
+          noUserInteraction: true
         });
         return;
       }
@@ -61,7 +61,7 @@ export const useCopyToClipboard = (
       setState({
         value: normalizedValue,
         error: undefined,
-        noUserInteraction,
+        noUserInteraction
       });
 
       params?.onSuccess?.();
@@ -69,7 +69,7 @@ export const useCopyToClipboard = (
       setState({
         value: normalizedValue,
         error: error as Error,
-        noUserInteraction: noUserInteraction ?? false,
+        noUserInteraction: noUserInteraction ?? false
       });
       params?.onError?.(error);
     }
