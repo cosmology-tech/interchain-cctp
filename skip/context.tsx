@@ -4,21 +4,26 @@ import { getWalletClient } from '@wagmi/core';
 import { WalletClient } from 'viem';
 import { SKIP_API_CLIENT_ID } from '@/config';
 import { config } from '@/config/wagmi';
-import { useChain, useManager } from '@cosmos-kit/react';
-import { getCosmosChainNameById } from '@/utils';
+import { useWalletClient } from '@cosmos-kit/react';
+import { wallets } from 'cosmos-kit';
 
 export const SkipContext = createContext<{ skipClient: SkipRouter } | undefined>(undefined);
 
 export function SkipProvider({ children }: { children: ReactNode }) {
-  const { getWalletRepo } = useManager();
+  const { client } = useWalletClient(wallets.keplr[0].walletName);
 
   const skipClient = new SkipRouter({
     clientID: SKIP_API_CLIENT_ID,
     getCosmosSigner: async (chainID) => {
-      await window.keplr.enable(chainID);
+      const cosmosSigner = client?.getOfflineSigner && (await client.getOfflineSigner(chainID));
 
-      return window.getOfflineSigner(chainID);
+      if (!cosmosSigner) {
+        throw new Error(`getCosmosSigner error: no offline signer available for chain ${chainID}`);
+      }
+
+      return cosmosSigner;
     },
+    // @ts-ignore
     getEVMSigner: async (chainID) => {
       const evmWalletClient = (await getWalletClient(config, {
         chainId: parseInt(chainID)
