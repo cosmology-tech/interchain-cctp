@@ -26,21 +26,19 @@ export function StaggerList(props: StaggerListProps) {
       className={props.className}
       style={props.style}
     >
-      {Array.from({ length: props.numItems }).map((_, i) =>
-        React.Children.map(props.children, (child) => {
-          return (
-            <StaggerListItem
-              key={i}
-              idx={i}
-              originIndex={0}
-              delayPerItem={delayPerItem}
-              originOffset={originOffset}
-            >
-              {child}
-            </StaggerListItem>
-          );
-        })
-      )}
+      {React.Children.map(props.children, (child, idx) => {
+        return (
+          <StaggerListItem
+            key={idx}
+            idx={idx}
+            originIndex={0}
+            delayPerItem={delayPerItem}
+            originOffset={originOffset}
+          >
+            {child}
+          </StaggerListItem>
+        );
+      })}
     </motion.div>
   );
 }

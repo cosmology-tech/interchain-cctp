@@ -31,6 +31,8 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
   const { data: balances } = useUsdcBalances({ chains: displayedChains, assets });
   const { data: usdcPrice } = useUsdcPrice();
 
+  console.log({ balances, displayedChains });
+
   return (
     <>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">

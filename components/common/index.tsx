@@ -5,4 +5,7 @@ export * from './Tooltip';
 export * from './FaqList';
 export * from './BaseButton';
 export * from './WalletAddress';
+
+// Animation components
 export * from './StaggerList';
+export * from './FadeIn';
