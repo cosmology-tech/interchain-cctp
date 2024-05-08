@@ -24,7 +24,7 @@ import {
   isValidCosmosAddress,
   isValidEvmAddress
 } from '@/utils';
-import { SkipChain, useSkipChains } from '@/hooks';
+import { SkipChain, useConnectChains, useSkipChains } from '@/hooks';
 
 interface SelectDestinationProps {
   destChain: SkipChain | null;
@@ -50,9 +50,13 @@ export const SelectDestination = ({
 
   const { data: chains = [] } = useSkipChains();
   const cosmosChainContexts = useChains(COSMOS_CHAIN_NAMES);
+  const {
+    isAllConnected: isCosmosWalletConnected,
+    connectAll,
+    disconnectAll
+  } = useConnectChains(COSMOS_CHAIN_NAMES);
 
   const sourceChainType = (searchParams.get('chain-type') ?? CHAIN_TYPE.EVM) as ChainType;
-  const isCosmosWalletConnected = Object.values(cosmosChainContexts)[0].isWalletConnected;
 
   const destChains = useMemo(() => {
     if (isValidEvmAddress(destAddress)) {
@@ -65,12 +69,7 @@ export const SelectDestination = ({
 
   const handleConnectWallet = () => {
     if (sourceChainType === 'evm') {
-      COSMOS_CHAIN_NAMES.forEach((chainName) => {
-        const chainContext = cosmosChainContexts[chainName];
-        if (chainContext.isWalletDisconnected) {
-          chainContext.connect();
-        }
-      });
+      connectAll();
     }
     if (sourceChainType === 'cosmos') {
       wagmiConnect({ connector: connectors[0] });
@@ -79,7 +78,7 @@ export const SelectDestination = ({
 
   const handleDisconnectWallet = () => {
     if (sourceChainType === 'evm') {
-      Object.values(cosmosChainContexts)[0].disconnect();
+      disconnectAll();
     }
     if (sourceChainType === 'cosmos') {
       wagmiDisconnect();

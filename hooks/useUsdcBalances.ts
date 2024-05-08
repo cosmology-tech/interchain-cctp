@@ -13,6 +13,7 @@ import {
   USDC_CONTRACT_ABI,
   config as wagmiConfig
 } from '@/config';
+import { useConnectChains } from './useConnectChains';
 
 export type EVMAddress = `0x${string}`;
 
@@ -22,37 +23,31 @@ interface Args {
 }
 
 export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
-  const cosmosChains = useChains(COSMOS_CHAIN_NAMES);
   const { connect: wagmiConnect, connectors } = useConnect();
-  const { address: evmAddress, isConnected: isEvmNetworkConnected } = useAccount();
-
-  const isCosmosNetworkConnected = COSMOS_CHAIN_NAMES.every((chainName) => {
-    return cosmosChains[chainName].isWalletConnected;
-  });
+  const { address: evmAddress, isConnected: isEvmWalletConnected } = useAccount();
+  const cosmosChains = useChains(COSMOS_CHAIN_NAMES);
+  const { isAllConnected: isCosmosWalletConnected, connectAll } =
+    useConnectChains(COSMOS_CHAIN_NAMES);
 
   const isEvmChainsOnly = chains.every((chain) => chain.chainType === 'evm');
   const isCosmosChainsOnly = chains.every((chain) => chain.chainType === 'cosmos');
 
   useEffect(() => {
-    if (isCosmosNetworkConnected || isEvmChainsOnly) return;
-    COSMOS_CHAIN_NAMES.forEach((chainName) => {
-      const chainContext = cosmosChains[chainName];
-      if (!chainContext.isWalletConnected) {
-        chainContext.connect();
-      }
-    });
-  }, [isCosmosNetworkConnected]);
+    if (isCosmosWalletConnected || isEvmChainsOnly) return;
+    connectAll();
+  }, [isCosmosWalletConnected]);
 
   useEffect(() => {
-    if (isEvmNetworkConnected || isCosmosChainsOnly) return;
+    if (isEvmWalletConnected || isCosmosChainsOnly) return;
     wagmiConnect({ connector: connectors[0] });
-  }, [isEvmNetworkConnected]);
+  }, [isEvmWalletConnected]);
 
   const isConnected = isEvmChainsOnly
-    ? isEvmNetworkConnected
+    ? isEvmWalletConnected
     : isCosmosChainsOnly
-    ? isCosmosNetworkConnected
-    : isEvmNetworkConnected && isCosmosNetworkConnected;
+    ? isCosmosWalletConnected
+    : isEvmWalletConnected && isCosmosWalletConnected;
+
   const isEnabled = isConnected && chains.length > 0 && Object.keys(assets).length > 0;
 
   return useQuery({

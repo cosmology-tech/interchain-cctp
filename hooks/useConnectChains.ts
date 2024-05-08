@@ -1,49 +1,40 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useChains } from '@cosmos-kit/react';
+import { useMemo } from 'react';
+import { wallets } from 'cosmos-kit';
+import { useWallet } from '@cosmos-kit/react';
 
 export const useConnectChains = (chainNames: string[]) => {
-  const [isAllConnected, setIsAllConnected] = useState(false);
-  const [resolveAllConnected, setResolveAllConnected] = useState<(() => void) | null>(null);
-  const chainContexts = useChains(chainNames);
+  const { chainWallets } = useWallet(wallets.keplr[0].walletName);
 
-  const connectAll = useCallback(async () => {
-    chainNames.forEach((chainName) => {
-      const chainContext = chainContexts[chainName];
-      if (chainContext?.isWalletDisconnected) {
-        chainContext.connect();
+  const chains = useMemo(() => {
+    return chainWallets.filter((chainWallet) => chainNames.includes(chainWallet.chainRecord.name));
+  }, [chainNames]);
+
+  const isAllConnected = chains.every((chain) => chain.isWalletConnected);
+
+  const connectAllAsync = async () => {
+    for (const chain of chains) {
+      if (chain.isWalletDisconnected) {
+        await chain.connect(false);
       }
-    });
-
-    if (isAllConnected) {
-      return;
     }
+    return chains.every((chain) => chain.isWalletConnected);
+  };
 
-    return new Promise<void>((resolve) => {
-      setResolveAllConnected(() => resolve);
-    });
-  }, [chainNames, chainContexts, isAllConnected]);
-
-  useEffect(() => {
-    const isConnected = Object.values(chainContexts).every(
-      (chainContext) => chainContext.isWalletConnected
-    );
-
-    if (isConnected && resolveAllConnected) {
-      resolveAllConnected();
-      setResolveAllConnected(null);
-    }
-
-    setIsAllConnected(isConnected);
-  }, [chainContexts, resolveAllConnected]);
-
-  const disconnectAll = () => {
-    chainNames.forEach((chainName) => {
-      const chainContext = chainContexts[chainName];
-      if (chainContext.isWalletConnected) {
-        chainContext.disconnect();
+  const connectAll = () => {
+    chains.forEach((chain) => {
+      if (chain.isWalletDisconnected) {
+        chain.connect();
       }
     });
   };
 
-  return { isAllConnected, connectAll, disconnectAll };
+  const disconnectAll = () => {
+    chains.forEach((chain) => {
+      if (chain.isWalletConnected) {
+        chain.disconnect();
+      }
+    });
+  };
+
+  return { isAllConnected, connectAll, connectAllAsync, disconnectAll };
 };
