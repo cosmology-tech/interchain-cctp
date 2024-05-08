@@ -1,6 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { useAccount, useConnect } from 'wagmi';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES } from '@/config';
+import { useDetectWallets } from '@/hooks/useDetectWallets';
 import { Box, NobleSelectWalletButton } from '@interchain-ui/react';
 import { useConnectChains } from '@/hooks';
 
@@ -34,6 +35,8 @@ export function WalletList() {
     });
   };
 
+  const isWalletInstalled = useDetectWallets();
+
   return (
     <Box
       pt="72px"
@@ -49,16 +52,18 @@ export function WalletList() {
         logoUrl={'/logos/metamask.svg'}
         logoAlt="metamask"
         title="MetaMask"
-        subTitle="Connect"
         onClick={handleConnectMetamask}
+        subTitle={isWalletInstalled.metamask ? 'Connect' : 'Install MetaMask'}
+        disabled={!isWalletInstalled.metamask}
       />
 
       <NobleSelectWalletButton
         logoUrl={'/logos/keplr.svg'}
         logoAlt="keplr"
         title="Keplr"
-        subTitle="Connect"
         onClick={handleConnectKeplr}
+        subTitle={isWalletInstalled.keplr ? 'Connect' : 'Install Keplr'}
+        disabled={!isWalletInstalled.keplr}
       />
 
       <NobleSelectWalletButton
@@ -66,6 +71,7 @@ export function WalletList() {
         logoAlt="keplr"
         title="Capsule"
         subTitle="Log in"
+        disabled
       />
 
       <NobleSelectWalletButton

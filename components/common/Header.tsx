@@ -1,29 +1,66 @@
-import Link from "next/link";
-import Image from "next/image";
-import { Box, useColorModeValue } from "@interchain-ui/react";
-import { ThemeSwitcher } from "@/components/common/ThemeSwitcher";
+import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { Box, useColorModeValue } from '@interchain-ui/react';
+import { ThemeSwitcher } from '@/components/common/ThemeSwitcher';
+import { HistoryLink } from './HistoryLink';
 
-export function Header() {
+interface HeaderProps {
+  children?: React.ReactNode;
+}
+
+export function Header(props: HeaderProps) {
+  const router = useRouter();
+  const isHomePage = router.pathname === '/';
+
   return (
     <Box
       display="flex"
       pt="40px"
       alignItems="center"
-      justifyContent="space-between"
+      justifyContent={{
+        mobile: 'space-between',
+        mdMobile: 'space-between'
+      }}
+      flexWrap={{
+        mobile: isHomePage ? 'nowrap' : 'wrap',
+        mdMobile: 'nowrap'
+      }}
     >
-      <Link href="/">
-        <Image
-          width={206}
-          height={36}
-          alt="Noble Express"
-          src={useColorModeValue(
-            "/logos/noble-express-light.svg",
-            "/logos/noble-express-dark.svg"
-          )}
-        />
-      </Link>
+      <Box paddingRight={isHomePage ? '$0' : '$27'} flexShrink={0}>
+        <Link href="/">
+          <Image
+            width={206}
+            height={36}
+            alt="Noble Express"
+            src={useColorModeValue(
+              '/logos/noble-express-light.svg',
+              '/logos/noble-express-dark.svg'
+            )}
+          />
+        </Link>
+      </Box>
 
-      <ThemeSwitcher />
+      <Box
+        display="flex"
+        width={{
+          mobile: isHomePage ? 'auto' : '100%',
+          mdMobile: 'auto'
+        }}
+        justifyContent={{
+          mobile: isHomePage ? 'center' : 'space-between',
+          mdMobile: 'center'
+        }}
+        alignItems="center"
+        paddingTop={{
+          mobile: isHomePage ? '0' : '24px',
+          mdMobile: '0'
+        }}
+      >
+        {isHomePage ? null : <HistoryLink />}
+
+        <ThemeSwitcher />
+      </Box>
     </Box>
   );
 }
