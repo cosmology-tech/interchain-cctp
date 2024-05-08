@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useIsMounted } from './useIsMounted';
 
 export const useDetectWallets = () => {
   const isMetamaskInstalled = useDetect(detectMetamask);
@@ -11,9 +12,12 @@ export const useDetectWallets = () => {
 };
 
 function useDetect(detectFn: () => boolean) {
-  const [isInstalled, setIsInstalled] = React.useState<boolean>(false);
+  const isMounted = useIsMounted();
+  const [isInstalled, setIsInstalled] = React.useState<boolean>(true);
 
   React.useEffect(() => {
+    if (!isMounted) return;
+
     const detect = () => {
       setIsInstalled(detectFn());
     };
@@ -23,7 +27,7 @@ function useDetect(detectFn: () => boolean) {
     return () => {
       window.removeEventListener('load', detect);
     };
-  }, []);
+  }, [detectFn, isMounted]);
 
   return isInstalled;
 }

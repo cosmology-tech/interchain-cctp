@@ -142,7 +142,8 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
           variant="solid"
           size="lg"
           attributes={{
-            marginTop: '20px'
+            marginTop: '20px',
+            fontWeight: '$semibold'
           }}
           onClick={() => onTransfer()}
           disabled={isBridgeButtonDisabled}
