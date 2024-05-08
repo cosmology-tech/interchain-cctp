@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import { useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect } from 'wagmi';
-import { Box, Stack, NobleSelectTokenButton, Skeleton } from '@interchain-ui/react';
+import { Box, NobleSelectTokenButton, Skeleton } from '@interchain-ui/react';
 
 import { calcDollarValue } from '@/utils';
 import { WalletAddress, FaqList, StaggerList } from '@/components/common';
@@ -30,8 +30,6 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
 
   const { data: balances } = useUsdcBalances({ chains: displayedChains, assets });
   const { data: usdcPrice } = useUsdcPrice();
-
-  console.log({ balances, displayedChains });
 
   return (
     <>
