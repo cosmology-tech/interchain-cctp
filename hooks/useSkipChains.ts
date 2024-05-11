@@ -27,7 +27,12 @@ export const useSkipChains = () => {
           };
         })
         .filter(({ chainID }) => SUPPORTED_CHAIN_IDS.includes(chainID))
-        .sort((chainA, chainB) => chainA.prettyName.localeCompare(chainB.prettyName));
+        .sort((chainA, chainB) => {
+          return (
+            SUPPORTED_CHAIN_IDS.indexOf(chainA.chainID) -
+            SUPPORTED_CHAIN_IDS.indexOf(chainB.chainID)
+          );
+        });
     },
     refetchOnMount: false,
     refetchOnReconnect: false,

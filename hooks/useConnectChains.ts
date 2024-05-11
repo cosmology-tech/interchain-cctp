@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { wallets } from 'cosmos-kit';
 import { useWallet } from '@cosmos-kit/react';
 
+// TODO: handle Error: Extension context invalidated
 export const useConnectChains = (chainNames: string[]) => {
   const { chainWallets } = useWallet(wallets.keplr[0].walletName);
 

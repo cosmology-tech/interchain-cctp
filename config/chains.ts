@@ -6,7 +6,8 @@ import {
   optimismSepolia,
   sepolia,
   mainnet,
-  Chain as EVMChain
+  Chain as EVMChain,
+  avalancheFuji
 } from 'wagmi/chains';
 
 import noble from 'chain-registry/mainnet/noble/chain';
@@ -20,7 +21,7 @@ import type { Chain as CosmosChain } from '@chain-registry/types';
 
 // Supported EVM chains
 const EVM_MAINNETS: EVMChain[] = [mainnet, arbitrum, optimism, avalanche];
-const EVM_TESTNETS: EVMChain[] = [sepolia, optimismSepolia, arbitrumSepolia];
+const EVM_TESTNETS: EVMChain[] = [sepolia, optimismSepolia, avalancheFuji];
 
 // Supported Cosmos chains
 const COSMOS_MAINNETS: CosmosChain[] = [noble, cosmoshub, stargaze, osmosis, juno];

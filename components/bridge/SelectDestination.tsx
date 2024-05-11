@@ -64,8 +64,8 @@ export const SelectDestination = ({
         .filter((chain) => chain.chainType === CHAIN_TYPE.EVM)
         .filter((chain) => (sourceChainType === 'evm' ? chain.chainID !== sourceChainId : true));
     }
-    return chains.filter((chain) => chain.chainType !== sourceChainType);
-  }, [chains, destAddress, sourceChainType]);
+    return chains.filter((chain) => chain.chainID !== sourceChainId);
+  }, [chains, destAddress, sourceChainType, sourceChainId]);
 
   const handleConnectWallet = () => {
     if (sourceChainType === 'evm') {
