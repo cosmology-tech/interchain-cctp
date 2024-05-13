@@ -44,6 +44,9 @@ export function SignTx() {
           </Box>
           <Box mt="12px" textAlign="center">
             <BaseButton
+              style={{
+                margin: '0 auto'
+              }}
               onPress={() => {
                 router.back();
               }}
