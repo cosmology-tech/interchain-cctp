@@ -1,24 +1,35 @@
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { useChains } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { Box, Text, NoblePageTitleBar, NobleButton } from '@interchain-ui/react';
+import { Box, NoblePageTitleBar, NobleButton } from '@interchain-ui/react';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
-import { SkipChain, useRoute, useUsdcAssets } from '@/hooks';
+import { BroadcastedTx, SkipChain, useRoute, useUsdcAssets } from '@/hooks';
 import { getCosmosChainNameById, isValidAddress, shiftDecimals } from '@/utils';
 import { useSkipClient } from '@/skip';
-import { BridgeStep, SelectedToken } from '@/pages/bridge';
+import { BridgeStep, SelectedToken, TransferInfo } from '@/pages/bridge';
 import { SelectAmount } from './SelectAmount';
 import { SelectDestination } from './SelectDestination';
 import { TransferExtraInfo } from './TransferExtraInfo';
+import { RouteResponse } from '@skip-router/core';
+import { SignTx } from './SignTx';
 
 interface SelectAmountDestProps {
   selectedToken: SelectedToken;
-  setBridgeStep: (bridgeStep: BridgeStep) => void;
+  setRoute: Dispatch<SetStateAction<RouteResponse | null>>;
+  setBridgeStep: Dispatch<SetStateAction<BridgeStep>>;
+  setBroadcastedTxs: Dispatch<SetStateAction<BroadcastedTx[]>>;
+  setTransferInfo: Dispatch<SetStateAction<TransferInfo | null>>;
 }
 
-export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountDestProps) {
+export function SelectAmountDest({
+  selectedToken,
+  setRoute,
+  setBridgeStep,
+  setTransferInfo,
+  setBroadcastedTxs
+}: SelectAmountDestProps) {
   const { chain: sourceChain, asset: sourceAsset, balance } = selectedToken;
 
   const skipClient = useSkipClient();
@@ -27,7 +38,7 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
   const [destChain, setDestChain] = useState<SkipChain | null>(null);
   const [destAddress, setDestAddress] = useState<string>('');
   const [amount, setAmount] = useState('0');
-  const [txStatus, setTxStatus] = useState<'pending' | 'success'>(); // TODO: remove later
+  const [showSignTxView, setShowSignTxView] = useState(false);
 
   const { address: evmAddress, chainId: connectedChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
@@ -49,12 +60,30 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
   });
 
   async function onTransfer() {
-    if (!route || !evmAddress || !destAddress) return;
+    if (!route || !evmAddress || !destChain || !destAddress) return;
+
+    const sourceChainAddress =
+      sourceChain.chainType === CHAIN_TYPE.EVM
+        ? evmAddress
+        : cosmosChainContexts[getCosmosChainNameById(sourceChain.chainID)].address!;
+
+    setRoute(route);
+    setShowSignTxView(true);
+    setTransferInfo({
+      amount,
+      fromChainID: sourceChain.chainID,
+      fromChainAddress: sourceChainAddress,
+      fromChainLogo: sourceChain.logoURI || '',
+      toChainID: destChain.chainID,
+      toChainAddress: destAddress,
+      toChainLogo: destChain.logoURI || ''
+    });
 
     if (
       sourceChain.chainType === CHAIN_TYPE.EVM &&
       connectedChainId !== Number(sourceChain.chainID)
     ) {
+      // TODO: move this to first step or at the beginning of this step
       await switchChainAsync({ chainId: Number(sourceChain.chainID) });
     }
 
@@ -68,26 +97,21 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
     }, {} as Record<string, string>);
 
     try {
-      await skipClient.executeRoute({
+      // TODO: handle errors
+      skipClient.executeRoute({
         route,
         userAddresses,
         validateGasBalance: route.txsRequired === 1,
         onTransactionTracked: async (tx) => {
-          console.log('onTransactionTracked:', tx);
-        },
-        onTransactionBroadcast: async (tx) => {
-          setTxStatus('pending');
-          console.log('onTransactionBroadcast:', tx);
-        },
-        onTransactionCompleted: async (tx) => {
-          setTxStatus('success');
-          setTimeout(() => {
-            setTxStatus(undefined);
-          }, 10000);
-          console.log('onTransactionCompleted:', tx);
+          setBroadcastedTxs((prev) => {
+            const txs = [...prev, { chainID: tx.chainID, txHash: tx.txHash }];
+            if (route.txsRequired === txs.length) {
+              setBridgeStep('view-status');
+            }
+            return txs;
+          });
         }
       });
-      // setBridgeStep('sign-tx');
     } catch (e) {
       console.error('Error:', e);
     }
@@ -107,6 +131,10 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
     +amount > +balance ||
     routeIsFetching ||
     routeIsError;
+
+  if (showSignTxView) {
+    return <SignTx />;
+  }
 
   return (
     <FadeIn>
@@ -153,15 +181,6 @@ export function SelectAmountDest({ selectedToken, setBridgeStep }: SelectAmountD
 
         {shouldShowEstimates && (
           <TransferExtraInfo route={route} destChain={destChain} sourceChain={sourceChain} />
-        )}
-
-        {/* TODO: remove later */}
-        {txStatus && (
-          <Box textAlign="center" mt="$12">
-            <Text>
-              Tx Status: <Text as="span">{txStatus.toUpperCase()}</Text>
-            </Text>
-          </Box>
         )}
       </Box>
 

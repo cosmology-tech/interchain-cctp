@@ -1,8 +1,8 @@
 import Image from 'next/image';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 import { ClockIcon } from '@/components/common';
-import { colors, getFinalityTime } from '@/config';
-import { SkipChain, useUsdcPrice } from '@/hooks';
+import { colors } from '@/config';
+import { SkipChain, useFinalityTimeEstimate, useUsdcPrice } from '@/hooks';
 import { RouteResponse } from '@skip-router/core';
 import { USDC_TO_UUSDC } from '@/utils';
 
@@ -14,13 +14,14 @@ function calcFeeFromRoute(route: RouteResponse, price = 1) {
 }
 
 interface TransferExtraInfoProps {
-  route: RouteResponse | undefined;
+  route: RouteResponse;
   destChain: SkipChain | null;
   sourceChain: SkipChain;
 }
 
 export const TransferExtraInfo = ({ route, sourceChain, destChain }: TransferExtraInfoProps) => {
   const { data: usdcPrice } = useUsdcPrice();
+  const estimatedFinalityTime = useFinalityTimeEstimate(route);
 
   return (
     <Box mt="1rem" display="flex" alignItems="center" visibility={destChain ? 'visible' : 'hidden'}>
@@ -52,7 +53,7 @@ export const TransferExtraInfo = ({ route, sourceChain, destChain }: TransferExt
           attributes={{ ml: '5px' }}
           color={useColorModeValue(colors.gray500, colors.blue700)}
         >
-          ≈ {getFinalityTime(sourceChain.chainID)}
+          ≈ {estimatedFinalityTime}
         </Text>
       </Box>
 

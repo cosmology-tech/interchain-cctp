@@ -132,9 +132,7 @@ export const SelectDestination = ({
 
   const handleChangeChain = () => {
     setDestChain(null);
-    if (destChain?.chainType === CHAIN_TYPE.COSMOS) {
-      setDestAddress('');
-    }
+    setDestAddress('');
   };
 
   const isWalletConnected = useMemo(() => {

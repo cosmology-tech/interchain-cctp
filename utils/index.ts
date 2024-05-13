@@ -64,3 +64,14 @@ export const calcDollarValue = (
   const dollarValue = BigNumber(amount).multipliedBy(price).toFormat(2);
   return formatted ? `${BigNumber(amount).gt(0) ? '≈' : ''} $${dollarValue}` : dollarValue;
 };
+
+export const calcEstimatedRemainingTime = (totalTime: string, percent: number) => {
+  const timeValue = totalTime.split(' ')[0];
+  const timeUnit = totalTime.split(' ')[1].slice(0, 6); // both 'minute' and 'second' are 6 characters long
+  const remainingTime = BigNumber(timeValue)
+    .multipliedBy(1 - percent)
+    .decimalPlaces(0, BigNumber.ROUND_UP)
+    .toString();
+
+  return `${remainingTime} ${timeUnit}${remainingTime === '1' ? '' : 's'}`;
+};

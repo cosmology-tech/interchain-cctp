@@ -179,17 +179,19 @@ export const COSMOS_CHAINS = SkipChains.filter((chain) =>
   COSMOS_CHAIN_IDS.includes(chain.chain_id!)
 ).sort((a, b) => a.chain_name!.localeCompare(b.chain_name!));
 
+type Time = `${number} ${'minutes' | 'seconds' | 'minute' | 'second'}`;
+
 /** @see https://docs.axelar.dev/learn/txduration#common-finality-time-for-interchain-transactions */
-const finalityTimeMap: Record<string, string> = {
+const finalityTimeMap: Record<string, Time> = {
   [`${ethereum.id}`]: '16 minutes',
   [`${avalanche.id}`]: '3 seconds',
-  [`${polygon.id}`]: '~5 minutes',
+  [`${polygon.id}`]: '5 minutes',
   [`${optimism.id}`]: '30 minutes',
-  [`${arbitrum.id}`]: '~20 minutes',
+  [`${arbitrum.id}`]: '20 minutes',
   [`${base.id}`]: '24 minutes'
 };
 
 /** @see https://docs.axelar.dev/learn/txduration#common-finality-time-for-interchain-transactions */
-export function getFinalityTime(id: string | number) {
-  return finalityTimeMap[`${id}`] || '~30 minutes';
+export function getFinalityTime(id: string | Time) {
+  return finalityTimeMap[`${id}`] || '30 minutes';
 }
