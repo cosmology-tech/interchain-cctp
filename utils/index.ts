@@ -75,3 +75,9 @@ export const calcEstimatedRemainingTime = (totalTime: string, percent: number) =
 
   return `${remainingTime} ${timeUnit}${remainingTime === '1' ? '' : 's'}`;
 };
+
+export const randomId = (length: number = 8) => {
+  return Math.random()
+    .toString(16)
+    .substring(2, length + 2);
+};

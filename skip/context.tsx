@@ -15,7 +15,7 @@ export function SkipProvider({ children }: { children: ReactNode }) {
   const skipClient = new SkipRouter({
     clientID: SKIP_API_CLIENT_ID,
     getCosmosSigner: async (chainID) => {
-      const cosmosSigner = client?.getOfflineSigner && (await client.getOfflineSigner(chainID));
+      const cosmosSigner = client?.getOfflineSignerDirect && client.getOfflineSignerDirect(chainID);
 
       if (!cosmosSigner) {
         throw new Error(`getCosmosSigner error: no offline signer available for chain ${chainID}`);

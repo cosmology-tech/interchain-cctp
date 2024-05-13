@@ -43,9 +43,10 @@ export interface TxsStatusData {
 interface Args {
   txs: BroadcastedTx[];
   txsRequired: number | undefined;
+  enabled?: boolean;
 }
 
-export const useTxsStatus = ({ txs, txsRequired }: Args) => {
+export const useTxsStatus = ({ txs, txsRequired, enabled }: Args) => {
   const skipClient = useSkipClient();
   const [isSettled, setIsSettled] = useState(false);
   const [prevData, setPrevData] = useState<TxsStatusData | undefined>(undefined);
@@ -123,7 +124,7 @@ export const useTxsStatus = ({ txs, txsRequired }: Args) => {
       setPrevData(resData);
       return resData;
     },
-    enabled: !isSettled && !!txs && txs.length > 0,
+    enabled: !isSettled && (!!txs && txs.length > 0 && enabled !== undefined ? enabled : true),
     refetchInterval: 1000 * 2,
     initialData: prevData
   });

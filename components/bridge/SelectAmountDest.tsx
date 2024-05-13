@@ -6,7 +6,7 @@ import { Box, NoblePageTitleBar, NobleButton } from '@interchain-ui/react';
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
 import { BroadcastedTx, SkipChain, useRoute, useUsdcAssets } from '@/hooks';
-import { getCosmosChainNameById, isValidAddress, shiftDecimals } from '@/utils';
+import { getCosmosChainNameById, isValidAddress, randomId, shiftDecimals } from '@/utils';
 import { useSkipClient } from '@/skip';
 import { BridgeStep, SelectedToken, TransferInfo } from '@/pages/bridge';
 import { SelectAmount } from './SelectAmount';
@@ -14,6 +14,7 @@ import { SelectDestination } from './SelectDestination';
 import { TransferExtraInfo } from './TransferExtraInfo';
 import { RouteResponse } from '@skip-router/core';
 import { SignTx } from './SignTx';
+import { txHistory } from '@/contexts';
 
 interface SelectAmountDestProps {
   selectedToken: SelectedToken;
@@ -67,9 +68,7 @@ export function SelectAmountDest({
         ? evmAddress
         : cosmosChainContexts[getCosmosChainNameById(sourceChain.chainID)].address!;
 
-    setRoute(route);
-    setShowSignTxView(true);
-    setTransferInfo({
+    const transferInfo: TransferInfo = {
       amount,
       fromChainID: sourceChain.chainID,
       fromChainAddress: sourceChainAddress,
@@ -77,7 +76,11 @@ export function SelectAmountDest({
       toChainID: destChain.chainID,
       toChainAddress: destAddress,
       toChainLogo: destChain.logoURI || ''
-    });
+    };
+
+    setRoute(route);
+    setShowSignTxView(true);
+    setTransferInfo(transferInfo);
 
     if (
       sourceChain.chainType === CHAIN_TYPE.EVM &&
@@ -96,13 +99,23 @@ export function SelectAmountDest({
       return acc;
     }, {} as Record<string, string>);
 
+    const historyId = randomId();
+
     try {
       // TODO: handle errors
+      // TODO: stop this when switching to ViewStatus
       skipClient.executeRoute({
         route,
         userAddresses,
         validateGasBalance: route.txsRequired === 1,
         onTransactionTracked: async (tx) => {
+          txHistory.addItem({
+            route,
+            transferInfo,
+            id: historyId,
+            broadcastedTx: tx
+          });
+
           setBroadcastedTxs((prev) => {
             const txs = [...prev, { chainID: tx.chainID, txHash: tx.txHash }];
             if (route.txsRequired === txs.length) {

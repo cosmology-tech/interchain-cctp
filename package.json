@@ -42,7 +42,8 @@
     "react-dom": "^18",
     "react-icons": "4.6.0",
     "viem": "^2.9.19",
-    "wagmi": "^2.5.20"
+    "wagmi": "^2.5.20",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^5.32.1",
