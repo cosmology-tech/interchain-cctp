@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Asset } from '@skip-router/core';
+import type { Asset } from '@skip-router/core';
 import { Box, Stack, Text, NobleTokenAvatar, NobleInput, NobleButton } from '@interchain-ui/react';
 import { calcDollarValue } from '@/utils';
 import { SkipChain, useUsdcPrice } from '@/hooks';

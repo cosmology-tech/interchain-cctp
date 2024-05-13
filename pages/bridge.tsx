@@ -1,6 +1,6 @@
 import { Layout, SelectAmountDest, SelectToken, ViewStatus } from '@/components';
 import { BroadcastedTx, SkipChain } from '@/hooks';
-import { Asset, RouteResponse } from '@skip-router/core';
+import type { Asset, RouteResponse } from '@skip-router/core';
 import { useMemo, useState } from 'react';
 
 export type BridgeStep = 'select-token' | 'select-amount-dest' | 'view-status';

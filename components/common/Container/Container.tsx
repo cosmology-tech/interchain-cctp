@@ -1,20 +1,20 @@
-import { Box, useTheme } from "@interchain-ui/react";
-import Image from "next/image";
-import * as styles from "./Container.css";
+import { Box, useTheme } from '@interchain-ui/react';
+import Image from 'next/image';
+import * as styles from './Container.css';
 
 const bgMap = {
   light: {
-    top: "/background/bg-light-top.svg",
-    bottom: "/background/bg-light-bottom.svg",
+    top: '/background/bg-light-top.svg',
+    bottom: '/background/bg-light-bottom.svg'
   },
   dark: {
-    top: "/background/bg-dark-top.svg",
-    bottom: "/background/bg-dark-bottom.svg",
-  },
+    top: '/background/bg-dark-top.svg',
+    bottom: '/background/bg-dark-bottom.svg'
+  }
 } as const;
 
 export const Container = ({ children }: { children: React.ReactNode }) => {
-  const { theme = "light" } = useTheme();
+  const { theme = 'light' } = useTheme();
 
   return (
     <Box
@@ -23,7 +23,7 @@ export const Container = ({ children }: { children: React.ReactNode }) => {
       flexDirection="column"
       flex={1}
       attributes={{
-        id: "main-container",
+        id: 'main-container'
       }}
     >
       <Box
@@ -33,11 +33,12 @@ export const Container = ({ children }: { children: React.ReactNode }) => {
         zIndex={0}
         className={styles.containerBackgroundTop}
         attributes={{
-          id: "bg-top",
+          id: 'bg-top'
         }}
       >
         <Image
-          src={bgMap[theme ?? "light"].top}
+          priority={true}
+          src={bgMap[theme ?? 'light'].top}
           alt="bg top"
           width="313"
           height="679"
@@ -55,11 +56,11 @@ export const Container = ({ children }: { children: React.ReactNode }) => {
         zIndex={1}
         paddingBottom={{
           mobile: 0,
-          tablet: "calc(102px + 118px)",
+          tablet: 'calc(102px + 118px)'
         }}
         px={{
-          mobile: "$6",
-          tablet: "$12",
+          mobile: '$6',
+          tablet: '$12'
         }}
       >
         {children}
@@ -72,11 +73,12 @@ export const Container = ({ children }: { children: React.ReactNode }) => {
         zIndex={0}
         className={styles.containerBackgroundBottom}
         attributes={{
-          id: "bg-bottom",
+          id: 'bg-bottom'
         }}
       >
         <Image
-          src={bgMap[theme ?? "light"].bottom}
+          priority={true}
+          src={bgMap[theme ?? 'light'].bottom}
           alt="bg bottom"
           width="313"
           height="679"
