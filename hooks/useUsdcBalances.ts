@@ -40,12 +40,12 @@ export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
   useEffect(() => {
     if (isCosmosWalletConnected || isEvmChainsOnly) return;
     connectAll();
-  }, [isCosmosWalletConnected]);
+  }, [connectAll, isCosmosWalletConnected, isEvmChainsOnly]);
 
   useEffect(() => {
     if (isEvmWalletConnected || isCosmosChainsOnly) return;
     wagmiConnect({ connector: connectors[0] });
-  }, [isEvmWalletConnected]);
+  }, [connectors, isCosmosChainsOnly, isEvmWalletConnected, wagmiConnect]);
 
   const isConnected = isEvmChainsOnly
     ? isEvmWalletConnected
