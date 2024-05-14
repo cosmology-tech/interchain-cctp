@@ -1,13 +1,21 @@
 import { useRouter } from 'next/router';
 import { useSearchParams } from 'next/navigation';
-import { useAccount, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect, useSwitchChain } from 'wagmi';
 import { Box, NobleSelectTokenButton, Skeleton } from '@interchain-ui/react';
 
 import { calcDollarValue } from '@/utils';
 import { WalletAddress, FaqList, StaggerList } from '@/components/common';
 import { CHAIN_TYPE, DEFAULT_USDC_LOGO, sizes } from '@/config';
-import { useUsdcPrice, useIsMounted, useSkipChains, useUsdcAssets, useUsdcBalances } from '@/hooks';
+import {
+  useUsdcPrice,
+  useIsMounted,
+  useSkipChains,
+  useUsdcAssets,
+  useUsdcBalances,
+  SkipChain
+} from '@/hooks';
 import { BridgeStep, SelectedToken } from '@/pages/bridge';
+import { Asset } from '@skip-router/core';
 
 interface SelectTokenProps {
   setBridgeStep: (bridgeStep: BridgeStep) => void;
@@ -17,9 +25,10 @@ interface SelectTokenProps {
 // TODO: switch to the network that's selected in metamask
 export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProps) {
   const router = useRouter();
-  const { address: evmAddress } = useAccount();
+  const { address: evmAddress, chainId: connectedChainId } = useAccount();
   const searchParams = useSearchParams();
   const { disconnect } = useDisconnect();
+  const { switchChainAsync } = useSwitchChain();
   const isMounted = useIsMounted();
 
   const { data: chains = [], isLoading: isChainsLoading } = useSkipChains();
@@ -30,6 +39,30 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
 
   const { data: balances } = useUsdcBalances({ chains: displayedChains, assets });
   const { data: usdcPrice } = useUsdcPrice();
+
+  const handleSelectToken =
+    (selectedChain: SkipChain, selectedAsset: Asset | undefined) => async () => {
+      if (!balances || !selectedAsset) return;
+
+      if (
+        selectedChain.chainType === CHAIN_TYPE.EVM &&
+        connectedChainId !== Number(selectedChain.chainID)
+      ) {
+        try {
+          await switchChainAsync({ chainId: Number(selectedChain.chainID) });
+        } catch (error) {
+          console.error(error);
+          return;
+        }
+      }
+
+      setBridgeStep('select-amount-dest');
+      setSelectedToken({
+        chain: selectedChain,
+        asset: selectedAsset,
+        balance: balances[selectedChain.chainID]
+      });
+    };
 
   return (
     <>
@@ -80,15 +113,7 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
                         ? calcDollarValue(balances[chain.chainID], usdcPrice)
                         : ''
                   }}
-                  onClick={() => {
-                    if (!balances || !usdcAsset) return;
-                    setBridgeStep('select-amount-dest');
-                    setSelectedToken({
-                      chain,
-                      asset: usdcAsset,
-                      balance: balances[chain.chainID]
-                    });
-                  }}
+                  onClick={handleSelectToken(chain, usdcAsset)}
                 />
               );
             })}

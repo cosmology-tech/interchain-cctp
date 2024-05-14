@@ -82,14 +82,6 @@ export function SelectAmountDest({
     setShowSignTxView(true);
     setTransferInfo(transferInfo);
 
-    if (
-      sourceChain.chainType === CHAIN_TYPE.EVM &&
-      connectedChainId !== Number(sourceChain.chainID)
-    ) {
-      // TODO: move this to first step or at the beginning of this step
-      await switchChainAsync({ chainId: Number(sourceChain.chainID) });
-    }
-
     const userAddresses = route.chainIDs.reduce((acc, chainID) => {
       if (/^\d+/.test(chainID)) {
         acc[chainID] = evmAddress;
@@ -102,6 +94,13 @@ export function SelectAmountDest({
     const historyId = randomId();
 
     try {
+      if (
+        sourceChain.chainType === CHAIN_TYPE.EVM &&
+        connectedChainId !== Number(sourceChain.chainID)
+      ) {
+        await switchChainAsync({ chainId: Number(sourceChain.chainID) });
+      }
+
       await skipClient?.executeRoute({
         route,
         userAddresses,
