@@ -102,9 +102,7 @@ export function SelectAmountDest({
     const historyId = randomId();
 
     try {
-      // TODO: handle errors
-      // TODO: stop this when switching to ViewStatus
-      skipClient?.executeRoute({
+      await skipClient?.executeRoute({
         route,
         userAddresses,
         validateGasBalance: route.txsRequired === 1,
@@ -125,8 +123,9 @@ export function SelectAmountDest({
           });
         }
       });
-    } catch (e) {
-      console.error('Error:', e);
+    } catch (err) {
+      console.error(err);
+      setShowSignTxView(false);
     }
   }
 

@@ -66,27 +66,31 @@ export function SignTx() {
           <Box mt="40px" display="flex" alignItems="center" justifyContent="center">
             <AbstractWallet />
           </Box>
-          <Box mt="12px" textAlign="center">
-            <BaseButton
-              style={{
-                margin: '0 auto'
-              }}
-              onPress={() => {
-                router.back();
-              }}
-            >
-              <Text
-                as="span"
-                fontSize="14px"
-                fontWeight="600"
-                lineHeight="20px"
-                attributes={{ cursor: 'pointer' }}
-                color={useColorModeValue(colors.gray500, colors.blue700)}
+          {/* 
+            * The button is included in the design but actually useless
+            * The user can reject from the wallet itself if they want to cancel the transaction
+            <Box mt="12px" textAlign="center">
+              <BaseButton
+                style={{
+                  margin: '0 auto'
+                }}
+                onPress={() => {
+                  router.back();
+                }}
               >
-                Cancel
-              </Text>
-            </BaseButton>
-          </Box>
+                <Text
+                  as="span"
+                  fontSize="14px"
+                  fontWeight="600"
+                  lineHeight="20px"
+                  attributes={{ cursor: 'pointer' }}
+                  color={useColorModeValue(colors.gray500, colors.blue700)}
+                >
+                  Cancel
+                </Text>
+              </BaseButton>
+            </Box> 
+            */}
         </Box>
       </Box>
     </FadeIn>
