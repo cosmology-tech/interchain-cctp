@@ -28,7 +28,7 @@ export function SkipProvider({ children }: { children: React.ReactNode }) {
           clientID: SKIP_API_CLIENT_ID,
           getCosmosSigner: async (chainID: string) => {
             const cosmosSigner =
-              client?.getOfflineSigner && (await client.getOfflineSigner(chainID));
+              client?.getOfflineSignerDirect && client.getOfflineSignerDirect(chainID);
 
             if (!cosmosSigner) {
               throw new Error(
