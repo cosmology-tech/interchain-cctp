@@ -35,6 +35,8 @@ export const SelectAmount = ({
   }
 
   const shouldShowPartialButtons = isNaN(+balance) ? false : +balance > 0;
+  const parsedAmount = amount ? (isNaN(+amount) ? '0' : amount) : '0';
+  const amountInUsdcValue = usdcPrice ? calcDollarValue(parsedAmount, usdcPrice) : '$0';
 
   return (
     <NobleInput
@@ -46,6 +48,7 @@ export const SelectAmount = ({
       type="number"
       onChange={(e) => {
         setAmount(e.target.value);
+        setPartialPercent(null);
       }}
       inputTextAlign="right"
       startAddon={
@@ -109,7 +112,7 @@ export const SelectAmount = ({
           </Box>
 
           <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">
-            {usdcPrice && calcDollarValue(amount, usdcPrice)}
+            {amountInUsdcValue}
           </Text>
         </Box>
       }
