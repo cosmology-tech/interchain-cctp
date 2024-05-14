@@ -1,5 +1,5 @@
 import { CHAIN_ID_TO_PRETTY_NAME } from '@/config';
-import { BridgeType, RouteResponse } from '@skip-router/core';
+import type { BridgeType, RouteResponse } from '@skip-router/core';
 
 export interface Action {
   text: string;

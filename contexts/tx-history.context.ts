@@ -1,4 +1,4 @@
-import { RouteResponse } from '@skip-router/core';
+import type { RouteResponse } from '@skip-router/core';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 

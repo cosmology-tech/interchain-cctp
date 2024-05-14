@@ -13,7 +13,7 @@ import {
 } from '@interchain-ui/react';
 import { FaqList, FadeIn } from '@/components/common';
 import { BroadcastedTx, useFinalityTimeEstimate, useTxsStatus } from '@/hooks';
-import { RouteResponse } from '@skip-router/core';
+import type { RouteResponse } from '@skip-router/core';
 import { Action, makeActions } from './utils/make-actions';
 import { makeStepState } from './utils/make-step-state';
 import { BridgeStep, TransferInfo } from '@/pages/bridge';
