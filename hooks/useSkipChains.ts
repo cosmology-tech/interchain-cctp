@@ -11,7 +11,11 @@ export const useSkipChains = () => {
   const skipClient = useSkipClient();
 
   return useQuery({
-    queryKey: ['skip-chains', isTestnetMode ? 'testnet' : 'mainnet'],
+    queryKey: [
+      'skip-chains',
+      isTestnetMode ? 'testnet' : 'mainnet',
+      skipClient ? 'skip-ready' : 'skip-pending'
+    ],
     queryFn: async () => {
       if (!skipClient) return [];
 
