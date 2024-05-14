@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction, useState } from 'react';
 import { useChains } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Box, NoblePageTitleBar, NobleButton } from '@interchain-ui/react';
+import BigNumber from 'bignumber.js';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
@@ -12,7 +13,7 @@ import { BridgeStep, SelectedToken, TransferInfo } from '@/pages/bridge';
 import { SelectAmount } from './SelectAmount';
 import { SelectDestination } from './SelectDestination';
 import { TransferExtraInfo } from './TransferExtraInfo';
-import { RouteResponse } from '@skip-router/core';
+import type { RouteResponse } from '@skip-router/core';
 import { SignTx } from './SignTx';
 import { txHistory } from '@/contexts';
 
@@ -128,6 +129,12 @@ export function SelectAmountDest({
     }
   }
 
+  const totalEstimatedFees = route
+    ? route.estimatedFees.reduce((prev, fee) => {
+        return new BigNumber(prev).plus(fee.usdAmount).toString();
+      }, '0')
+    : '0';
+
   const shouldShowEstimates = !!route && !!destChain && !!evmAddress;
   const bridgeButtonText = routeIsFetching
     ? 'Finding best route...'
@@ -162,6 +169,7 @@ export function SelectAmountDest({
           sourceAsset={sourceAsset}
           sourceChain={sourceChain}
           balance={balance}
+          fees={totalEstimatedFees}
         />
 
         <Box my="12px" display="flex" alignItems="center" justifyContent="center">

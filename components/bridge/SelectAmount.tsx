@@ -13,6 +13,7 @@ interface SelectAmountProps {
   balance: string;
   sourceAsset: Asset;
   sourceChain: SkipChain;
+  fees: string;
 }
 
 export const SelectAmount = ({
@@ -20,18 +21,19 @@ export const SelectAmount = ({
   amount,
   setAmount,
   sourceAsset,
-  sourceChain
+  sourceChain,
+  fees
 }: SelectAmountProps) => {
   const [partialPercent, setPartialPercent] = useState<number | null>(null);
   const { data: usdcPrice } = useUsdcPrice();
 
   function onAmountButtonClick(
     amount: string | number,
-    max: boolean,
+    isMax: boolean,
     selectedPartialPercent: number
   ) {
     setPartialPercent(selectedPartialPercent);
-    setAmount(max ? balance : String(amount));
+    setAmount(isMax ? new BigNumber(balance).minus(fees).toString() : String(amount));
   }
 
   const shouldShowPartialButtons = isNaN(+balance) ? false : +balance > 0;
