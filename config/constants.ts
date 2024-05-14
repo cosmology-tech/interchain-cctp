@@ -173,10 +173,6 @@ export const COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM = {
 
 export const COSMOS_CHAIN_IDS = Object.keys(COSMOS_CHAIN_ID_TO_CHAIN_NAME);
 
-export const COSMOS_CHAINS = SkipChains.filter((chain) =>
-  COSMOS_CHAIN_IDS.includes(chain.chain_id!)
-).sort((a, b) => a.chain_name!.localeCompare(b.chain_name!));
-
 type Time = `${number} ${'minutes' | 'seconds' | 'minute' | 'second'}`;
 
 /** @see https://docs.axelar.dev/learn/txduration#common-finality-time-for-interchain-transactions */
