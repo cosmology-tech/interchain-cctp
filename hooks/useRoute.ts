@@ -39,7 +39,7 @@ export const useRoute = ({
       destAssetChainID
     ],
     queryFn: async () => {
-      if (!isEnabled) return;
+      if (!isEnabled || !skipClient) return;
 
       try {
         const route = await skipClient.route({

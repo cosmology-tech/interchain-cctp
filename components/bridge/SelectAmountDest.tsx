@@ -104,7 +104,7 @@ export function SelectAmountDest({
     try {
       // TODO: handle errors
       // TODO: stop this when switching to ViewStatus
-      skipClient.executeRoute({
+      skipClient?.executeRoute({
         route,
         userAddresses,
         validateGasBalance: route.txsRequired === 1,

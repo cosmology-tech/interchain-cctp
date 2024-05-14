@@ -56,7 +56,7 @@ export const useTxsStatus = ({ txs, txsRequired, enabled }: Args) => {
   return useQuery({
     queryKey,
     queryFn: async ({ queryKey: [, txsRequired, txs] }) => {
-      if (!txs) return;
+      if (!txs || !skipClient) return;
 
       const results = await Promise.all(
         txs.map(async (tx) => {

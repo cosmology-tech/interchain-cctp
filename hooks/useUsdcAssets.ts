@@ -9,6 +9,8 @@ export const useUsdcAssets = () => {
   return useQuery({
     queryKey: ['usdc-assets', isTestnetMode ? 'testnet' : 'mainnet'],
     queryFn: async () => {
+      if (!skipClient) return {};
+
       const assets = await Promise.all(
         SUPPORTED_CHAIN_IDS.map(async (chainId) => {
           const chainAssets = await skipClient.assets({

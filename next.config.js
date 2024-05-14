@@ -12,6 +12,8 @@ module.exports = () => {
 
   /** @type {import('next').NextConfig} */
   const nextConfig = {
+    // !! WARN !!
+    // Turn this off when you need to deploy to Vercel directly
     output: 'export',
     reactStrictMode: true,
     typescript: {
@@ -22,6 +24,10 @@ module.exports = () => {
       ignoreBuildErrors: true
     },
     images: {
+      // !! WARN !!
+      // Turn this off when you deploy to Vercel or self host via AWS amplify
+      // This is turned on to work with output: 'export'
+      unoptimized: true,
       remotePatterns: [
         {
           protocol: 'https',
