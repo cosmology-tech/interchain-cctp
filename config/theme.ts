@@ -1,34 +1,40 @@
 export const colors = {
-  white: "#fff",
-  gray50: "#101219",
-  gray100: "#181921",
-  gray200: "#212536",
-  gray400: "#4D5270",
-  gray500: "#6D6D88",
-  gray600: "#AAAABF",
-  gray700: "#D5D5E8",
+  white: '#fff',
+  gray50: '#101219',
+  gray100: '#181921',
+  gray200: '#212536',
+  gray400: '#4D5270',
+  gray500: '#6D6D88',
+  gray600: '#AAAABF',
+  gray700: '#D5D5E8',
 
-  blue50: "#020418",
-  blue100: "#070B28",
-  blue200: "#0F1331",
-  blue300: "#1E2457",
-  blue400: "#3C4992",
-  blue600: "#6B7FFF",
-  blue700: "#909FFF",
+  blue50: '#020418',
+  blue100: '#070B28',
+  blue200: '#0F1331',
+  blue300: '#1E2457',
+  blue400: '#3C4992',
+  blue600: '#6B7FFF',
+  blue700: '#909FFF',
+
+  red50: '#F6EAEA',
+  red100: '#D2A3A3',
+  red200: '#D53838',
+  red300: '#EE4D4D',
+  red400: '#7B3434',
 
   divider: {
-    light: "#DCDEED",
-    dark: "#1E2457",
+    light: '#DCDEED',
+    dark: '#1E2457'
   },
 
   border: {
-    light: "#D5D5E8",
-    dark: "#1E2457",
+    light: '#D5D5E8',
+    dark: '#1E2457'
   }
-}
+};
 
 export const sizes = {
   main: {
-    maxWidth: "466px",
+    maxWidth: '466px'
   }
-}
+};

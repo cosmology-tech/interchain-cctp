@@ -1,4 +1,4 @@
-import { CHAIN_ID_TO_PRETTY_NAME } from '@/config';
+import { CHAIN_ID_TO_PRETTY_NAME, colors } from '@/config';
 import { TxHistoryItem, txHistory } from '@/contexts';
 import { useTxsStatus, useFinalityTimeEstimate } from '@/hooks';
 import { calcEstimatedRemainingTime } from '@/utils';
@@ -84,6 +84,7 @@ export const HistoryItem = ({ id, data }: HistoryItemProps) => {
           status={status === 'success' ? 'successful' : 'processing'}
           sourceChainLogoSrc={transferInfo.fromChainLogo}
           destinationChainLogoSrc={transferInfo.toChainLogo}
+          customStatus={status === 'failed' ? { text: 'Failed', color: colors.red300 } : undefined}
         />
       }
       renderContent={
@@ -102,7 +103,7 @@ export const HistoryItem = ({ id, data }: HistoryItemProps) => {
               logoUrl={transferInfo.toChainLogo}
             />
           </Stack>
-          {!(status === 'success') && (
+          {status === 'pending' && (
             <Box
               bg="$cardBg"
               px="$14"
