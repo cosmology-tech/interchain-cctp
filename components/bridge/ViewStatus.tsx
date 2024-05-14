@@ -71,6 +71,52 @@ export const ViewStatus = ({
     }
   };
 
+  const txSuccess = (
+    <>
+      <Box mt="$7" mb="$16">
+        <svg
+          width="87"
+          height="87"
+          viewBox="0 0 87 87"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <Box
+            as="circle"
+            fill={useColorModeValue('$gray800', '$blue300')}
+            stroke={useColorModeValue('$gray700', '$blue400')}
+            attributes={{ cx: '43.5', cy: '43.5', r: '43' }}
+          />
+          <Box
+            as="path"
+            fill={useColorModeValue('$gray500', '$blue600')}
+            attributes={{
+              d: 'M24.238 42.136C25.6793 40.7448 28.0077 40.7448 29.449 42.136L37.9516 50.4022L59.3502 29.5985C60.8158 28.3758 63.0021 28.46 64.3672 29.7872C65.7324 31.1144 65.8155 33.2365 64.5612 34.6647L40.5398 58.0182H40.5363C39.095 59.4128 36.7666 59.4128 35.3253 58.0182L24.2379 47.2391C23.538 46.5654 23.1465 45.6458 23.1465 44.6892C23.1465 43.7292 23.5381 42.813 24.238 42.136Z'
+            }}
+          />
+        </svg>
+      </Box>
+      {/* TODO: get range link */}
+      <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
+        View transaction on Range
+      </NobleButton>
+    </>
+  );
+
+  const txError = (
+    <>
+      <Text color="$text" fontSize="$sm" fontWeight="$semibold" attributes={{ mb: '$8' }}>
+        ~{estimatedRemainingTime} remaining
+      </Text>
+      <NobleTxProgressBar progress={100 * progressPercentage} mb="$12" />
+      <Stack direction="vertical" space="14px" attributes={{ alignSelf: 'flex-start', mb: '$9' }}>
+        {steps.map((step) => (
+          <NobleTxStepItem key={step.text} step={step.text} status={getStepStatus(step)} />
+        ))}
+      </Stack>
+    </>
+  );
+
   if (!txStatus) {
     return (
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
@@ -139,62 +185,7 @@ export const ViewStatus = ({
                 flexDirection="column"
                 alignItems="center"
               >
-                {txStatus.isSuccess ? (
-                  <>
-                    <Box mt="$7" mb="$16">
-                      <svg
-                        width="87"
-                        height="87"
-                        viewBox="0 0 87 87"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <Box
-                          as="circle"
-                          fill={useColorModeValue('$gray800', '$blue300')}
-                          stroke={useColorModeValue('$gray700', '$blue400')}
-                          attributes={{ cx: '43.5', cy: '43.5', r: '43' }}
-                        />
-                        <Box
-                          as="path"
-                          fill={useColorModeValue('$gray500', '$blue600')}
-                          attributes={{
-                            d: 'M24.238 42.136C25.6793 40.7448 28.0077 40.7448 29.449 42.136L37.9516 50.4022L59.3502 29.5985C60.8158 28.3758 63.0021 28.46 64.3672 29.7872C65.7324 31.1144 65.8155 33.2365 64.5612 34.6647L40.5398 58.0182H40.5363C39.095 59.4128 36.7666 59.4128 35.3253 58.0182L24.2379 47.2391C23.538 46.5654 23.1465 45.6458 23.1465 44.6892C23.1465 43.7292 23.5381 42.813 24.238 42.136Z'
-                          }}
-                        />
-                      </svg>
-                    </Box>
-                    {/* TODO: get range link */}
-                    <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
-                      View transaction on Range
-                    </NobleButton>
-                  </>
-                ) : (
-                  <>
-                    <Text
-                      color="$text"
-                      fontSize="$sm"
-                      fontWeight="$semibold"
-                      attributes={{ mb: '$8' }}
-                    >
-                      ~{estimatedRemainingTime} remaining
-                    </Text>
-                    <NobleTxProgressBar progress={100 * progressPercentage} mb="$12" />
-                    <Stack
-                      direction="vertical"
-                      space="14px"
-                      attributes={{ alignSelf: 'flex-start', mb: '$9' }}
-                    >
-                      {steps.map((step) => (
-                        <NobleTxStepItem
-                          key={step.text}
-                          step={step.text}
-                          status={getStepStatus(step)}
-                        />
-                      ))}
-                    </Stack>
-                  </>
-                )}
+                {txStatus.isSuccess ? txSuccess : txError}
               </Box>
 
               <Box display="flex" flexDirection="column" alignItems="center">
