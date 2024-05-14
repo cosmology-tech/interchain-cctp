@@ -14,7 +14,7 @@ import {
 } from '@interchain-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { RouteResponse } from '@skip-router/core';
+import type { RouteResponse } from '@skip-router/core';
 
 import { ExitIcon } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, ChainType, colors } from '@/config';

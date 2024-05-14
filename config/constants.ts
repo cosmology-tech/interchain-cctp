@@ -118,8 +118,6 @@ export const EVM_CHAIN_ID_TO_TOKEN = { ...USDC_EVM_MAINNET, ...USDC_EVM_TESTNET 
 
 export const EVM_CHAIN_IDS = Object.keys(EVM_CHAIN_ID_TO_TOKEN);
 
-export const EVM_CHAINS = SkipChains.filter((chain) => EVM_CHAIN_IDS.includes(chain.chain_id!));
-
 export const COSMOS_BECH32_PREFIX_TO_CHAIN_ID = {
   cosmos1: 'cosmoshub-4',
   // noble1: 'noble-1',
@@ -174,10 +172,6 @@ export const COSMOS_CHAIN_ID_TO_USDC_IBC_DENOM = {
 };
 
 export const COSMOS_CHAIN_IDS = Object.keys(COSMOS_CHAIN_ID_TO_CHAIN_NAME);
-
-export const COSMOS_CHAINS = SkipChains.filter((chain) =>
-  COSMOS_CHAIN_IDS.includes(chain.chain_id!)
-).sort((a, b) => a.chain_name!.localeCompare(b.chain_name!));
 
 type Time = `${number} ${'minutes' | 'seconds' | 'minute' | 'second'}`;
 

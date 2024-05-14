@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 import { ClockIcon } from '@/components/common';
-import { colors } from '@/config';
 import { SkipChain, useFinalityTimeEstimate, useUsdcPrice } from '@/hooks';
-import { RouteResponse } from '@skip-router/core';
+import { colors } from '@/config';
+import type { RouteResponse } from '@skip-router/core';
 import { USDC_TO_UUSDC } from '@/utils';
 
 function calcFeeFromRoute(route: RouteResponse, price = 1) {

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Asset } from '@skip-router/core';
+import type { Asset } from '@skip-router/core';
 import { useQuery } from '@tanstack/react-query';
 import { readContract } from '@wagmi/core';
 import { useChains } from '@cosmos-kit/react';

@@ -16,7 +16,7 @@ export function StaggerList(props: StaggerListProps) {
 
   React.useEffect(() => {
     controls.start('visible');
-  }, []);
+  }, []); // eslint-disable-line
 
   return (
     <motion.div
@@ -84,14 +84,14 @@ function StaggerListItem(props: StaggerListItemProps) {
     if (props.idx === props.originIndex) {
       props.originOffset.current = offset.current;
     }
-  }, [props.delayPerItem]);
+  }, [props.delayPerItem, props.idx, props.originIndex, props.originOffset]);
 
   React.useEffect(() => {
     const dx = Math.abs(offset.current.left - props.originOffset.current.left);
     const dy = Math.abs(offset.current.top - props.originOffset.current.top);
     const d = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
     delayRef.current = d * props.delayPerItem;
-  }, [props.delayPerItem]);
+  }, [props.delayPerItem, props.originOffset]);
 
   return (
     <motion.div ref={ref} variants={itemVariants} custom={delayRef}>
