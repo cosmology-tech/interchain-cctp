@@ -109,7 +109,7 @@ export const SelectAmount = ({
           </Box>
 
           <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">
-            {usdcPrice && calcDollarValue(balance, usdcPrice)}
+            {usdcPrice && calcDollarValue(amount, usdcPrice)}
           </Text>
         </Box>
       }
