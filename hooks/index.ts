@@ -8,3 +8,4 @@ export * from './useRoute';
 export * from './useConnectChains';
 export * from './useTxsStatus';
 export * from './useFinalityTimeEstimate';
+export * from './useStargateClients';

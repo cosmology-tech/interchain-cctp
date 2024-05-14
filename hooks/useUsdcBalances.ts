@@ -14,6 +14,7 @@ import {
   config as wagmiConfig
 } from '@/config';
 import { useConnectChains } from './useConnectChains';
+import { StargateClients, useStargateClients } from './useStargateClients';
 
 export type EVMAddress = `0x${string}`;
 
@@ -25,12 +26,16 @@ interface Args {
 export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
   const { connect: wagmiConnect, connectors } = useConnect();
   const { address: evmAddress, isConnected: isEvmWalletConnected } = useAccount();
+
   const cosmosChains = useChains(COSMOS_CHAIN_NAMES);
   const { isAllConnected: isCosmosWalletConnected, connectAll } =
     useConnectChains(COSMOS_CHAIN_NAMES);
 
+  const { data: stargateClients } = useStargateClients();
+
   const isEvmChainsOnly = chains.every((chain) => chain.chainType === 'evm');
   const isCosmosChainsOnly = chains.every((chain) => chain.chainType === 'cosmos');
+  const hasCosmosChains = chains.some((chain) => chain.chainType === 'cosmos');
 
   useEffect(() => {
     if (isCosmosWalletConnected || isEvmChainsOnly) return;
@@ -48,7 +53,11 @@ export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
     ? isCosmosWalletConnected
     : isEvmWalletConnected && isCosmosWalletConnected;
 
-  const isEnabled = isConnected && chains.length > 0 && Object.keys(assets).length > 0;
+  const isEnabled =
+    isConnected &&
+    chains.length > 0 &&
+    Object.keys(assets).length > 0 &&
+    (hasCosmosChains ? !!stargateClients : true);
 
   return useQuery({
     queryKey: ['usdc-balances', chains.map((chain) => chain.chainID), Object.keys(assets)],
@@ -71,9 +80,9 @@ export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
             };
           }
           if (chain.chainType === 'cosmos') {
-            const { address: cosmosAddress, getStargateClient } =
-              cosmosChains[getCosmosChainNameById(chain.chainID)];
-            const stargateClient = await getStargateClient();
+            const chainName = getCosmosChainNameById(chain.chainID);
+            const { address: cosmosAddress } = cosmosChains[chainName];
+            const stargateClient = (stargateClients as StargateClients)[chainName];
             const coin = await stargateClient.getBalance(
               cosmosAddress!,
               NOBLE_CHAIN_IDS.includes(chain.chainID) ? 'uusdc' : assets[chain.chainID].denom
