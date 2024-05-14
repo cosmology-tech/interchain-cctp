@@ -25,7 +25,7 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
   const { data: chains = [], isLoading: isChainsLoading } = useSkipChains();
   const { data: assets } = useUsdcAssets();
 
-  const sourceChainType = searchParams.get('chain-type') ?? CHAIN_TYPE.EVM;
+  const sourceChainType = searchParams.get('chain_type') ?? CHAIN_TYPE.EVM;
   const displayedChains = chains.filter((chain) => chain.chainType === sourceChainType);
 
   const { data: balances } = useUsdcBalances({ chains: displayedChains, assets });

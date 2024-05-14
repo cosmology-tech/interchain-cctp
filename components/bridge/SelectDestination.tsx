@@ -56,7 +56,7 @@ export const SelectDestination = ({
     disconnectAll
   } = useConnectChains(COSMOS_CHAIN_NAMES);
 
-  const sourceChainType = (searchParams.get('chain-type') ?? CHAIN_TYPE.EVM) as ChainType;
+  const sourceChainType = (searchParams.get('chain_type') ?? CHAIN_TYPE.EVM) as ChainType;
 
   const destChains = useMemo(() => {
     if (isValidEvmAddress(destAddress)) {

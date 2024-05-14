@@ -12,7 +12,7 @@ export function WalletList() {
   const { connectAllAsync, isAllConnected } = useConnectChains(COSMOS_CHAIN_NAMES);
 
   const handleConnectMetamask = () => {
-    const href = `/bridge?chain-type=${CHAIN_TYPE.EVM}`;
+    const href = `/bridge?chain_type=${CHAIN_TYPE.EVM}`;
     if (address) {
       return router.push(href);
     }
@@ -24,7 +24,7 @@ export function WalletList() {
   };
 
   const handleConnectKeplr = () => {
-    const href = `/bridge?chain-type=${CHAIN_TYPE.COSMOS}`;
+    const href = `/bridge?chain_type=${CHAIN_TYPE.COSMOS}`;
     if (isAllConnected) {
       return router.push(href);
     }
