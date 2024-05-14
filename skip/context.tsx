@@ -9,7 +9,9 @@ import { wallets } from 'cosmos-kit';
 import type { SkipRouter } from '@skip-router/core';
 import { useSkipRouter } from '@/hooks/useSkipRouter';
 
-export const SkipContext = React.createContext<{ skipClient: SkipRouter } | undefined>(undefined);
+export const SkipContext = React.createContext<{ skipClient: SkipRouter | null } | undefined>(
+  undefined
+);
 
 export function SkipProvider({ children }: { children: React.ReactNode }) {
   const { client } = useWalletClient(wallets.keplr[0].walletName);
@@ -56,8 +58,6 @@ export function SkipProvider({ children }: { children: React.ReactNode }) {
       );
     }
   }, [client, skipClient, skipModule]);
-
-  if (!skipClient) return null;
 
   return <SkipContext.Provider value={{ skipClient }}>{children}</SkipContext.Provider>;
 }

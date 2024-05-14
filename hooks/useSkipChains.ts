@@ -13,6 +13,8 @@ export const useSkipChains = () => {
   return useQuery({
     queryKey: ['skip-chains', isTestnetMode ? 'testnet' : 'mainnet'],
     queryFn: async () => {
+      if (!skipClient) return [];
+
       const chains = await skipClient.chains({
         includeEVM: true,
         includeSVM: false,
