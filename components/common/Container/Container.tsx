@@ -1,20 +1,28 @@
 import { Box, useTheme } from '@interchain-ui/react';
-import Image from 'next/image';
 import * as styles from './Container.css';
+import {
+  BgDarkBottom,
+  BgDarkTop,
+  BgLightBottom,
+  BgLightTop
+} from '@/components/common/backgrounds';
 
 const bgMap = {
   light: {
-    top: '/background/bg-light-top.svg',
-    bottom: '/background/bg-light-bottom.svg'
+    top: BgLightTop,
+    bottom: BgLightBottom
   },
   dark: {
-    top: '/background/bg-dark-top.svg',
-    bottom: '/background/bg-dark-bottom.svg'
+    top: BgDarkTop,
+    bottom: BgDarkBottom
   }
 } as const;
 
 export const Container = ({ children }: { children: React.ReactNode }) => {
   const { theme = 'light' } = useTheme();
+
+  const TopBgSvg = bgMap[theme ?? 'light'].top;
+  const BottomBgSvg = bgMap[theme ?? 'light'].bottom;
 
   return (
     <Box
@@ -36,13 +44,7 @@ export const Container = ({ children }: { children: React.ReactNode }) => {
           id: 'bg-top'
         }}
       >
-        <Image
-          priority={true}
-          src={bgMap[theme ?? 'light'].top}
-          alt="bg top"
-          width="313"
-          height="679"
-        />
+        <TopBgSvg />
       </Box>
 
       <Box
@@ -76,13 +78,7 @@ export const Container = ({ children }: { children: React.ReactNode }) => {
           id: 'bg-bottom'
         }}
       >
-        <Image
-          priority={true}
-          src={bgMap[theme ?? 'light'].bottom}
-          alt="bg bottom"
-          width="313"
-          height="679"
-        />
+        <BottomBgSvg />
       </Box>
     </Box>
   );

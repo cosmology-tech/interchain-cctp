@@ -51,7 +51,10 @@ export const useTxsStatus = ({ txs, txsRequired, enabled }: Args) => {
   const [isSettled, setIsSettled] = useState(false);
   const [prevData, setPrevData] = useState<TxsStatusData | undefined>(undefined);
 
-  const queryKey = useMemo(() => ['txs-status', txsRequired, txs] as const, [txsRequired, txs]);
+  const queryKey = useMemo(
+    () => ['txs-status', txsRequired, txs, skipClient ? 'skip-ready' : 'skip-pending'] as const,
+    [txsRequired, txs, skipClient]
+  );
 
   return useQuery({
     queryKey,

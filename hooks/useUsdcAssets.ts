@@ -7,7 +7,11 @@ export const useUsdcAssets = () => {
   const skipClient = useSkipClient();
 
   return useQuery({
-    queryKey: ['usdc-assets', isTestnetMode ? 'testnet' : 'mainnet'],
+    queryKey: [
+      'usdc-assets',
+      isTestnetMode ? 'testnet' : 'mainnet',
+      skipClient ? 'skip-ready' : 'skip-pending'
+    ],
     queryFn: async () => {
       if (!skipClient) return {};
 

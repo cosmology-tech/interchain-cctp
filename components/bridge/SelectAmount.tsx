@@ -108,7 +108,6 @@ export const SelectAmount = ({
             ) : null}
           </Box>
 
-          {/* TODO: use amount instead of balance */}
           <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">
             {usdcPrice && calcDollarValue(balance, usdcPrice)}
           </Text>
