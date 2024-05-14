@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { RouteResponse } from '@skip-router/core';
+import type { RouteResponse } from '@skip-router/core';
 import { getFinalityTime } from '@/config';
 import { useSkipChains } from './useSkipChains';
 
