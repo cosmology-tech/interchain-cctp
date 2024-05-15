@@ -1,6 +1,6 @@
 import type { Asset } from '@skip-router/core';
 import { useQuery } from '@tanstack/react-query';
-import { useSkipClient } from '@/skip';
+import { useSkipClient } from '@/contexts';
 import { SUPPORTED_CHAIN_IDS, isTestnetMode, DEFAULT_USDC_LOGO, NOBLE_CHAIN_IDS } from '@/config';
 
 export const useUsdcAssets = () => {

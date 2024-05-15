@@ -1,6 +1,6 @@
 import type { Chain } from '@skip-router/core';
 import { useQuery } from '@tanstack/react-query';
-import { useSkipClient } from '@/skip';
+import { useSkipClient } from '@/contexts';
 import { SUPPORTED_CHAIN_IDS, CHAIN_ID_TO_PRETTY_NAME, isTestnetMode } from '@/config';
 
 export type SkipChain = Chain & {

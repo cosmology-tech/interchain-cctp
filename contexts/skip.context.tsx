@@ -61,3 +61,13 @@ export function SkipProvider({ children }: { children: React.ReactNode }) {
 
   return <SkipContext.Provider value={{ skipClient }}>{children}</SkipContext.Provider>;
 }
+
+export function useSkipClient() {
+  const context = React.useContext(SkipContext);
+
+  if (context === undefined) {
+    throw new Error('useSkip must be used within a SkipProvider');
+  }
+
+  return context.skipClient;
+}

@@ -7,7 +7,7 @@ import {
   StatusState,
   TransferState
 } from '@skip-router/core';
-import { useSkipClient } from '@/skip';
+import { useSkipClient } from '@/contexts';
 
 export interface BroadcastedTx {
   chainID: string;

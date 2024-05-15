@@ -7,7 +7,7 @@ import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
 import { BroadcastedTx, SkipChain, useRoute, useUsdcAssets } from '@/hooks';
 import { getCosmosChainNameById, isValidAddress, randomId, shiftDecimals } from '@/utils';
-import { useSkipClient } from '@/skip';
+import { useSkipClient } from '@/contexts';
 import { BridgeStep, SelectedToken, TransferInfo } from '@/pages/bridge';
 import { SelectAmount } from './SelectAmount';
 import { SelectDestination } from './SelectDestination';

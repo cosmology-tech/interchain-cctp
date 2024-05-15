@@ -1,4 +1,4 @@
-import { SkipProvider } from '@/skip';
+import { SkipProvider } from '@/contexts';
 import { WagmiProvider } from 'wagmi';
 import { ChainProvider } from '@cosmos-kit/react';
 import { config } from '@/config/wagmi';

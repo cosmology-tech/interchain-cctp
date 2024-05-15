@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useSkipClient } from '@/skip';
+import { useSkipClient } from '@/contexts';
 import BigNumber from 'bignumber.js';
 
 interface Args {

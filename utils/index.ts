@@ -1,6 +1,6 @@
 import { chains } from 'chain-registry';
 import { Asset, Chain } from '@chain-registry/types';
-// import { skipChainById } from '@/skip';
+// import { skipChainById } from '@/contexts';
 // import { COSMOS_BECH32_PREFIX_TO_CHAIN_ID } from '@/config';
 import { COSMOS_CHAINS } from '@/config/chains';
 import BigNumber from 'bignumber.js';
