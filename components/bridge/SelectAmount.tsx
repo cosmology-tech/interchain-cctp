@@ -4,8 +4,10 @@ import { Box, Stack, Text, NobleTokenAvatar, NobleInput, NobleButton } from '@in
 import { calcDollarValue } from '@/utils';
 import { SkipChain, useUsdcPrice } from '@/hooks';
 import BigNumber from 'bignumber.js';
+import { CHAIN_TYPE } from '@/config';
 
 const PARTIAL_PERCENTAGES = [0.1, 0.25, 0.5, 0.8, 1.0];
+const DEFAULT_GAS_AMOUNT = (200_000).toString();
 
 interface SelectAmountProps {
   amount: string;
@@ -13,7 +15,6 @@ interface SelectAmountProps {
   balance: string;
   sourceAsset: Asset;
   sourceChain: SkipChain;
-  fees: string;
 }
 
 export const SelectAmount = ({
@@ -21,20 +22,37 @@ export const SelectAmount = ({
   amount,
   setAmount,
   sourceAsset,
-  sourceChain,
-  fees
+  sourceChain
 }: SelectAmountProps) => {
   const [partialPercent, setPartialPercent] = useState<number | null>(null);
   const { data: usdcPrice } = useUsdcPrice();
 
-  function onAmountButtonClick(
-    amount: string | number,
-    isMax: boolean,
-    selectedPartialPercent: number
-  ) {
+  const onAmountButtonClick = (amount: string | number, selectedPartialPercent: number) => {
     setPartialPercent(selectedPartialPercent);
-    setAmount(isMax ? new BigNumber(balance).minus(fees).toString() : String(amount));
-  }
+    setAmount(String(amount));
+  };
+
+  const onMaxAmountClick = async (selectedPartialPercent: number) => {
+    setPartialPercent(selectedPartialPercent);
+
+    const isCosmosChain = sourceChain.chainType === CHAIN_TYPE.COSMOS;
+    const isNativeAsset = sourceChain.feeAssets[0]?.denom === sourceAsset.denom;
+    const gasPrice = sourceChain.feeAssets[0]?.gasPrice.average;
+
+    if (!isCosmosChain || !isNativeAsset || !gasPrice) {
+      setAmount(balance);
+      return;
+    }
+
+    const decimals = sourceAsset.decimals ?? 6;
+    const gasRequired = BigNumber(gasPrice)
+      .multipliedBy(DEFAULT_GAS_AMOUNT)
+      .shiftedBy(-decimals)
+      .toString();
+    let newAmountIn = BigNumber(balance).minus(gasRequired);
+    newAmountIn = newAmountIn.isNegative() ? BigNumber(0) : newAmountIn;
+    setAmount(newAmountIn.toFixed(decimals));
+  };
 
   const shouldShowPartialButtons = isNaN(+balance) ? false : +balance > 0;
   const parsedAmount = amount ? (isNaN(+amount) ? '0' : amount) : '0';
@@ -90,7 +108,9 @@ export const SelectAmount = ({
                   variant="tag"
                   size="xs"
                   isActive={partialPercent === percent}
-                  onClick={() => onAmountButtonClick(amount, isMax, percent)}
+                  onClick={() =>
+                    isMax ? onMaxAmountClick(percent) : onAmountButtonClick(amount, percent)
+                  }
                 >
                   {isMax ? 'Max' : `${amount}`}
                 </NobleButton>
