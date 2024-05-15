@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useChains } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { Box, NoblePageTitleBar, NobleButton } from '@interchain-ui/react';
+import { Box, NoblePageTitleBar, NobleButton, toast } from '@interchain-ui/react';
 import BigNumber from 'bignumber.js';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
@@ -123,8 +123,9 @@ export function SelectAmountDest({
           });
         }
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      toast.error(('Failed to execute transaction: ' + err.message) as string);
       setShowSignTxView(false);
     }
   }
