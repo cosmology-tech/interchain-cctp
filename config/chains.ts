@@ -1,30 +1,39 @@
 import {
+  // mainnets
+  mainnet,
   arbitrum,
-  arbitrumSepolia,
   avalanche,
   optimism,
-  optimismSepolia,
+  polygon,
+  base,
+  // testnets
   sepolia,
-  mainnet,
-  Chain as EVMChain,
-  avalancheFuji
+  avalancheFuji,
+  optimismSepolia,
+  // types
+  Chain as EVMChain
 } from 'wagmi/chains';
 
+// mainnets
 import noble from 'chain-registry/mainnet/noble/chain';
 import cosmoshub from 'chain-registry/mainnet/cosmoshub/chain';
 import stargaze from 'chain-registry/mainnet/stargaze/chain';
 import osmosis from 'chain-registry/mainnet/osmosis/chain';
 import juno from 'chain-registry/mainnet/juno/chain';
+import agoric from 'chain-registry/mainnet/agoric/chain';
+
+// testnets
 import nobletestnet from 'chain-registry/testnet/nobletestnet/chain';
 import osmosistestnet from 'chain-registry/testnet/osmosistestnet/chain';
+
 import type { Chain as CosmosChain } from '@chain-registry/types';
 
 // Supported EVM chains
-const EVM_MAINNETS: EVMChain[] = [mainnet, arbitrum, optimism, avalanche];
+const EVM_MAINNETS: EVMChain[] = [mainnet, base, arbitrum, optimism, avalanche, polygon];
 const EVM_TESTNETS: EVMChain[] = [sepolia, optimismSepolia, avalancheFuji];
 
 // Supported Cosmos chains
-const COSMOS_MAINNETS: CosmosChain[] = [noble, cosmoshub, stargaze, osmosis, juno];
+const COSMOS_MAINNETS: CosmosChain[] = [noble, cosmoshub, stargaze, osmosis, juno, agoric];
 const COSMOS_TESTNETS: CosmosChain[] = [nobletestnet, osmosistestnet];
 
 // =======================
@@ -41,13 +50,15 @@ export const SUPPORTED_CHAIN_IDS = isTestnetMode
 export const EVM_CHAINS = isTestnetMode ? EVM_TESTNETS : EVM_MAINNETS;
 export const COSMOS_CHAINS = isTestnetMode ? COSMOS_TESTNETS : COSMOS_MAINNETS;
 
-const EVM_CHAIN_ID_TO_PRETTY_NAME = EVM_CHAINS.reduce((res, cur) => {
-  return { ...res, [cur.id]: cur.name };
-}, {});
+const EVM_CHAIN_ID_TO_PRETTY_NAME = [...EVM_MAINNETS, ...EVM_TESTNETS].reduce(
+  (res, cur) => ({ ...res, [cur.id]: cur.name }),
+  {}
+);
 
-const COSMOS_CHAIN_ID_TO_PRETTY_NAME = COSMOS_CHAINS.reduce((res, cur) => {
-  return { ...res, [cur.chain_id]: cur.pretty_name };
-}, {});
+const COSMOS_CHAIN_ID_TO_PRETTY_NAME = [...COSMOS_MAINNETS, ...COSMOS_TESTNETS].reduce(
+  (res, cur) => ({ ...res, [cur.chain_id]: cur.pretty_name }),
+  {}
+);
 
 export const CHAIN_ID_TO_PRETTY_NAME: Record<string, string> = {
   ...EVM_CHAIN_ID_TO_PRETTY_NAME,
