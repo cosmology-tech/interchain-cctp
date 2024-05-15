@@ -6,9 +6,14 @@ body {
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
 }
 
+html {
+  background-color: #F6F6FE;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
+    background-color: #020418;
   }
 }
 
