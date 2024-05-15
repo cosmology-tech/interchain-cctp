@@ -92,3 +92,22 @@ h6 {
 #__next {
   isolation: isolate;
 }
+
+.initial-load-fallback {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background-color: #F6F6FE;
+  color: #020418;
+}
+
+@media (prefers-color-scheme: dark) {
+  .initial-load-fallback {
+    background-color: #020418;
+    color: #909FFF;
+  }
+}
+
+.initial-load-fallback__desc {
+  visibility: hidden;
+}

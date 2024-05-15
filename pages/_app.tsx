@@ -4,15 +4,16 @@ import '@interchain-ui/react/styles';
 import type { AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import { Box, Toaster, useColorModeValue } from '@interchain-ui/react';
+import { InitialLoadFallback } from '@/components/common/InitialLoadFallback';
 
 const DynamicAppProvider = dynamic(
   () => import('../components/common/AppProvider').then((mod) => mod.AppProvider),
   {
-    loading: () => <p>Loading...</p>
+    loading: () => <InitialLoadFallback />
   }
 );
 
-function CreateCosmosApp({ Component, pageProps }: AppProps) {
+function NobleExpressApp({ Component, pageProps }: AppProps) {
   return (
     <DynamicAppProvider>
       <Box
@@ -28,4 +29,4 @@ function CreateCosmosApp({ Component, pageProps }: AppProps) {
   );
 }
 
-export default CreateCosmosApp;
+export default NobleExpressApp;
