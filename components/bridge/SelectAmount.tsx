@@ -4,7 +4,7 @@ import { Box, Stack, Text, NobleTokenAvatar, NobleInput, NobleButton } from '@in
 import { calcDollarValue } from '@/utils';
 import { SkipChain, useUsdcPrice } from '@/hooks';
 import BigNumber from 'bignumber.js';
-import { CHAIN_TYPE } from '@/config';
+import { NOBLE_CHAIN_IDS } from '@/config';
 
 const PARTIAL_PERCENTAGES = [0.1, 0.25, 0.5, 0.8, 1.0];
 const DEFAULT_GAS_AMOUNT = (200_000).toString();
@@ -35,15 +35,15 @@ export const SelectAmount = ({
   const onMaxAmountClick = async (selectedPartialPercent: number) => {
     setPartialPercent(selectedPartialPercent);
 
-    const isCosmosChain = sourceChain.chainType === CHAIN_TYPE.COSMOS;
-    const isNativeAsset = sourceChain.feeAssets[0]?.denom === sourceAsset.denom;
-    const gasPrice = sourceChain.feeAssets[0]?.gasPrice.average;
+    const isNobleChain = NOBLE_CHAIN_IDS.includes(sourceChain.chainID);
 
-    if (!isCosmosChain || !isNativeAsset || !gasPrice) {
+    if (!isNobleChain) {
       setAmount(balance);
       return;
     }
 
+    const feeAsset = sourceChain.feeAssets.find(({ denom }) => denom === 'uusdc');
+    const gasPrice = feeAsset?.gasPrice.average ?? '0.1';
     const decimals = sourceAsset.decimals ?? 6;
     const gasRequired = BigNumber(gasPrice)
       .multipliedBy(DEFAULT_GAS_AMOUNT)
