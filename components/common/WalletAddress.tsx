@@ -1,7 +1,9 @@
+import * as React from 'react';
 import Image from 'next/image';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Box, Text, toast, useColorModeValue } from '@interchain-ui/react';
 import { shortenAddress } from '@/utils';
-import { CopyIcon, ExitIcon } from '@/components/common';
+import { CopyIcon, ExitIcon, CheckCircleIcon, FadeIn } from '@/components/common';
 import { useCopyToClipboard } from '@/hooks';
 import { BaseButton } from './BaseButton';
 
@@ -14,12 +16,10 @@ export interface WalletAddressProps {
 export function WalletAddress(props: WalletAddressProps) {
   const { walletType = 'metamask', address = '', onDisconnect = () => {} } = props;
 
+  const [showSuccessIcon, setShowSuccessIcon] = React.useState(false);
   const [_copyState, copyToClipboard] = useCopyToClipboard({
     onError: () => {
       toast.error('Failed to copy address');
-    },
-    onSuccess: () => {
-      toast.success('Address copied');
     }
   });
 
@@ -42,12 +42,41 @@ export function WalletAddress(props: WalletAddressProps) {
           <BaseButton
             aria-label="Copy"
             onPress={() => {
+              console.log('COPYYYY');
+              setShowSuccessIcon(true);
+
               copyToClipboard(address);
+
+              setTimeout(() => {
+                setShowSuccessIcon(false);
+              }, 1000);
             }}
           >
-            <Box height="16px">
-              <CopyIcon />
-            </Box>
+            <AnimatePresence mode="wait">
+              {showSuccessIcon ? (
+                <motion.div
+                  key="check"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                >
+                  <Box as="span" maxHeight="16px" color="$textSuccess">
+                    <CheckCircleIcon />
+                  </Box>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="copy"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                >
+                  <Box as="span" maxHeight="16px">
+                    <CopyIcon />
+                  </Box>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </BaseButton>
         </>
       ) : null}

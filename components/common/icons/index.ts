@@ -8,3 +8,4 @@ export * from './SearchIcon';
 export * from './MoonIcon';
 export * from './SunIcon';
 export * from './RefreshIcon';
+export * from './CheckCircleIcon';
