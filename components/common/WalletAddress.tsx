@@ -42,7 +42,6 @@ export function WalletAddress(props: WalletAddressProps) {
           <BaseButton
             aria-label="Copy"
             onPress={() => {
-              console.log('COPYYYY');
               setShowSuccessIcon(true);
 
               copyToClipboard(address);
