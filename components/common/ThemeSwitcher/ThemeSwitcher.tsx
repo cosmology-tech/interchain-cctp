@@ -1,13 +1,10 @@
-import {
-  Switch as AriaSwitch,
-  SwitchProps as AriaSwitchProps,
-} from "react-aria-components";
-import { useTheme } from "@interchain-ui/react";
-import { SunIcon, MoonIcon } from "@/components/common/icons";
+import { Switch as AriaSwitch, SwitchProps as AriaSwitchProps } from 'react-aria-components';
+import { useTheme } from '@interchain-ui/react';
+import { SunIcon, MoonIcon } from '@/components/common/icons';
 
-import * as styles from "./ThemeSwitcher.css";
+import * as styles from './ThemeSwitcher.css';
 
-export interface ThemeSwitcherProps extends Omit<AriaSwitchProps, "children"> {}
+export interface ThemeSwitcherProps extends Omit<AriaSwitchProps, 'children'> {}
 
 export function ThemeSwitcher({ ...props }: ThemeSwitcherProps) {
   const { theme, setTheme } = useTheme();
@@ -15,16 +12,21 @@ export function ThemeSwitcher({ ...props }: ThemeSwitcherProps) {
   return (
     <AriaSwitch
       {...props}
-      isSelected={theme === "dark"}
+      id="theme-switcher"
+      isSelected={theme === 'dark'}
       onChange={(isSelected) => {
-        if (isSelected) return setTheme("dark");
-        setTheme("light");
+        if (isSelected) return setTheme('dark');
+        setTheme('light');
       }}
       className={styles.switcher[theme]}
     >
+      <label htmlFor="theme-switcher" className="visually-hidden">
+        Theme switcher
+      </label>
+
       <div className={styles.switcherIndicator} />
 
-      {theme === "light" ? <MoonIcon /> : <SunIcon />}
+      {theme === 'light' ? <MoonIcon /> : <SunIcon />}
     </AriaSwitch>
   );
 }
