@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 import { CHAIN_TYPE, ChainType, colors } from '@/config';
 import { BaseButton, FadeIn } from '@/components/common';
+import { PulsingBox } from '@/components/common/PulsingBox';
 import { AbstractWallet } from '@/components/common/icons/AbstractWallet';
 import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -63,8 +64,11 @@ export function SignTx() {
               {walletInfo.name}
             </Text>
           </Box>
+
           <Box mt="40px" display="flex" alignItems="center" justifyContent="center">
-            <AbstractWallet />
+            <PulsingBox width="216px" height="271px">
+              <AbstractWallet />
+            </PulsingBox>
           </Box>
           {/* 
             * The button is included in the design but actually useless
