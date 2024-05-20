@@ -13,14 +13,19 @@ export function StaggerList(props: StaggerListProps) {
   const { delayPerItem = 0.001 } = props;
   const originOffset = React.useRef({ top: 0, left: 0 });
   const controls = useAnimation();
+  const [hasAnimated, setHasAnimated] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    controls.start('visible');
-  }, [props.children]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!hasAnimated) {
+      setHasAnimated(true);
+    }
+
+    controls.start(hasAnimated ? 'visibleNext' : 'visible');
+  }, [controls, hasAnimated, props.children]);
 
   return (
     <motion.div
-      initial="hidden"
+      initial={hasAnimated ? 'hiddenNext' : 'hidden'}
       animate={controls}
       variants={{}}
       className={props.className}
@@ -34,6 +39,7 @@ export function StaggerList(props: StaggerListProps) {
             originIndex={0}
             delayPerItem={delayPerItem}
             originOffset={originOffset}
+            hasAnimated={hasAnimated}
           >
             {child}
           </StaggerListItem>
@@ -51,6 +57,7 @@ interface StaggerListItemProps {
     top: number;
     left: number;
   }>;
+  hasAnimated?: boolean;
   children?: React.ReactNode;
 }
 
@@ -63,6 +70,14 @@ const itemVariants = {
     opacity: 1,
     scale: 1,
     transition: { delay: delayRef.current }
+  }),
+  // Animation for next rerenders to avoid layout shift
+  hiddenNext: {
+    opacity: 0
+  },
+  visibleNext: (delayRef: React.MutableRefObject<number>) => ({
+    opacity: 1,
+    transition: { delay: delayRef.current }
   })
 };
 
@@ -70,10 +85,9 @@ function StaggerListItem(props: StaggerListItemProps) {
   const delayRef = React.useRef(0);
   const offset = React.useRef({ top: 0, left: 0 });
   const ref = React.useRef(null);
-  // const [done, setDone] = React.useState(false);
 
   React.useLayoutEffect(() => {
-    if (!ref.current) return;
+    if (!ref.current || props.hasAnimated) return;
 
     const element = ref.current as HTMLDivElement;
 
@@ -85,7 +99,7 @@ function StaggerListItem(props: StaggerListItemProps) {
     if (props.idx === props.originIndex) {
       props.originOffset.current = offset.current;
     }
-  }, [props.delayPerItem, props.idx, props.originIndex, props.originOffset]);
+  }, [props.delayPerItem, props.hasAnimated, props.idx, props.originIndex, props.originOffset]);
 
   React.useEffect(() => {
     const dx = Math.abs(offset.current.left - props.originOffset.current.left);
