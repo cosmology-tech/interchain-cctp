@@ -15,6 +15,7 @@ import { TransferExtraInfo } from './TransferExtraInfo';
 import type { RouteResponse } from '@skip-router/core';
 import { SignTx } from './SignTx';
 import { txHistory } from '@/contexts';
+import { PoweredBy } from './PoweredBy';
 
 interface SelectAmountDestProps {
   selectedToken: SelectedToken;
@@ -194,6 +195,8 @@ export function SelectAmountDest({
         {shouldShowEstimates && (
           <TransferExtraInfo route={route} destChain={destChain} sourceChain={sourceChain} />
         )}
+
+        <PoweredBy mt="30px" />
       </Box>
 
       <FaqList />
