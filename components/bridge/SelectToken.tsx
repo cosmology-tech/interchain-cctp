@@ -130,7 +130,7 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
           <Skeleton width="$full" height="$20" mt="24px" borderRadius="$md" />
         ) : (
           // <StaggerList
-          //   numItems={sortedChains.length}
+          //   numItems={displayedChains.length}
           //   style={{
           //     display: 'flex',
           //     flexDirection: 'column',
