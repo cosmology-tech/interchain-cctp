@@ -10,7 +10,14 @@ import {
 } from '@interchain-ui/react';
 
 import { calcDollarValue } from '@/utils';
-import { WalletAddress, FaqList, StaggerList, EyeSlashIcon, EyeIcon } from '@/components/common';
+import {
+  WalletAddress,
+  FaqList,
+  StaggerList,
+  BaseButton,
+  EyeSlashIcon,
+  EyeIcon
+} from '@/components/common';
 import { CHAIN_TYPE, DEFAULT_USDC_LOGO, colors, sizes } from '@/config';
 import {
   useUsdcPrice,
@@ -87,6 +94,7 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
       });
     };
 
+  console.log({ displayedChains, balances });
   return (
     <>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
@@ -105,40 +113,32 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
               }}
             />
           ) : null}
-          <Box
-            display="flex"
-            alignItems="center"
-            gap="9px"
-            cursor="pointer"
-            attributes={{
-              onClick: () =>
-                useSettingsStore.setState((prev) => ({ hideZeroBalances: !prev.hideZeroBalances }))
+
+          <BaseButton
+            onPress={() => {
+              useSettingsStore.setState((prev) => ({ hideZeroBalances: !prev.hideZeroBalances }));
             }}
           >
-            <Text
-              color={useColorModeValue(colors.gray500, colors.blue600)}
-              fontSize="12px"
-              fontWeight="400"
-            >
-              {hideZeroBalances ? 'Show all balances' : 'Hide zero balances'}
-            </Text>
-            {hideZeroBalances ? <EyeIcon /> : <EyeSlashIcon />}
-          </Box>
+            <Box as="span" display="flex" alignItems="center" gap="9px">
+              <Text
+                as="span"
+                color={useColorModeValue(colors.gray500, colors.blue600)}
+                fontSize="12px"
+                fontWeight="400"
+              >
+                {hideZeroBalances ? 'Show all balances' : 'Hide zero balances'}
+              </Text>
+
+              {hideZeroBalances ? <EyeIcon /> : <EyeSlashIcon />}
+            </Box>
+          </BaseButton>
         </Box>
 
         {isChainsLoading ? (
           <Skeleton width="$full" height="$20" mt="24px" borderRadius="$md" />
         ) : (
-          // <StaggerList
-          //   numItems={displayedChains.length}
-          //   style={{
-          //     display: 'flex',
-          //     flexDirection: 'column',
-          //     gap: '16px',
-          //     marginTop: '24px'
-          //   }}
-          // >
-          <div
+          <StaggerList
+            numItems={displayedChains.length}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -148,9 +148,13 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
           >
             {displayedChains.map((chain) => {
               const usdcAsset = assets?.[chain.chainID];
+              const usdcBalanceDisplay = balances ? balances[chain.chainID] : '--';
+              const usdcBalanceNotional =
+                balances && usdcPrice ? calcDollarValue(balances[chain.chainID], usdcPrice) : '';
+
               return (
                 <NobleSelectTokenButton
-                  key={chain.chainID}
+                  key={`${chain.chainID}__${usdcBalanceDisplay}`}
                   size="xl"
                   token={{
                     mainLogoUrl: usdcAsset?.logoURI ?? DEFAULT_USDC_LOGO,
@@ -159,18 +163,14 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
                     subLogoAlt: chain.prettyName,
                     symbol: usdcAsset?.symbol ?? 'USDC',
                     network: `On ${chain.prettyName}`,
-                    tokenAmount: balances ? balances[chain.chainID] : '--',
-                    notionalValue:
-                      balances && usdcPrice
-                        ? calcDollarValue(balances[chain.chainID], usdcPrice)
-                        : ''
+                    tokenAmount: usdcBalanceDisplay,
+                    notionalValue: usdcBalanceNotional
                   }}
                   onClick={handleSelectToken(chain, usdcAsset)}
                 />
               );
             })}
-          </div>
-          // </StaggerList>
+          </StaggerList>
         )}
       </Box>
 

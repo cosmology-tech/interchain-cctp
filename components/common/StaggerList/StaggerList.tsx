@@ -16,7 +16,7 @@ export function StaggerList(props: StaggerListProps) {
 
   React.useEffect(() => {
     controls.start('visible');
-  }, []); // eslint-disable-line
+  }, [props.children]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <motion.div
@@ -70,6 +70,7 @@ function StaggerListItem(props: StaggerListItemProps) {
   const delayRef = React.useRef(0);
   const offset = React.useRef({ top: 0, left: 0 });
   const ref = React.useRef(null);
+  // const [done, setDone] = React.useState(false);
 
   React.useLayoutEffect(() => {
     if (!ref.current) return;
