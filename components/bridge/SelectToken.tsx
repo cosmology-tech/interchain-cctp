@@ -1,11 +1,17 @@
 import { useRouter } from 'next/router';
 import { useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect, useSwitchChain } from 'wagmi';
-import { Box, NobleSelectTokenButton, Skeleton } from '@interchain-ui/react';
+import {
+  Box,
+  NobleSelectTokenButton,
+  Skeleton,
+  Text,
+  useColorModeValue
+} from '@interchain-ui/react';
 
 import { calcDollarValue } from '@/utils';
-import { WalletAddress, FaqList, StaggerList } from '@/components/common';
-import { CHAIN_TYPE, DEFAULT_USDC_LOGO, sizes } from '@/config';
+import { WalletAddress, FaqList, StaggerList, EyeSlashIcon, EyeIcon } from '@/components/common';
+import { CHAIN_TYPE, DEFAULT_USDC_LOGO, colors, sizes } from '@/config';
 import {
   useUsdcPrice,
   useIsMounted,
@@ -16,13 +22,15 @@ import {
 } from '@/hooks';
 import { BridgeStep, SelectedToken } from '@/pages/bridge';
 import { Asset } from '@skip-router/core';
+import BigNumber from 'bignumber.js';
+import { useMemo } from 'react';
+import { useSettingsStore } from '@/contexts';
 
 interface SelectTokenProps {
   setBridgeStep: (bridgeStep: BridgeStep) => void;
   setSelectedToken: (selectedToken: SelectedToken) => void;
 }
 
-// TODO: switch to the network that's selected in metamask
 export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProps) {
   const router = useRouter();
   const { address: evmAddress, chainId: connectedChainId } = useAccount();
@@ -31,14 +39,29 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
   const { switchChainAsync } = useSwitchChain();
   const isMounted = useIsMounted();
 
+  const { hideZeroBalances } = useSettingsStore();
+
   const { data: chains = [], isLoading: isChainsLoading } = useSkipChains();
   const { data: assets } = useUsdcAssets();
 
   const sourceChainType = searchParams.get('chain_type') ?? CHAIN_TYPE.EVM;
-  const displayedChains = chains.filter((chain) => chain.chainType === sourceChainType);
+  const sourceChains = chains.filter((chain) => chain.chainType === sourceChainType);
 
-  const { data: balances } = useUsdcBalances({ chains: displayedChains, assets });
+  const { data: balances } = useUsdcBalances({ chains: sourceChains, assets });
   const { data: usdcPrice } = useUsdcPrice();
+
+  const displayedChains = useMemo(() => {
+    if (!balances) return sourceChains;
+    return sourceChains
+      .sort((a, b) => {
+        const aBalance = BigNumber(balances[a.chainID] ?? 0);
+        const bBalance = BigNumber(balances[b.chainID] ?? 0);
+        return bBalance.comparedTo(aBalance);
+      })
+      .filter((chain) => {
+        return hideZeroBalances ? BigNumber(balances[chain.chainID]).gt(0) : true;
+      });
+  }, [balances, sourceChains, hideZeroBalances]);
 
   const handleSelectToken =
     (selectedChain: SkipChain, selectedAsset: Asset | undefined) => async () => {
@@ -71,22 +94,51 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
           Select token to bridge
         </Box>
 
-        {isMounted ? (
-          <WalletAddress
-            walletType={sourceChainType === 'cosmos' ? 'keplr' : 'metamask'}
-            address={sourceChainType === 'cosmos' ? '' : evmAddress}
-            onDisconnect={() => {
-              disconnect();
-              router.push('/');
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          {isMounted ? (
+            <WalletAddress
+              walletType={sourceChainType === 'cosmos' ? 'keplr' : 'metamask'}
+              address={sourceChainType === 'cosmos' ? '' : evmAddress}
+              onDisconnect={() => {
+                disconnect();
+                router.push('/');
+              }}
+            />
+          ) : null}
+          <Box
+            display="flex"
+            alignItems="center"
+            gap="9px"
+            cursor="pointer"
+            attributes={{
+              onClick: () =>
+                useSettingsStore.setState((prev) => ({ hideZeroBalances: !prev.hideZeroBalances }))
             }}
-          />
-        ) : null}
+          >
+            <Text
+              color={useColorModeValue(colors.gray500, colors.blue600)}
+              fontSize="12px"
+              fontWeight="400"
+            >
+              {hideZeroBalances ? 'Show all balances' : 'Hide zero balances'}
+            </Text>
+            {hideZeroBalances ? <EyeIcon /> : <EyeSlashIcon />}
+          </Box>
+        </Box>
 
         {isChainsLoading ? (
           <Skeleton width="$full" height="$20" mt="24px" borderRadius="$md" />
         ) : (
-          <StaggerList
-            numItems={displayedChains.length}
+          // <StaggerList
+          //   numItems={sortedChains.length}
+          //   style={{
+          //     display: 'flex',
+          //     flexDirection: 'column',
+          //     gap: '16px',
+          //     marginTop: '24px'
+          //   }}
+          // >
+          <div
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -117,7 +169,8 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
                 />
               );
             })}
-          </StaggerList>
+          </div>
+          // </StaggerList>
         )}
       </Box>
 
