@@ -27,14 +27,23 @@ export const SelectAmount = ({
   const [partialPercent, setPartialPercent] = useState<number | null>(null);
   const { data: usdcPrice } = useUsdcPrice();
 
-  const onAmountButtonClick = (amount: string | number, selectedPartialPercent: number) => {
+  const onPartialButtonClick = (selectedPartialPercent: number) => {
     setPartialPercent(selectedPartialPercent);
-    setAmount(String(amount));
+
+    if (BigNumber(selectedPartialPercent).eq(1)) {
+      onMaxAmountClick();
+      return;
+    }
+
+    const decimals = sourceAsset.decimals ?? 6;
+    const amount = BigNumber(balance)
+      .times(selectedPartialPercent)
+      .decimalPlaces(decimals)
+      .toString();
+    setAmount(amount);
   };
 
-  const onMaxAmountClick = async (selectedPartialPercent: number) => {
-    setPartialPercent(selectedPartialPercent);
-
+  const onMaxAmountClick = () => {
     const isNobleChain = NOBLE_CHAIN_IDS.includes(sourceChain.chainID);
 
     if (!isNobleChain) {
@@ -51,7 +60,7 @@ export const SelectAmount = ({
       .toString();
     let newAmountIn = BigNumber(balance).minus(gasRequired);
     newAmountIn = newAmountIn.isNegative() ? BigNumber(0) : newAmountIn;
-    setAmount(newAmountIn.toFixed(decimals));
+    setAmount(newAmountIn.decimalPlaces(decimals).toString());
   };
 
   const shouldShowPartialButtons = isNaN(+balance) ? false : +balance > 0;
@@ -99,7 +108,6 @@ export const SelectAmount = ({
         shouldShowPartialButtons ? (
           <Stack space="$4">
             {PARTIAL_PERCENTAGES.map((percent, index) => {
-              const amount = BigNumber(balance).times(percent).toFormat(2);
               const isMax = index === PARTIAL_PERCENTAGES.length - 1;
 
               return (
@@ -108,11 +116,9 @@ export const SelectAmount = ({
                   variant="tag"
                   size="xs"
                   isActive={partialPercent === percent}
-                  onClick={() =>
-                    isMax ? onMaxAmountClick(percent) : onAmountButtonClick(amount, percent)
-                  }
+                  onClick={() => onPartialButtonClick(percent)}
                 >
-                  {isMax ? 'Max' : `${amount}`}
+                  {isMax ? 'Max' : `${percent * 100}%`}
                 </NobleButton>
               );
             })}
