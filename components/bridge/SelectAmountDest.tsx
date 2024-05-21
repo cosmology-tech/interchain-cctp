@@ -6,7 +6,13 @@ import { Box, NoblePageTitleBar, NobleButton, toast } from '@interchain-ui/react
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
 import { BroadcastedTx, SkipChain, useRoute, useUsdcAssets } from '@/hooks';
-import { getCosmosChainNameById, isValidAddress, randomId, shiftDecimals } from '@/utils';
+import {
+  getCosmosChainNameById,
+  isUserRejectedRequestError,
+  isValidAddress,
+  randomId,
+  shiftDecimals
+} from '@/utils';
 import { useSkipClient } from '@/contexts';
 import { BridgeStep, SelectedToken, TransferInfo } from '@/pages/bridge';
 import { SelectAmount } from './SelectAmount';
@@ -125,7 +131,11 @@ export function SelectAmountDest({
       });
     } catch (err: any) {
       console.error(err);
-      toast.error(('Failed to execute transaction: ' + err.message) as string);
+      if (isUserRejectedRequestError(err)) {
+        setShowSignTxView(false);
+        return;
+      }
+      toast.error(('Transaction failed: ' + err.message) as string);
       setShowSignTxView(false);
     }
   }
