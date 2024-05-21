@@ -9,7 +9,7 @@ export const useUsdcChains = () => {
   const skipClient = useSkipClient();
 
   return useQuery({
-    queryKey: ['usdc-chains'],
+    queryKey: ['usdc-chains', skipClient ? 'skip-ready' : 'skip-pending'],
     queryFn: async () => {
       const cosmosAssets = await skipClient?.assetsFromSource({
         sourceAssetDenom: 'uusdc',

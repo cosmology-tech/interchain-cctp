@@ -6,6 +6,7 @@ export * from './FaqList';
 export * from './BaseButton';
 export * from './WalletAddress';
 export * from './HistoryLink';
+export * from './ImageWithFallback';
 
 // Animation components
 export * from './StaggerList';

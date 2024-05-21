@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useChains } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { Box, NoblePageTitleBar, NobleButton, toast } from '@interchain-ui/react';
+import { Box, NoblePageTitleBar, NobleButton, Text, toast } from '@interchain-ui/react';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
@@ -135,7 +135,21 @@ export function SelectAmountDest({
         setShowSignTxView(false);
         return;
       }
-      toast.error(('Transaction failed: ' + err.message) as string);
+      toast.error(
+        <Text
+          as="p"
+          color="inherit"
+          attributes={{
+            maxHeight: '250px',
+            overflow: 'auto'
+          }}
+        >
+          {`Failed to execute transaction: ${err.message}`}
+        </Text>,
+        {
+          duration: 6000
+        }
+      );
       setShowSignTxView(false);
     }
   }
