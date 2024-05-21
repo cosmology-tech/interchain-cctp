@@ -9,3 +9,4 @@ export * from './useConnectChains';
 export * from './useTxsStatus';
 export * from './useFinalityTimeEstimate';
 export * from './useStargateClients';
+export * from './useUsdcChains';

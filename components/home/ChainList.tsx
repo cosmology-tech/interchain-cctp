@@ -4,8 +4,11 @@ import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 import { Button as AriaButton } from 'react-aria-components';
 import { Tooltip } from '@/components/common/Tooltip';
 import { buttonReset } from '@/styles/Shared.css';
+import { useUsdcChains } from '@/hooks';
 
 export function ChainList() {
+  const { data: chains } = useUsdcChains();
+
   return (
     <Box textAlign="center" display="flex" justifyContent="center" alignItems="center">
       <Tooltip.Trigger delay={0.2}>

@@ -94,7 +94,6 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
       });
     };
 
-  console.log({ displayedChains, balances });
   return (
     <>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">

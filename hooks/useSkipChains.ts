@@ -26,13 +26,13 @@ export const useSkipChains = () => {
       });
 
       return chains
+        .filter(({ chainID }) => SUPPORTED_CHAIN_IDS.includes(chainID))
         .map((chain): SkipChain => {
           return {
             ...chain,
             prettyName: CHAIN_ID_TO_PRETTY_NAME[chain.chainID] || chain.chainName
           };
         })
-        .filter(({ chainID }) => SUPPORTED_CHAIN_IDS.includes(chainID))
         .sort((chainA, chainB) => {
           return (
             SUPPORTED_CHAIN_IDS.indexOf(chainA.chainID) -

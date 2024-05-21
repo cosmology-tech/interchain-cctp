@@ -29,7 +29,7 @@ import osmosistestnet from 'chain-registry/testnet/osmosistestnet/chain';
 import type { Chain as CosmosChain } from '@chain-registry/types';
 
 // Supported EVM chains
-const EVM_MAINNETS: EVMChain[] = [mainnet, base, arbitrum, optimism, avalanche, polygon];
+export const EVM_MAINNETS: EVMChain[] = [mainnet, base, arbitrum, optimism, avalanche, polygon];
 const EVM_TESTNETS: EVMChain[] = [sepolia, optimismSepolia, avalancheFuji];
 
 // Supported Cosmos chains
