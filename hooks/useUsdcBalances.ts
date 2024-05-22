@@ -7,12 +7,7 @@ import { useAccount, useConnect } from 'wagmi';
 
 import { SkipChain } from './useSkipChains';
 import { getCosmosChainNameById, shiftDecimals } from '@/utils';
-import {
-  COSMOS_CHAIN_NAMES,
-  NOBLE_CHAIN_IDS,
-  USDC_CONTRACT_ABI,
-  config as wagmiConfig
-} from '@/config';
+import { COSMOS_CHAIN_NAMES, USDC_CONTRACT_ABI, config as wagmiConfig } from '@/config';
 import { useConnectChains } from './useConnectChains';
 import { StargateClients, useStargateClients } from './useStargateClients';
 
@@ -85,7 +80,7 @@ export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
             const stargateClient = (stargateClients as StargateClients)[chainName];
             const coin = await stargateClient.getBalance(
               cosmosAddress!,
-              NOBLE_CHAIN_IDS.includes(chain.chainID) ? 'uusdc' : assets[chain.chainID].denom
+              assets[chain.chainID].denom
             );
             return {
               chainId: chain.chainID,
