@@ -120,6 +120,9 @@ function ChainItem(props: ChainItemProps) {
         alt={props.alt ?? props.name}
         width={props.width}
         height={props.height}
+        style={{
+          borderRadius: '100%'
+        }}
       />
 
       <Text
