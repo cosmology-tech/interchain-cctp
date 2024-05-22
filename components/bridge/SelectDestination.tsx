@@ -10,7 +10,8 @@ import {
   NobleInput,
   NobleSelectNetworkButton,
   NobleButton,
-  NobleChainCombobox
+  NobleChainCombobox,
+  Tooltip
 } from '@interchain-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
@@ -25,6 +26,7 @@ import {
   isValidEvmAddress
 } from '@/utils';
 import { SkipChain, useConnectChains, useSkipChains } from '@/hooks';
+import BigNumber from 'bignumber.js';
 
 interface SelectDestinationProps {
   destChain: SkipChain | null;
@@ -164,6 +166,8 @@ export const SelectDestination = ({
   const usernameTextColor = useColorModeValue(colors.gray500, colors.blue600);
   const sectionTitleColor = useColorModeValue(colors.gray500, colors.blue700);
 
+  const isDestAmountNegative = BigNumber(route?.usdAmountOut || 0).lte(0);
+
   return (
     <>
       <Box display="flex" justifyContent="space-between">
@@ -200,14 +204,32 @@ export const SelectDestination = ({
           ) : null}
         </Box>
 
-        <Text
-          fontSize="16px"
-          fontWeight="600"
-          color={useColorModeValue(colors.blue50, colors.white)}
-          attributes={{ marginRight: '24px', transform: 'translateY(-2px)' }}
-        >
-          {route ? route.usdAmountOut : ''}
-        </Text>
+        <Box display={isDestAmountNegative ? 'none' : 'flex'} alignItems="center" height="$min">
+          <Text
+            fontSize="$lg"
+            fontWeight="600"
+            lineHeight="$short"
+            color={useColorModeValue(colors.blue50, colors.white)}
+            attributes={{
+              mr: route?.warning?.type === 'BAD_PRICE_WARNING' ? '8px' : '12px'
+            }}
+          >
+            {route ? route.usdAmountOut : ''}
+          </Text>
+
+          {route?.warning?.type === 'BAD_PRICE_WARNING' && (
+            <Tooltip
+              placement="top"
+              title={
+                <Box maxWidth="300px">
+                  <Text color="$textInverse">Bad Price Warning: {route.warning.message}</Text>
+                </Box>
+              }
+            >
+              <Icon name="errorWarningLine" size="$xl" color="$textWarning" />
+            </Tooltip>
+          )}
+        </Box>
       </Box>
 
       {showAddrInput ? (

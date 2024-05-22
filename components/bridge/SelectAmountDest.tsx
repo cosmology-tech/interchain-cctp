@@ -22,6 +22,7 @@ import type { RouteResponse } from '@skip-router/core';
 import { SignTx } from './SignTx';
 import { txHistory } from '@/contexts';
 import { PoweredBy } from './PoweredBy';
+import BigNumber from 'bignumber.js';
 
 interface SelectAmountDestProps {
   selectedToken: SelectedToken;
@@ -154,10 +155,13 @@ export function SelectAmountDest({
     }
   }
 
-  const shouldShowEstimates = !!route && !!destChain && !!evmAddress;
+  const isBadRoute = route && BigNumber(route.usdAmountOut || 0).lte(0);
+
+  const showTransferInfo = !!route && !!destChain && !!evmAddress && !isBadRoute;
+
   const bridgeButtonText = routeIsFetching
     ? 'Finding best route...'
-    : routeIsError
+    : routeIsError || isBadRoute
     ? 'No route found'
     : 'Bridge';
 
@@ -167,7 +171,8 @@ export function SelectAmountDest({
     !isValidAddress(destAddress) ||
     +amount > +balance ||
     routeIsFetching ||
-    routeIsError;
+    routeIsError ||
+    isBadRoute;
 
   if (showSignTxView) {
     return <SignTx />;
@@ -216,7 +221,7 @@ export function SelectAmountDest({
           {bridgeButtonText}
         </NobleButton>
 
-        {shouldShowEstimates && (
+        {showTransferInfo && (
           <TransferExtraInfo route={route} destChain={destChain} sourceChain={sourceChain} />
         )}
 
