@@ -55,7 +55,7 @@ export function ChainList() {
               fontWeight="500"
               attributes={{ marginLeft: '-30px' }}
             >
-              +16
+              +30
             </Text>
           </Box>
         </AriaButton>
