@@ -6,19 +6,20 @@ import {
   Box,
   Text,
   Icon,
+  useTheme,
   useColorModeValue,
   NobleInput,
   NobleSelectNetworkButton,
   NobleButton,
-  NobleChainCombobox,
-  Tooltip
+  NobleChainCombobox
 } from '@interchain-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import type { RouteResponse } from '@skip-router/core';
 
-import { ExitIcon } from '@/components/common';
+import { ExitIcon, Tooltip, BaseButton } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, ChainType, colors } from '@/config';
+import { scrollBar } from '@/styles/Shared.css';
 import {
   cosmosAddressToChainId,
   getCosmosChainNameById,
@@ -175,6 +176,7 @@ export const SelectDestination = ({
 
   const isDestAmountNegative = BigNumber(route?.usdAmountOut || 0).lte(0);
 
+  const { theme } = useTheme();
   return (
     <>
       <SelectWalletModal
@@ -230,16 +232,24 @@ export const SelectDestination = ({
           </Text>
 
           {route?.warning?.type === 'BAD_PRICE_WARNING' && (
-            <Tooltip
-              placement="top"
-              title={
-                <Box maxWidth="300px">
-                  <Text color="$textInverse">Bad Price Warning: {route.warning.message}</Text>
+            <Tooltip.Trigger delay={0.1}>
+              <BaseButton>
+                <Icon name="errorWarningLine" size="$xl" color="$textWarning" />
+              </BaseButton>
+
+              <Tooltip placement="top" padding={16}>
+                <Box
+                  maxWidth="300px"
+                  maxHeight="200px"
+                  overflow="auto"
+                  className={scrollBar[theme]}
+                >
+                  <Text color={theme === 'light' ? '$textInverse' : '$text'}>
+                    Bad Price Warning: {route.warning.message}
+                  </Text>
                 </Box>
-              }
-            >
-              <Icon name="errorWarningLine" size="$xl" color="$textWarning" />
-            </Tooltip>
+              </Tooltip>
+            </Tooltip.Trigger>
           )}
         </Box>
       </Box>
