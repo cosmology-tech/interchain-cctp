@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Key, useMemo } from 'react';
+import { Key, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useChains } from '@cosmos-kit/react';
 import {
@@ -25,8 +25,15 @@ import {
   isValidCosmosAddress,
   isValidEvmAddress
 } from '@/utils';
-import { SkipChain, useConnectChains, useSkipChains } from '@/hooks';
+import {
+  SkipChain,
+  TCosmosWallet,
+  useConnectWallet,
+  useDisconnectWallet,
+  useSkipChains
+} from '@/hooks';
 import BigNumber from 'bignumber.js';
+import { SelectWalletModal } from './SelectWalletModal';
 
 interface SelectDestinationProps {
   destChain: SkipChain | null;
@@ -47,16 +54,16 @@ export const SelectDestination = ({
 }: SelectDestinationProps) => {
   const searchParams = useSearchParams();
   const { address: evmAddress, isConnected: isEvmWalletConnected } = useAccount();
-  const { connect: wagmiConnect, connectors } = useConnect();
-  const { disconnect: wagmiDisconnect } = useDisconnect();
+  const { connect: connectMetamask, connectors } = useConnect();
+  const { disconnect: disconnectMetamask } = useDisconnect();
 
   const { data: chains = [] } = useSkipChains();
   const cosmosChainContexts = useChains(COSMOS_CHAIN_NAMES);
-  const {
-    isAllConnected: isCosmosWalletConnected,
-    connectAll,
-    disconnectAll
-  } = useConnectChains(COSMOS_CHAIN_NAMES);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState<TCosmosWallet>('keplr');
+  const { isConnected: isCosmosWalletConnected } = useConnectWallet(selectedWallet);
+  const { disconnect: disconnectCosmosWallet } = useDisconnectWallet(selectedWallet);
 
   const sourceChainType = (searchParams.get('chain_type') ?? CHAIN_TYPE.EVM) as ChainType;
 
@@ -71,19 +78,19 @@ export const SelectDestination = ({
 
   const handleConnectWallet = () => {
     if (sourceChainType === 'evm') {
-      connectAll();
+      setIsOpen(true);
     }
     if (sourceChainType === 'cosmos') {
-      wagmiConnect({ connector: connectors[0] });
+      connectMetamask({ connector: connectors[0] });
     }
   };
 
   const handleDisconnectWallet = () => {
     if (sourceChainType === 'evm') {
-      disconnectAll();
+      disconnectCosmosWallet();
     }
     if (sourceChainType === 'cosmos') {
-      wagmiDisconnect();
+      disconnectMetamask();
     }
     setDestChain(null);
     setDestAddress('');
@@ -95,9 +102,9 @@ export const SelectDestination = ({
     let walletName = '';
     if (sourceChainType === 'evm') {
       const chainContext = Object.values(cosmosChainContexts)[0];
-      walletName = chainContext.wallet?.prettyName ?? 'Keplr';
+      walletName = chainContext.wallet?.prettyName ?? '';
       username = chainContext.username ?? '';
-      logoUrl = '/logos/keplr.svg';
+      logoUrl = selectedWallet === 'keplr' ? '/logos/keplr.svg' : '/logos/leap.svg';
     }
     if (sourceChainType === 'cosmos') {
       walletName = 'MetaMask';
@@ -170,6 +177,11 @@ export const SelectDestination = ({
 
   return (
     <>
+      <SelectWalletModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        setSelectedWallet={setSelectedWallet}
+      />
       <Box display="flex" justifyContent="space-between">
         <Box>
           <Text

@@ -1,6 +1,5 @@
-import { useRouter } from 'next/router';
 import { useSearchParams } from 'next/navigation';
-import { useAccount, useDisconnect, useSwitchChain } from 'wagmi';
+import { useAccount, useSwitchChain } from 'wagmi';
 import {
   Box,
   NobleSelectTokenButton,
@@ -25,7 +24,8 @@ import {
   useSkipChains,
   useUsdcAssets,
   useUsdcBalances,
-  SkipChain
+  SkipChain,
+  TCosmosWallet
 } from '@/hooks';
 import { BridgeStep, SelectedToken } from '@/pages/bridge';
 import { Asset } from '@skip-router/core';
@@ -39,22 +39,26 @@ interface SelectTokenProps {
 }
 
 export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProps) {
-  const router = useRouter();
-  const { address: evmAddress, chainId: connectedChainId } = useAccount();
   const searchParams = useSearchParams();
-  const { disconnect } = useDisconnect();
-  const { switchChainAsync } = useSwitchChain();
   const isMounted = useIsMounted();
+
+  const { switchChainAsync } = useSwitchChain();
+  const { chainId: connectedChainId } = useAccount();
 
   const { hideZeroBalances } = useSettingsStore();
 
   const { data: chains = [], isLoading: isChainsLoading } = useSkipChains();
   const { data: assets } = useUsdcAssets();
 
+  const walletName = (searchParams.get('wallet') ?? 'keplr') as TCosmosWallet;
   const sourceChainType = searchParams.get('chain_type') ?? CHAIN_TYPE.EVM;
   const sourceChains = chains.filter((chain) => chain.chainType === sourceChainType);
 
-  const { data: balances } = useUsdcBalances({ chains: sourceChains, assets });
+  const { data: balances } = useUsdcBalances({
+    assets,
+    chains: sourceChains,
+    cosmosWallet: walletName
+  });
   const { data: usdcPrice } = useUsdcPrice();
 
   const displayedChains = useMemo(() => {
@@ -102,16 +106,7 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
         </Box>
 
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          {isMounted ? (
-            <WalletAddress
-              walletType={sourceChainType === 'cosmos' ? 'keplr' : 'metamask'}
-              address={sourceChainType === 'cosmos' ? '' : evmAddress}
-              onDisconnect={() => {
-                disconnect();
-                router.push('/');
-              }}
-            />
-          ) : null}
+          {isMounted && <WalletAddress />}
 
           <BaseButton
             onPress={() => {

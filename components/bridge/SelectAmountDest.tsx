@@ -1,11 +1,11 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import { useChains } from '@cosmos-kit/react';
+import { useChains, useWalletClient } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Box, NoblePageTitleBar, NobleButton, Text, toast } from '@interchain-ui/react';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
-import { BroadcastedTx, SkipChain, useRoute, useUsdcAssets } from '@/hooks';
+import { BroadcastedTx, SkipChain, TCosmosWallet, useRoute, useUsdcAssets } from '@/hooks';
 import {
   getCosmosChainNameById,
   isUserRejectedRequestError,
@@ -23,6 +23,8 @@ import { SignTx } from './SignTx';
 import { txHistory } from '@/contexts';
 import { PoweredBy } from './PoweredBy';
 import BigNumber from 'bignumber.js';
+import { wallets } from 'cosmos-kit';
+import { useSearchParams } from 'next/navigation';
 
 interface SelectAmountDestProps {
   selectedToken: SelectedToken;
@@ -31,6 +33,11 @@ interface SelectAmountDestProps {
   setBroadcastedTxs: Dispatch<SetStateAction<BroadcastedTx[]>>;
   setTransferInfo: Dispatch<SetStateAction<TransferInfo | null>>;
 }
+
+const CosmosSigningWalletName: Record<TCosmosWallet, string> = {
+  keplr: wallets.keplr.extension?.walletName!,
+  leap: wallets.leap.extension?.walletName!
+};
 
 export function SelectAmountDest({
   selectedToken,
@@ -49,6 +56,9 @@ export function SelectAmountDest({
   const [amount, setAmount] = useState('0');
   const [showSignTxView, setShowSignTxView] = useState(false);
 
+  const searchParams = useSearchParams();
+  const walletName = (searchParams.get('wallet') ?? 'keplr') as TCosmosWallet;
+  const { client: cosmosWalletClient } = useWalletClient(CosmosSigningWalletName[walletName]);
   const { address: evmAddress, chainId: connectedChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { data: assets } = useUsdcAssets();
@@ -113,6 +123,19 @@ export function SelectAmountDest({
         route,
         userAddresses,
         validateGasBalance: route.txsRequired === 1,
+        getCosmosSigner: async (chainID: string) => {
+          const cosmosSigner =
+            cosmosWalletClient?.getOfflineSignerDirect &&
+            cosmosWalletClient.getOfflineSignerDirect(chainID);
+
+          if (!cosmosSigner) {
+            throw new Error(
+              `getCosmosSigner error: no offline signer available for chain ${chainID}`
+            );
+          }
+
+          return cosmosSigner;
+        },
         onTransactionTracked: async (tx) => {
           txHistory.addItem({
             route,

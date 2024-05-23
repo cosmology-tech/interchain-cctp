@@ -3,18 +3,15 @@ import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Box, Text, toast, useColorModeValue } from '@interchain-ui/react';
 import { shortenAddress } from '@/utils';
-import { CopyIcon, ExitIcon, CheckCircleIcon, FadeIn } from '@/components/common';
-import { useCopyToClipboard } from '@/hooks';
+import { CopyIcon, ExitIcon, CheckCircleIcon } from '@/components/common';
+import { TCosmosWallet, useCopyToClipboard, useDisconnectWallet } from '@/hooks';
 import { BaseButton } from './BaseButton';
+import { useSearchParams } from 'next/navigation';
+import { useAccount, useDisconnect } from 'wagmi';
+import { useRouter } from 'next/router';
 
-export interface WalletAddressProps {
-  walletType?: 'metamask' | 'keplr';
-  address?: string;
-  onDisconnect?: () => void;
-}
-
-export function WalletAddress(props: WalletAddressProps) {
-  const { walletType = 'metamask', address = '', onDisconnect = () => {} } = props;
+export function WalletAddress() {
+  const { address: evmAddress } = useAccount();
 
   const [showSuccessIcon, setShowSuccessIcon] = React.useState(false);
   const [_copyState, copyToClipboard] = useCopyToClipboard({
@@ -23,14 +20,32 @@ export function WalletAddress(props: WalletAddressProps) {
     }
   });
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const walletName = searchParams.get('wallet') as TCosmosWallet | null;
+  const address = walletName ? '' : evmAddress;
+
+  const { disconnect: disconnectMetamask } = useDisconnect();
+  const { disconnect: disconnectKeplr } = useDisconnectWallet('keplr');
+  const { disconnect: disconnectLeap } = useDisconnectWallet('leap');
+
+  const onDisconnect = () => {
+    if (walletName === 'keplr') disconnectKeplr();
+    if (walletName === 'leap') disconnectLeap();
+    if (!walletName) disconnectMetamask();
+    router.push('/');
+  };
+
   const addressColor = useColorModeValue('$textSecondary', '$primary');
 
   return (
     <Box display="flex" alignItems="center" gap="8px">
-      {walletType === 'metamask' ? (
+      {!walletName ? (
         <Image src="/logos/metamask.svg" alt="MetaMask" width={16} height={16} />
+      ) : walletName === 'keplr' ? (
+        <Image src="/logos/keplr.svg" alt="Keplr" width={16} height={16} />
       ) : (
-        <Image src="/logos/keplr.svg" alt="MetaMask" width={16} height={16} />
+        <Image src="/logos/leap.svg" alt="Leap" width={16} height={16} />
       )}
 
       {address ? (
@@ -80,12 +95,7 @@ export function WalletAddress(props: WalletAddressProps) {
         </>
       ) : null}
 
-      <BaseButton
-        aria-label="Exit"
-        onPress={() => {
-          onDisconnect();
-        }}
-      >
+      <BaseButton aria-label="Exit" onPress={onDisconnect}>
         <Box height="16px">
           <ExitIcon />
         </Box>

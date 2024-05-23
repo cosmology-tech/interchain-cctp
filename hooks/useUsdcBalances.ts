@@ -8,7 +8,7 @@ import { useAccount, useConnect } from 'wagmi';
 import { SkipChain } from './useSkipChains';
 import { getCosmosChainNameById, shiftDecimals } from '@/utils';
 import { COSMOS_CHAIN_NAMES, USDC_CONTRACT_ABI, config as wagmiConfig } from '@/config';
-import { useConnectChains } from './useConnectChains';
+import { TCosmosWallet, useConnectWallet } from './useConnectWallet';
 import { StargateClients, useStargateClients } from './useStargateClients';
 
 export type EVMAddress = `0x${string}`;
@@ -16,15 +16,16 @@ export type EVMAddress = `0x${string}`;
 interface Args {
   chains?: SkipChain[];
   assets?: Record<string, Asset>;
+  cosmosWallet?: TCosmosWallet;
 }
 
-export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
-  const { connect: wagmiConnect, connectors } = useConnect();
+export const useUsdcBalances = ({ chains = [], assets = {}, cosmosWallet = 'keplr' }: Args) => {
+  const { connect: connectEvmWallet, connectors } = useConnect();
   const { address: evmAddress, isConnected: isEvmWalletConnected } = useAccount();
 
   const cosmosChains = useChains(COSMOS_CHAIN_NAMES);
-  const { isAllConnected: isCosmosWalletConnected, connectAll } =
-    useConnectChains(COSMOS_CHAIN_NAMES);
+  const { isConnected: isCosmosWalletConnected, connect: connectCosmosWallet } =
+    useConnectWallet(cosmosWallet);
 
   const { data: stargateClients } = useStargateClients();
 
@@ -34,13 +35,13 @@ export const useUsdcBalances = ({ chains = [], assets = {} }: Args) => {
 
   useEffect(() => {
     if (isCosmosWalletConnected || isEvmChainsOnly) return;
-    connectAll();
-  }, [connectAll, isCosmosWalletConnected, isEvmChainsOnly]);
+    connectCosmosWallet();
+  }, [connectCosmosWallet, isCosmosWalletConnected, isEvmChainsOnly]);
 
   useEffect(() => {
     if (isEvmWalletConnected || isCosmosChainsOnly) return;
-    wagmiConnect({ connector: connectors[0] });
-  }, [connectors, isCosmosChainsOnly, isEvmWalletConnected, wagmiConnect]);
+    connectEvmWallet({ connector: connectors[0] });
+  }, [connectors, isCosmosChainsOnly, isEvmWalletConnected, connectEvmWallet]);
 
   const isConnected = isEvmChainsOnly
     ? isEvmWalletConnected

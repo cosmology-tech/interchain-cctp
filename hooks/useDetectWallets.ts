@@ -4,10 +4,12 @@ import { useIsMounted } from './useIsMounted';
 export const useDetectWallets = () => {
   const isMetamaskInstalled = useDetect(detectMetamask);
   const isKeplrInstalled = useDetect(detectKeplr);
+  const isLeapInstalled = useDetect(detectLeap);
 
   return {
     metamask: isMetamaskInstalled,
-    keplr: isKeplrInstalled
+    keplr: isKeplrInstalled,
+    leap: isLeapInstalled
   } as const;
 };
 
@@ -47,9 +49,14 @@ function detectMetamask() {
 declare global {
   interface Window {
     keplr?: any; // just a placeholder to let TS not complain about keplr
+    leap?: any;
   }
 }
 
 function detectKeplr() {
   return !!window.keplr;
+}
+
+function detectLeap() {
+  return !!window.leap;
 }

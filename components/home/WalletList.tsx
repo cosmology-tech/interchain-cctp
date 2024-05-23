@@ -1,18 +1,32 @@
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { useAccount, useConnect } from 'wagmi';
-import { CHAIN_TYPE, COSMOS_CHAIN_NAMES } from '@/config';
-import { useDetectWallets } from '@/hooks/useDetectWallets';
 import { Box, NobleSelectWalletButton } from '@interchain-ui/react';
-import { useConnectChains } from '@/hooks';
+
+import { ChainType } from '@/config';
+import { TCosmosWallet, useConnectWallet, useDetectWallets } from '@/hooks';
+
+export type BridgeHref = {
+  pathname: string;
+  query: {
+    wallet?: TCosmosWallet;
+    chain_type: ChainType;
+  };
+};
 
 export function WalletList() {
   const router = useRouter();
   const { address } = useAccount();
   const { connectAsync, connectors } = useConnect();
-  const { connectAllAsync, isAllConnected } = useConnectChains(COSMOS_CHAIN_NAMES);
+
+  const { connectAsync: connectKeplrAsync, isConnected: isKeplrConnected } =
+    useConnectWallet('keplr');
+  const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } = useConnectWallet('leap');
 
   const handleConnectMetamask = () => {
-    const href = `/bridge?chain_type=${CHAIN_TYPE.EVM}`;
+    const href: BridgeHref = {
+      pathname: '/bridge',
+      query: { chain_type: 'evm' }
+    };
     if (address) {
       return router.push(href);
     }
@@ -24,11 +38,29 @@ export function WalletList() {
   };
 
   const handleConnectKeplr = () => {
-    const href = `/bridge?chain_type=${CHAIN_TYPE.COSMOS}`;
-    if (isAllConnected) {
+    const href: BridgeHref = {
+      pathname: '/bridge',
+      query: { chain_type: 'cosmos', wallet: 'keplr' }
+    };
+    if (isKeplrConnected) {
       return router.push(href);
     }
-    connectAllAsync().then((isSuccess) => {
+    connectKeplrAsync().then((isSuccess) => {
+      if (isSuccess) {
+        router.push(href);
+      }
+    });
+  };
+
+  const handleConnectLeap = () => {
+    const href: BridgeHref = {
+      pathname: '/bridge',
+      query: { chain_type: 'cosmos', wallet: 'leap' }
+    };
+    if (isLeapConnected) {
+      return router.push(href);
+    }
+    connectLeapAsync().then((isSuccess) => {
       if (isSuccess) {
         router.push(href);
       }
@@ -68,10 +100,11 @@ export function WalletList() {
 
       <NobleSelectWalletButton
         logoUrl={'/logos/capsule.svg'}
-        logoAlt="keplr"
+        logoAlt="capsule"
         title="Capsule"
-        subTitle="Log in"
-        disabled
+        onClick={handleConnectLeap}
+        subTitle={isWalletInstalled.leap ? 'Connect' : 'Install Leap'}
+        disabled={!isWalletInstalled.leap}
       />
 
       <NobleSelectWalletButton

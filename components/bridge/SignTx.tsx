@@ -1,29 +1,28 @@
 import Image from 'next/image';
-import { useRouter } from 'next/router';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
-import { CHAIN_TYPE, ChainType, colors } from '@/config';
-import { BaseButton, FadeIn } from '@/components/common';
+import { colors } from '@/config';
+import { FadeIn } from '@/components/common';
 import { PulsingBox } from '@/components/common/PulsingBox';
 import { AbstractWallet } from '@/components/common/icons/AbstractWallet';
 import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 export function SignTx() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const walletInfo = useMemo(() => {
-    const sourceChainType = (searchParams.get('chain_type') ?? CHAIN_TYPE.EVM) as ChainType;
-    switch (sourceChainType) {
-      case CHAIN_TYPE.EVM:
-        return {
-          name: 'MetaMask',
-          logo: '/logos/metamask.svg'
-        };
-      case CHAIN_TYPE.COSMOS:
+    const walletName = searchParams.get('wallet');
+
+    switch (walletName) {
+      case 'keplr':
         return {
           name: 'Keplr',
           logo: '/logos/keplr.svg'
+        };
+      case 'leap':
+        return {
+          name: 'Leap',
+          logo: '/logos/leap.svg'
         };
       default:
         return {
