@@ -24,6 +24,7 @@ export const SelectWalletModal = ({
     if (isConnected) {
       setSelectedWallet(walletName);
       onClose();
+      return;
     }
     connectAsync().then((isSuccess) => {
       if (isSuccess) {
