@@ -1,15 +1,8 @@
-import * as React from "react";
-import cls from "clsx";
-import {
-  Box,
-  Text,
-  Accordion,
-  NobleButton,
-  useTheme,
-} from "@interchain-ui/react";
-import { ChevronDown } from "../icons/Chevron";
-import * as styles from "./FaqAccordion.css";
-import * as sharedStyles from "@/styles/Shared.css";
+import * as React from 'react';
+import { Box, Text, Accordion, NobleButton, useTheme } from '@interchain-ui/react';
+import { ChevronDown } from '../icons/Chevron';
+import * as styles from './FaqAccordion.css';
+import * as sharedStyles from '@/styles/Shared.css';
 
 export interface FaqAccordionProps {
   isExpanded: boolean;
@@ -36,7 +29,7 @@ function Trigger({
       height="70px"
       className={styles.accordionTrigger}
       domAttributes={{
-        "data-expanded": isExpanded,
+        'data-expanded': isExpanded
       }}
     >
       <Box
@@ -65,9 +58,7 @@ export function FaqAccordion(props: FaqAccordionProps) {
   const { theme } = useTheme();
   return (
     <Accordion
-      renderTrigger={
-        <Trigger isExpanded={props.isExpanded}>{props.question}</Trigger>
-      }
+      renderTrigger={<Trigger isExpanded={props.isExpanded}>{props.question}</Trigger>}
       renderContent={
         <Box
           bg="$cardBg"

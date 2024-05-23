@@ -179,7 +179,7 @@ export const SelectDestination = ({
     <>
       <SelectWalletModal
         isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        setIsOpen={setIsOpen}
         setSelectedWallet={setSelectedWallet}
       />
       <Box display="flex" justifyContent="space-between">

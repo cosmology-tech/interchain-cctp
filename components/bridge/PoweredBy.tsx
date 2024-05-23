@@ -54,7 +54,7 @@ const SkipLogo = ({ color }: { color: string }) => (
 
 const CosmologyLogo = ({ color }: { color: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="26" height="18" viewBox="0 0 26 18" fill="none">
-    <g clip-path="url(#clip0_29_878)">
+    <g clipPath="url(#clip0_29_878)">
       <Box
         as="path"
         fill={color}

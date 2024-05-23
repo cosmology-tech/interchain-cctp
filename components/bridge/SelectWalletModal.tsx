@@ -1,20 +1,64 @@
+import * as React from 'react';
+import { wallets } from 'cosmos-kit';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  ConnectModal,
+  ConnectModalRequestingConnection,
+  WalletButton
+} from '@/components/common/ConnectModal';
 import { TCosmosWallet, useConnectWallet } from '@/hooks';
-import { BasicModal, Box, Button } from '@interchain-ui/react';
+import { Stack } from '@interchain-ui/react';
 
 interface SelectWalletModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  setIsOpen: (isOpen: boolean) => void;
   setSelectedWallet: (name: TCosmosWallet) => void;
 }
 
+const springTransition = {
+  type: 'spring',
+  stiffness: 700,
+  damping: 30
+};
+
 export const SelectWalletModal = ({
   isOpen,
-  onClose,
-  setSelectedWallet
+  setIsOpen,
+  setSelectedWallet: externalSetSelectedWallet
 }: SelectWalletModalProps) => {
+  const [view, setView] = React.useState<'wallets' | 'request'>('wallets');
+  const [status, setStatus] = React.useState<'requesting' | 'rejected' | 'error' | 'connected'>(
+    'requesting'
+  );
+  const [selectedWallet, setSelectedWallet] = React.useState<TCosmosWallet | null>(null);
+
   const { connectAsync: connectKeplrAsync, isConnected: isKeplrConnected } =
     useConnectWallet('keplr');
   const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } = useConnectWallet('leap');
+
+  const onSelectedWalletChange = (wallet: TCosmosWallet | null) => {
+    setSelectedWallet(wallet);
+
+    if (wallet) {
+      externalSetSelectedWallet(wallet);
+    }
+  };
+
+  const closeModal = (delay?: number) => {
+    const closeAndReset = () => {
+      setIsOpen(false);
+      setView('wallets');
+      setStatus('requesting');
+    };
+
+    if (delay) {
+      return setTimeout(() => {
+        closeAndReset();
+      }, delay);
+    }
+
+    closeAndReset();
+  };
 
   const handleConnect = (
     walletName: TCosmosWallet,
@@ -22,28 +66,93 @@ export const SelectWalletModal = ({
     isConnected: boolean
   ) => {
     if (isConnected) {
-      setSelectedWallet(walletName);
-      onClose();
+      onSelectedWalletChange(walletName);
+      setStatus('connected');
+      closeModal(1500);
       return;
     }
-    connectAsync().then((isSuccess) => {
-      if (isSuccess) {
-        setSelectedWallet(walletName);
-        onClose();
-      }
-    });
+
+    if (view !== 'request') {
+      setView('request');
+    }
+
+    connectAsync()
+      .then((isSuccess: boolean) => {
+        setStatus('requesting');
+
+        if (isSuccess) {
+          onSelectedWalletChange(walletName);
+          setStatus('connected');
+          closeModal(1500);
+        }
+      })
+      .catch((err) => {
+        setStatus('error');
+      });
   };
 
   return (
-    <BasicModal isOpen={isOpen} title="Select Wallet" onClose={onClose}>
-      <Box display="flex" justifyContent="center" width="100%" p="$10" gap="$10">
-        <Button onClick={() => handleConnect('keplr', connectKeplrAsync, isKeplrConnected)}>
-          Connect Keplr
-        </Button>
-        <Button onClick={() => handleConnect('leap', connectLeapAsync, isLeapConnected)}>
-          Connect Leap
-        </Button>
-      </Box>
-    </BasicModal>
+    <ConnectModal
+      isOpen={isOpen}
+      setOpen={setIsOpen}
+      showBackButton={view === 'request'}
+      onBack={() => {
+        setView('wallets');
+        setStatus('requesting');
+      }}
+    >
+      {view === 'wallets' && (
+        <AnimatePresence>
+          <motion.div
+            transition={springTransition}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Stack direction="vertical" space="$8">
+              <WalletButton
+                walletName={wallets.keplr[0].walletPrettyName ?? ''}
+                walletLogoSrc={wallets.keplr[0].walletInfo.logo as string}
+                onPress={() => {
+                  handleConnect('keplr', connectKeplrAsync, isKeplrConnected);
+                }}
+              />
+              <WalletButton
+                walletName={wallets.leap[0].walletPrettyName ?? ''}
+                walletLogoSrc={wallets.leap[0].walletInfo.logo as string}
+                onPress={() => {
+                  handleConnect('leap', connectLeapAsync, isLeapConnected);
+                }}
+              />
+            </Stack>
+          </motion.div>
+        </AnimatePresence>
+      )}
+
+      {view === 'request' && (
+        <AnimatePresence>
+          <motion.div
+            transition={springTransition}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <ConnectModalRequestingConnection
+              status={status}
+              walletName={wallets.keplr[0].walletPrettyName ?? ''}
+              walletLogoSrc={wallets.keplr[0].walletInfo.logo as string}
+              onTryAgain={() => {
+                if (selectedWallet && selectedWallet === 'keplr') {
+                  return handleConnect('keplr', connectKeplrAsync, isKeplrConnected);
+                }
+                if (selectedWallet && selectedWallet === 'leap') {
+                  return handleConnect('leap', connectLeapAsync, isLeapConnected);
+                }
+              }}
+            />
+          </motion.div>
+        </AnimatePresence>
+      )}
+    </ConnectModal>
   );
 };

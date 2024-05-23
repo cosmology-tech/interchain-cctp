@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { FaqList, HomeHeader, Layout, WalletList } from '@/components';
 import { useStargateClients } from '@/hooks';
 

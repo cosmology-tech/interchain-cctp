@@ -1,13 +1,14 @@
-export * from './icons';
-export * from './Layout';
-export * from './Button';
-export * from './Tooltip';
-export * from './FaqList';
 export * from './BaseButton';
-export * from './WalletAddress';
+export * from './Button';
+export * from './ConnectModal';
+export * from './FaqList';
 export * from './HistoryLink';
 export * from './ImageWithFallback';
+export * from './Layout';
+export * from './Tooltip';
+export * from './WalletAddress';
+export * from './icons';
 
 // Animation components
-export * from './StaggerList';
 export * from './FadeIn';
+export * from './StaggerList';
