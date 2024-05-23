@@ -56,7 +56,12 @@ export const useUsdcBalances = ({ chains = [], assets = {}, cosmosWallet = 'kepl
     (hasCosmosChains ? !!stargateClients : true);
 
   return useQuery({
-    queryKey: ['usdc-balances', chains.map((chain) => chain.chainID), Object.keys(assets)],
+    queryKey: [
+      'usdc-balances',
+      cosmosWallet ?? '',
+      chains.map((chain) => chain.chainID),
+      Object.keys(assets)
+    ],
     queryFn: async () => {
       if (!isEnabled) return {};
 
