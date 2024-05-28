@@ -3,24 +3,41 @@ import { WagmiProvider } from 'wagmi';
 import { ChainProvider } from '@cosmos-kit/react';
 import { config } from '@/config/wagmi';
 import { assets, chains } from 'chain-registry';
-import { wallets } from 'cosmos-kit';
+import { wallets as _wallets } from 'cosmos-kit';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider, NobleProvider } from '@interchain-ui/react';
+import { useEffect, useRef, useState } from 'react';
 
 const queryClient = new QueryClient();
 
 export const AppProvider = ({ children }: { children?: React.ReactNode }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [wallets, setWallets] = useState([_wallets.keplr.extension!, _wallets.leap.extension!]);
+  const hasRun = useRef(false);
+
+  useEffect(() => {
+    if (!hasRun.current) {
+      import('@cosmos-kit/leap-capsule-social-login')
+        .then((CapsuleModule) => {
+          return CapsuleModule.wallets;
+        })
+        .then((leapSocialLogin) => {
+          setWallets((prev) => [...prev, ...leapSocialLogin]);
+          setIsLoading(false);
+        });
+      hasRun.current = true;
+    }
+  }, []);
+
+  if (isLoading) return null;
+
   return (
     <ThemeProvider>
       <NobleProvider>
         <QueryClientProvider client={queryClient}>
-          <ChainProvider
-            chains={chains}
-            assetLists={assets}
-            wallets={[wallets.keplr.extension!, wallets.leap.extension!]}
-          >
+          <ChainProvider chains={chains} assetLists={assets} wallets={wallets}>
             <SkipProvider>
               <WagmiProvider config={config}>{children}</WagmiProvider>
             </SkipProvider>
