@@ -1,11 +1,17 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { useChains, useWalletClient } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Box, NoblePageTitleBar, NobleButton, Text, toast } from '@interchain-ui/react';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
-import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
-import { BroadcastedTx, SkipChain, TCosmosWallet, useRoute, useUsdcAssets } from '@/hooks';
+import {
+  CHAIN_TYPE,
+  COSMOS_CHAIN_NAMES,
+  COSMOS_WALLET_KEY_TO_NAME,
+  CosmosWalletKey,
+  sizes
+} from '@/config';
+import { BroadcastedTx, SkipChain, useRoute, useUsdcAssets } from '@/hooks';
 import {
   checkIsInvalidRoute,
   getCosmosChainNameById,
@@ -23,8 +29,6 @@ import type { RouteResponse } from '@skip-router/core';
 import { SignTx } from './SignTx';
 import { txHistory } from '@/contexts';
 import { PoweredBy } from './PoweredBy';
-import BigNumber from 'bignumber.js';
-import { wallets } from 'cosmos-kit';
 import { useSearchParams } from 'next/navigation';
 
 interface SelectAmountDestProps {
@@ -34,11 +38,6 @@ interface SelectAmountDestProps {
   setBroadcastedTxs: Dispatch<SetStateAction<BroadcastedTx[]>>;
   setTransferInfo: Dispatch<SetStateAction<TransferInfo | null>>;
 }
-
-const CosmosSigningWalletName: Record<TCosmosWallet, string> = {
-  keplr: wallets.keplr.extension?.walletName!,
-  leap: 'leap-capsule-social-login'
-};
 
 export function SelectAmountDest({
   selectedToken,
@@ -58,8 +57,8 @@ export function SelectAmountDest({
   const [showSignTxView, setShowSignTxView] = useState(false);
 
   const searchParams = useSearchParams();
-  const walletName = (searchParams.get('wallet') ?? 'keplr') as TCosmosWallet;
-  const { client: cosmosWalletClient } = useWalletClient(CosmosSigningWalletName[walletName]);
+  const walletKey = (searchParams.get('wallet') ?? 'keplr') as CosmosWalletKey;
+  const { client: cosmosWalletClient } = useWalletClient(COSMOS_WALLET_KEY_TO_NAME[walletKey]);
   const { address: evmAddress, chainId: connectedChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { data: assets } = useUsdcAssets();
@@ -79,20 +78,6 @@ export function SelectAmountDest({
     enabled: !!destAsset
   });
 
-  console.log({ route });
-
-  const [capsuleProvider, setCapsuleProvider] = useState<any>();
-
-  useEffect(() => {
-    import('@leapwallet/cosmos-social-login-capsule-provider').then((m) => {
-      const capsuleProvider = new m.CapsuleProvider({
-        apiKey: '066e2ad566ffb06c1dab2a06dfe0ff46'
-        // env: Environment.BETA
-      });
-      setCapsuleProvider(capsuleProvider);
-    });
-  }, []);
-
   async function onTransfer() {
     if (!route || !evmAddress || !destChain || !destAddress) return;
 
@@ -110,8 +95,6 @@ export function SelectAmountDest({
       toChainAddress: destAddress,
       toChainLogo: destChain.logoURI || ''
     };
-
-    console.log({ transferInfo });
 
     setRoute(route);
     setShowSignTxView(true);
@@ -141,23 +124,9 @@ export function SelectAmountDest({
         userAddresses,
         validateGasBalance: route.txsRequired === 1,
         getCosmosSigner: async (chainID: string) => {
-          // let cosmosSigner: any;
-
-          // if (walletName === 'keplr') {
-          //   cosmosSigner =
-          //     cosmosWalletClient?.getOfflineSignerDirect &&
-          //     cosmosWalletClient.getOfflineSignerDirect(chainID);
-          // } else {
-          //   cosmosSigner =
-          //     capsuleProvider?.getOfflineSignerAmino &&
-          //     capsuleProvider.getOfflineSignerAmino(chainID);
-          // }
-          // const walletClient = walletName === 'keplr' ? cosmosWalletClient : capsuleProvider;
-
           const cosmosSigner =
             cosmosWalletClient?.getOfflineSignerDirect &&
             cosmosWalletClient.getOfflineSignerDirect(chainID);
-          console.log({ [`${walletName} signer`]: cosmosSigner });
 
           if (!cosmosSigner) {
             throw new Error(
