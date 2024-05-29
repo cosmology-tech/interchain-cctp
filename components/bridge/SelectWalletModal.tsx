@@ -6,13 +6,14 @@ import {
   ConnectModalRequestingConnection,
   WalletButton
 } from '@/components/common/ConnectModal';
-import { TCosmosWallet, useConnectWallet } from '@/hooks';
+import { useCosmosWallet } from '@/hooks';
 import { Stack } from '@interchain-ui/react';
+import { CosmosWalletKey } from '@/config';
 
 interface SelectWalletModalProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  setSelectedWallet: (name: TCosmosWallet) => void;
+  setSelectedWallet: (name: CosmosWalletKey) => void;
 }
 
 const springTransition = {
@@ -30,13 +31,14 @@ export const SelectWalletModal = ({
   const [status, setStatus] = React.useState<'requesting' | 'rejected' | 'error' | 'connected'>(
     'requesting'
   );
-  const [selectedWallet, setSelectedWallet] = React.useState<TCosmosWallet | null>(null);
+  const [selectedWallet, setSelectedWallet] = React.useState<CosmosWalletKey | null>(null);
 
   const { connectAsync: connectKeplrAsync, isConnected: isKeplrConnected } =
-    useConnectWallet('keplr');
-  const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } = useConnectWallet('leap');
+    useCosmosWallet('keplr');
+  const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } =
+    useCosmosWallet('leap-social-login');
 
-  const onSelectedWalletChange = (wallet: TCosmosWallet | null) => {
+  const onSelectedWalletChange = (wallet: CosmosWalletKey | null) => {
     setSelectedWallet(wallet);
 
     if (wallet) {
@@ -61,7 +63,7 @@ export const SelectWalletModal = ({
   };
 
   const handleConnect = (
-    walletName: TCosmosWallet,
+    walletName: CosmosWalletKey,
     connectAsync: () => Promise<boolean>,
     isConnected: boolean
   ) => {
@@ -121,7 +123,7 @@ export const SelectWalletModal = ({
                 walletName={wallets.leap[0].walletPrettyName ?? ''}
                 walletLogoSrc={wallets.leap[0].walletInfo.logo as string}
                 onPress={() => {
-                  handleConnect('leap', connectLeapAsync, isLeapConnected);
+                  handleConnect('leap-social-login', connectLeapAsync, isLeapConnected);
                 }}
               />
             </Stack>
@@ -145,8 +147,8 @@ export const SelectWalletModal = ({
                 if (selectedWallet && selectedWallet === 'keplr') {
                   return handleConnect('keplr', connectKeplrAsync, isKeplrConnected);
                 }
-                if (selectedWallet && selectedWallet === 'leap') {
-                  return handleConnect('leap', connectLeapAsync, isLeapConnected);
+                if (selectedWallet && selectedWallet === 'leap-social-login') {
+                  return handleConnect('leap-social-login', connectLeapAsync, isLeapConnected);
                 }
               }}
             />

@@ -23,6 +23,10 @@ module.exports = () => {
       // Type error: File appears to be binary.
       ignoreBuildErrors: true
     },
+    transpilePackages: [
+      '@leapwallet/cosmos-social-login-capsule-provider-ui',
+      '@leapwallet/cosmos-social-login-capsule-provider'
+    ],
     images: {
       // !! WARN !!
       // Turn this off when you deploy to Vercel or self host via AWS amplify

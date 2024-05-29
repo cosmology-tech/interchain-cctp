@@ -1,12 +1,19 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { useChains, useWalletClient } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Box, NoblePageTitleBar, NobleButton, Text, toast } from '@interchain-ui/react';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
-import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
-import { BroadcastedTx, SkipChain, TCosmosWallet, useRoute, useUsdcAssets } from '@/hooks';
 import {
+  CHAIN_TYPE,
+  COSMOS_CHAIN_NAMES,
+  COSMOS_WALLET_KEY_TO_NAME,
+  CosmosWalletKey,
+  sizes
+} from '@/config';
+import { BroadcastedTx, SkipChain, useRoute, useUsdcAssets } from '@/hooks';
+import {
+  checkIsInvalidRoute,
   getCosmosChainNameById,
   isUserRejectedRequestError,
   isValidAddress,
@@ -22,8 +29,6 @@ import type { RouteResponse } from '@skip-router/core';
 import { SignTx } from './SignTx';
 import { txHistory } from '@/contexts';
 import { PoweredBy } from './PoweredBy';
-import BigNumber from 'bignumber.js';
-import { wallets } from 'cosmos-kit';
 import { useSearchParams } from 'next/navigation';
 
 interface SelectAmountDestProps {
@@ -33,11 +38,6 @@ interface SelectAmountDestProps {
   setBroadcastedTxs: Dispatch<SetStateAction<BroadcastedTx[]>>;
   setTransferInfo: Dispatch<SetStateAction<TransferInfo | null>>;
 }
-
-const CosmosSigningWalletName: Record<TCosmosWallet, string> = {
-  keplr: wallets.keplr.extension?.walletName!,
-  leap: wallets.leap.extension?.walletName!
-};
 
 export function SelectAmountDest({
   selectedToken,
@@ -57,8 +57,8 @@ export function SelectAmountDest({
   const [showSignTxView, setShowSignTxView] = useState(false);
 
   const searchParams = useSearchParams();
-  const walletName = (searchParams.get('wallet') ?? 'keplr') as TCosmosWallet;
-  const { client: cosmosWalletClient } = useWalletClient(CosmosSigningWalletName[walletName]);
+  const walletKey = (searchParams.get('wallet') ?? 'keplr') as CosmosWalletKey;
+  const { client: cosmosWalletClient } = useWalletClient(COSMOS_WALLET_KEY_TO_NAME[walletKey]);
   const { address: evmAddress, chainId: connectedChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { data: assets } = useUsdcAssets();
@@ -178,13 +178,13 @@ export function SelectAmountDest({
     }
   }
 
-  const isBadRoute = route && BigNumber(route.usdAmountOut || 0).lte(0);
+  const isInvalidRoute = useMemo(() => checkIsInvalidRoute(route), [route]);
 
-  const showTransferInfo = !!route && !!destChain && !!evmAddress && !isBadRoute;
+  const showTransferInfo = !!route && !!destChain && !!evmAddress && !isInvalidRoute;
 
   const bridgeButtonText = routeIsFetching
     ? 'Finding best route...'
-    : routeIsError || isBadRoute
+    : routeIsError || isInvalidRoute
     ? 'No route found'
     : 'Bridge';
 
@@ -195,7 +195,7 @@ export function SelectAmountDest({
     +amount > +balance ||
     routeIsFetching ||
     routeIsError ||
-    isBadRoute;
+    isInvalidRoute;
 
   if (showSignTxView) {
     return <SignTx />;

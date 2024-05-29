@@ -1,14 +1,24 @@
 import { useRouter } from 'next/router';
 import { useAccount, useConnect } from 'wagmi';
-import { Box, NobleSelectWalletButton } from '@interchain-ui/react';
+import { Box, NobleSelectWalletButton, toast } from '@interchain-ui/react';
 
-import { ChainType } from '@/config';
-import { TCosmosWallet, useConnectWallet, useDetectWallets } from '@/hooks';
+import { ChainType, CosmosWalletKey } from '@/config';
+import { useCapsuleClient, useCosmosWallet, useDetectWallets } from '@/hooks';
+import dynamic from 'next/dynamic';
+import { useState } from 'react';
+
+const CustomCapsuleModalView = dynamic(
+  () =>
+    import('@leapwallet/cosmos-social-login-capsule-provider-ui').then(
+      (m) => m.CustomCapsuleModalView
+    ),
+  { ssr: false }
+);
 
 export type BridgeHref = {
   pathname: string;
   query: {
-    wallet?: TCosmosWallet;
+    wallet?: CosmosWalletKey;
     chain_type: ChainType;
   };
 };
@@ -17,10 +27,14 @@ export function WalletList() {
   const router = useRouter();
   const { address } = useAccount();
   const { connectAsync, connectors } = useConnect();
+  const [showCapsuleModal, setShowCapsuleModal] = useState(false);
 
   const { connectAsync: connectKeplrAsync, isConnected: isKeplrConnected } =
-    useConnectWallet('keplr');
-  const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } = useConnectWallet('leap');
+    useCosmosWallet('keplr');
+  const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } =
+    useCosmosWallet('leap-social-login');
+
+  const { capsuleClient } = useCapsuleClient();
 
   const handleConnectMetamask = () => {
     const href: BridgeHref = {
@@ -52,68 +66,85 @@ export function WalletList() {
     });
   };
 
+  const leapHref: BridgeHref = {
+    pathname: '/bridge',
+    query: { chain_type: 'cosmos', wallet: 'leap-social-login' }
+  };
+
   const handleConnectLeap = () => {
-    const href: BridgeHref = {
-      pathname: '/bridge',
-      query: { chain_type: 'cosmos', wallet: 'leap' }
-    };
     if (isLeapConnected) {
-      return router.push(href);
+      return router.push(leapHref);
     }
-    connectLeapAsync().then((isSuccess) => {
-      if (isSuccess) {
-        router.push(href);
-      }
-    });
+    setShowCapsuleModal(true);
   };
 
   const isWalletInstalled = useDetectWallets();
 
   return (
-    <Box
-      pt="72px"
-      pb="200px"
-      px="$12"
-      display="flex"
-      gap="24px"
-      flexWrap="wrap"
-      justifyContent="center"
-      alignItems="center"
-    >
-      <NobleSelectWalletButton
-        logoUrl={'/logos/metamask.svg'}
-        logoAlt="metamask"
-        title="MetaMask"
-        onClick={handleConnectMetamask}
-        subTitle={isWalletInstalled.metamask ? 'Connect' : 'Install MetaMask'}
-        disabled={!isWalletInstalled.metamask}
+    <>
+      <CustomCapsuleModalView
+        capsule={capsuleClient}
+        showCapsuleModal={showCapsuleModal}
+        setShowCapsuleModal={setShowCapsuleModal}
+        theme="dark"
+        onAfterLoginSuccessful={() => {
+          const toastId = toast.success('Login successful. Hang tight...');
+          connectLeapAsync().then((isSuccess) => {
+            if (isSuccess) {
+              router.push(leapHref);
+              toast.dismiss(toastId);
+            }
+          });
+        }}
+        onLoginFailure={() => {
+          toast.error('Login failed. Please try again.');
+        }}
       />
 
-      <NobleSelectWalletButton
-        logoUrl={'/logos/keplr.svg'}
-        logoAlt="keplr"
-        title="Keplr"
-        onClick={handleConnectKeplr}
-        subTitle={isWalletInstalled.keplr ? 'Connect' : 'Install Keplr'}
-        disabled={!isWalletInstalled.keplr}
-      />
+      <Box
+        pt="72px"
+        pb="200px"
+        px="$12"
+        display="flex"
+        gap="24px"
+        flexWrap="wrap"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <NobleSelectWalletButton
+          logoUrl={'/logos/metamask.svg'}
+          logoAlt="metamask"
+          title="MetaMask"
+          onClick={handleConnectMetamask}
+          subTitle={isWalletInstalled.metamask ? 'Connect' : 'Install MetaMask'}
+          disabled={!isWalletInstalled.metamask}
+        />
 
-      <NobleSelectWalletButton
-        logoUrl={'/logos/capsule.svg'}
-        logoAlt="capsule"
-        title="Capsule"
-        onClick={handleConnectLeap}
-        subTitle={isWalletInstalled.leap ? 'Connect' : 'Install Leap'}
-        disabled={!isWalletInstalled.leap}
-      />
+        <NobleSelectWalletButton
+          logoUrl={'/logos/keplr.svg'}
+          logoAlt="keplr"
+          title="Keplr"
+          onClick={handleConnectKeplr}
+          subTitle={isWalletInstalled.keplr ? 'Connect' : 'Install Keplr'}
+          disabled={!isWalletInstalled.keplr}
+        />
 
-      <NobleSelectWalletButton
-        logoUrl={'/logos/phantom.svg'}
-        logoAlt="phantom"
-        title="Phantom"
-        subTitle="Soon"
-        disabled
-      />
-    </Box>
+        <NobleSelectWalletButton
+          logoUrl={'/logos/capsule.svg'}
+          logoAlt="capsule"
+          title="Capsule"
+          onClick={handleConnectLeap}
+          subTitle="Log in"
+        />
+
+        <NobleSelectWalletButton
+          logoUrl={'/logos/phantom.svg'}
+          logoAlt="phantom"
+          title="Phantom"
+          subTitle="Soon"
+          disabled
+        />
+      </Box>
+    </>
   );
 }

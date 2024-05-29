@@ -18,22 +18,17 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import type { RouteResponse } from '@skip-router/core';
 
 import { ExitIcon, Tooltip, BaseButton } from '@/components/common';
-import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, ChainType, colors } from '@/config';
+import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, ChainType, colors, CosmosWalletKey } from '@/config';
 import { scrollBar } from '@/styles/Shared.css';
 import {
+  checkIsInvalidRoute,
   cosmosAddressToChainId,
   getCosmosChainNameById,
+  getOutAmount,
   isValidCosmosAddress,
   isValidEvmAddress
 } from '@/utils';
-import {
-  SkipChain,
-  TCosmosWallet,
-  useConnectWallet,
-  useDisconnectWallet,
-  useSkipChains
-} from '@/hooks';
-import BigNumber from 'bignumber.js';
+import { SkipChain, useCosmosWallet, useSkipChains } from '@/hooks';
 import { SelectWalletModal } from './SelectWalletModal';
 
 interface SelectDestinationProps {
@@ -62,9 +57,9 @@ export const SelectDestination = ({
   const cosmosChainContexts = useChains(COSMOS_CHAIN_NAMES);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState<TCosmosWallet>('keplr');
-  const { isConnected: isCosmosWalletConnected } = useConnectWallet(selectedWallet);
-  const { disconnect: disconnectCosmosWallet } = useDisconnectWallet(selectedWallet);
+  const [selectedWallet, setSelectedWallet] = useState<CosmosWalletKey>('keplr');
+  const { isConnected: isCosmosWalletConnected, disconnect: disconnectCosmosWallet } =
+    useCosmosWallet(selectedWallet);
 
   const sourceChainType = (searchParams.get('chain_type') ?? CHAIN_TYPE.EVM) as ChainType;
 
@@ -174,9 +169,10 @@ export const SelectDestination = ({
   const usernameTextColor = useColorModeValue(colors.gray500, colors.blue600);
   const sectionTitleColor = useColorModeValue(colors.gray500, colors.blue700);
 
-  const isDestAmountNegative = BigNumber(route?.usdAmountOut || 0).lte(0);
+  const isInvalidRoute = checkIsInvalidRoute(route);
 
   const { theme } = useTheme();
+
   return (
     <>
       <SelectWalletModal
@@ -218,7 +214,7 @@ export const SelectDestination = ({
           ) : null}
         </Box>
 
-        <Box display={isDestAmountNegative ? 'none' : 'flex'} alignItems="center" height="$min">
+        <Box display={isInvalidRoute ? 'none' : 'flex'} alignItems="center" height="$min">
           <Text
             fontSize="$lg"
             fontWeight="600"
@@ -228,7 +224,7 @@ export const SelectDestination = ({
               mr: route?.warning?.type === 'BAD_PRICE_WARNING' ? '8px' : '12px'
             }}
           >
-            {route ? route.usdAmountOut : ''}
+            {getOutAmount(route)}
           </Text>
 
           {route?.warning?.type === 'BAD_PRICE_WARNING' && (

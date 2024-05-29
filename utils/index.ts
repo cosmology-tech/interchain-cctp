@@ -5,6 +5,7 @@ import { Asset, Chain } from '@chain-registry/types';
 import { COSMOS_CHAINS } from '@/config/chains';
 import BigNumber from 'bignumber.js';
 import { fromBech32 } from '@cosmjs/encoding';
+import { RouteResponse, Asset as SkipAsset } from '@skip-router/core';
 
 export const USDC_TO_UUSDC = 1e6;
 export function uusdcToUsdc(uusdc: string | bigint = '0') {
@@ -98,3 +99,19 @@ export function isUserRejectedRequestError(input: unknown): input is Error {
   }
   return false;
 }
+
+const USDC_DECIMALS = 6;
+
+export const getOutAmount = (route: RouteResponse | undefined) => {
+  if (!route) return '0';
+  return route.usdAmountOut
+    ? route.usdAmountOut
+    : BigNumber(route.estimatedAmountOut || route.amountOut)
+        .shiftedBy(-USDC_DECIMALS)
+        .toString();
+};
+
+export const checkIsInvalidRoute = (route: RouteResponse | undefined) => {
+  if (!route) return true;
+  return BigNumber(getOutAmount(route)).lte(0);
+};

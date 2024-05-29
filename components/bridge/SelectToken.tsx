@@ -17,15 +17,14 @@ import {
   EyeSlashIcon,
   EyeIcon
 } from '@/components/common';
-import { CHAIN_TYPE, DEFAULT_USDC_LOGO, colors, sizes } from '@/config';
+import { CHAIN_TYPE, CosmosWalletKey, DEFAULT_USDC_LOGO, colors, sizes } from '@/config';
 import {
   useUsdcPrice,
   useIsMounted,
   useSkipChains,
   useUsdcAssets,
   useUsdcBalances,
-  SkipChain,
-  TCosmosWallet
+  SkipChain
 } from '@/hooks';
 import { BridgeStep, SelectedToken } from '@/pages/bridge';
 import { Asset } from '@skip-router/core';
@@ -50,7 +49,7 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
   const { data: chains = [], isLoading: isChainsLoading } = useSkipChains();
   const { data: assets } = useUsdcAssets();
 
-  const walletName = (searchParams.get('wallet') ?? 'keplr') as TCosmosWallet;
+  const walletName = (searchParams.get('wallet') ?? 'keplr') as CosmosWalletKey;
   const sourceChainType = searchParams.get('chain_type') ?? CHAIN_TYPE.EVM;
   const sourceChains = chains.filter((chain) => chain.chainType === sourceChainType);
 

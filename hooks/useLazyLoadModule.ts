@@ -16,6 +16,11 @@ export function useLazyLoadModule<TModule>(modulePath: string) {
           case '@cosmos-kit/react':
             loadedModule = (await import('@cosmos-kit/react')) as TModule;
             break;
+          case '@leapwallet/cosmos-social-login-capsule-provider':
+            loadedModule = (await import(
+              '@leapwallet/cosmos-social-login-capsule-provider'
+            )) as TModule;
+            break;
           // Add more cases here for other modules if necessary
           default:
             throw new Error(`Unknown module: ${modulePath}`);
