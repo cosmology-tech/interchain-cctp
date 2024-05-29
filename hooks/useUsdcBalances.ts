@@ -7,8 +7,13 @@ import { useAccount, useConnect } from 'wagmi';
 
 import { SkipChain } from './useSkipChains';
 import { getCosmosChainNameById, shiftDecimals } from '@/utils';
-import { COSMOS_CHAIN_NAMES, USDC_CONTRACT_ABI, config as wagmiConfig } from '@/config';
-import { TCosmosWallet, useConnectWallet } from './useConnectWallet';
+import {
+  COSMOS_CHAIN_NAMES,
+  CosmosWalletKey,
+  USDC_CONTRACT_ABI,
+  config as wagmiConfig
+} from '@/config';
+import { useCosmosWallet } from './useCosmosWallet';
 import { StargateClients, useStargateClients } from './useStargateClients';
 
 export type EVMAddress = `0x${string}`;
@@ -16,7 +21,7 @@ export type EVMAddress = `0x${string}`;
 interface Args {
   chains?: SkipChain[];
   assets?: Record<string, Asset>;
-  cosmosWallet?: TCosmosWallet;
+  cosmosWallet?: CosmosWalletKey;
 }
 
 export const useUsdcBalances = ({ chains = [], assets = {}, cosmosWallet = 'keplr' }: Args) => {
@@ -25,7 +30,7 @@ export const useUsdcBalances = ({ chains = [], assets = {}, cosmosWallet = 'kepl
 
   const cosmosChains = useChains(COSMOS_CHAIN_NAMES);
   const { isConnected: isCosmosWalletConnected, connect: connectCosmosWallet } =
-    useConnectWallet(cosmosWallet);
+    useCosmosWallet(cosmosWallet);
 
   const { data: stargateClients } = useStargateClients();
 
@@ -83,11 +88,17 @@ export const useUsdcBalances = ({ chains = [], assets = {}, cosmosWallet = 'kepl
           if (chain.chainType === 'cosmos') {
             const chainName = getCosmosChainNameById(chain.chainID);
             const { address: cosmosAddress } = cosmosChains[chainName];
+
             const stargateClient = (stargateClients as StargateClients)[chainName];
             const coin = await stargateClient.getBalance(
               cosmosAddress!,
               assets[chain.chainID].denom
             );
+            if (chainName === 'nobletestnet')
+              console.log({
+                nobleAddress: cosmosAddress,
+                balance: shiftDecimals(coin.amount, -(assets[chain.chainID]?.decimals ?? 6))
+              });
             return {
               chainId: chain.chainID,
               usdcBalance: shiftDecimals(coin.amount, -(assets[chain.chainID]?.decimals ?? 6))

@@ -1,12 +1,11 @@
 import { useRouter } from 'next/router';
 import { useAccount, useConnect } from 'wagmi';
-import { Box, NobleSelectWalletButton } from '@interchain-ui/react';
+import { Box, NobleSelectWalletButton, toast } from '@interchain-ui/react';
 
-import { ChainType } from '@/config';
-import { TCosmosWallet, useConnectWallet, useDetectWallets } from '@/hooks';
+import { ChainType, CosmosWalletKey } from '@/config';
+import { useCapsuleClient, useCosmosWallet, useDetectWallets } from '@/hooks';
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
-import { useWallet } from '@cosmos-kit/react';
+import { useState } from 'react';
 
 const CustomCapsuleModalView = dynamic(
   () =>
@@ -19,7 +18,7 @@ const CustomCapsuleModalView = dynamic(
 export type BridgeHref = {
   pathname: string;
   query: {
-    wallet?: TCosmosWallet;
+    wallet?: CosmosWalletKey;
     chain_type: ChainType;
   };
 };
@@ -31,20 +30,11 @@ export function WalletList() {
   const [showCapsuleModal, setShowCapsuleModal] = useState(false);
 
   const { connectAsync: connectKeplrAsync, isConnected: isKeplrConnected } =
-    useConnectWallet('keplr');
-  const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } = useConnectWallet('leap');
+    useCosmosWallet('keplr');
+  const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } =
+    useCosmosWallet('leap-social-login');
 
-  const [capsuleProvider, setCapsuleProvider] = useState<any>();
-
-  useEffect(() => {
-    import('@leapwallet/cosmos-social-login-capsule-provider').then((m) => {
-      const capsuleProvider = new m.CapsuleProvider({
-        apiKey: '066e2ad566ffb06c1dab2a06dfe0ff46'
-        // env: Environment.BETA
-      });
-      setCapsuleProvider(capsuleProvider);
-    });
-  }, []);
+  const { capsuleClient } = useCapsuleClient();
 
   const handleConnectMetamask = () => {
     const href: BridgeHref = {
@@ -76,32 +66,16 @@ export function WalletList() {
     });
   };
 
-  const { chainWallets } = useWallet('leap-capsule-social-login');
-
-  const cosmoshub = chainWallets.find(
-    (chainWallet) => chainWallet.chainRecord.name === 'cosmoshub'
-  );
-
-  console.log({
-    isConnected: cosmoshub?.isWalletConnected,
-    address: cosmoshub?.address
-  });
+  const leapHref: BridgeHref = {
+    pathname: '/bridge',
+    query: { chain_type: 'cosmos', wallet: 'leap-social-login' }
+  };
 
   const handleConnectLeap = () => {
+    if (isLeapConnected) {
+      return router.push(leapHref);
+    }
     setShowCapsuleModal(true);
-
-    // const href: BridgeHref = {
-    //   pathname: '/bridge',
-    //   query: { chain_type: 'cosmos', wallet: 'leap' }
-    // };
-    // if (isLeapConnected) {
-    //   return router.push(href);
-    // }
-    // connectLeapAsync().then((isSuccess) => {
-    //   if (isSuccess) {
-    //     router.push(href);
-    //   }
-    // });
   };
 
   const isWalletInstalled = useDetectWallets();
@@ -109,17 +83,21 @@ export function WalletList() {
   return (
     <>
       <CustomCapsuleModalView
-        capsule={capsuleProvider?.getClient()}
+        capsule={capsuleClient}
         showCapsuleModal={showCapsuleModal}
         setShowCapsuleModal={setShowCapsuleModal}
         theme="dark"
         onAfterLoginSuccessful={() => {
-          console.log('login successful');
-          // window.successFromCapsuleModal();
+          const toastId = toast.success('Login successful. Hang tight...');
+          connectLeapAsync().then((isSuccess) => {
+            if (isSuccess) {
+              router.push(leapHref);
+              toast.dismiss(toastId);
+            }
+          });
         }}
         onLoginFailure={() => {
-          console.log('login failed');
-          // window.failureFromCapsuleModal();
+          toast.error('Login failed. Please try again.');
         }}
       />
 
@@ -156,8 +134,7 @@ export function WalletList() {
           logoAlt="capsule"
           title="Capsule"
           onClick={handleConnectLeap}
-          subTitle={isWalletInstalled.leap ? 'Connect' : 'Install Leap'}
-          disabled={!isWalletInstalled.leap}
+          subTitle="Log in"
         />
 
         <NobleSelectWalletButton

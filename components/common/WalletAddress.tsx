@@ -4,11 +4,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Box, Text, toast, useColorModeValue } from '@interchain-ui/react';
 import { shortenAddress } from '@/utils';
 import { CopyIcon, ExitIcon, CheckCircleIcon } from '@/components/common';
-import { TCosmosWallet, useCopyToClipboard, useDisconnectWallet } from '@/hooks';
+import { useCopyToClipboard, useCosmosWallet } from '@/hooks';
 import { BaseButton } from './BaseButton';
 import { useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useRouter } from 'next/router';
+import { CosmosWalletKey } from '@/config';
 
 export function WalletAddress() {
   const { address: evmAddress } = useAccount();
@@ -22,16 +23,16 @@ export function WalletAddress() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const walletName = searchParams.get('wallet') as TCosmosWallet | null;
+  const walletName = searchParams.get('wallet') as CosmosWalletKey | null;
   const address = walletName ? '' : evmAddress;
 
   const { disconnect: disconnectMetamask } = useDisconnect();
-  const { disconnect: disconnectKeplr } = useDisconnectWallet('keplr');
-  const { disconnect: disconnectLeap } = useDisconnectWallet('leap');
+  const { disconnect: disconnectKeplr } = useCosmosWallet('keplr');
+  const { disconnect: disconnectLeapSocialLogin } = useCosmosWallet('leap-social-login');
 
   const onDisconnect = () => {
     if (walletName === 'keplr') disconnectKeplr();
-    if (walletName === 'leap') disconnectLeap();
+    if (walletName === 'leap-social-login') disconnectLeapSocialLogin();
     if (!walletName) disconnectMetamask();
     router.push('/');
   };
