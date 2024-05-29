@@ -21,8 +21,10 @@ import { ExitIcon, Tooltip, BaseButton } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, ChainType, colors } from '@/config';
 import { scrollBar } from '@/styles/Shared.css';
 import {
+  checkIsInvalidRoute,
   cosmosAddressToChainId,
   getCosmosChainNameById,
+  getOutAmount,
   isValidCosmosAddress,
   isValidEvmAddress
 } from '@/utils';
@@ -33,7 +35,6 @@ import {
   useDisconnectWallet,
   useSkipChains
 } from '@/hooks';
-import BigNumber from 'bignumber.js';
 import { SelectWalletModal } from './SelectWalletModal';
 
 interface SelectDestinationProps {
@@ -174,9 +175,10 @@ export const SelectDestination = ({
   const usernameTextColor = useColorModeValue(colors.gray500, colors.blue600);
   const sectionTitleColor = useColorModeValue(colors.gray500, colors.blue700);
 
-  const isDestAmountNegative = BigNumber(route?.usdAmountOut || 0).lte(0);
+  const isInvalidRoute = checkIsInvalidRoute(route);
 
   const { theme } = useTheme();
+
   return (
     <>
       <SelectWalletModal
@@ -218,7 +220,7 @@ export const SelectDestination = ({
           ) : null}
         </Box>
 
-        <Box display={isDestAmountNegative ? 'none' : 'flex'} alignItems="center" height="$min">
+        <Box display={isInvalidRoute ? 'none' : 'flex'} alignItems="center" height="$min">
           <Text
             fontSize="$lg"
             fontWeight="600"
@@ -228,7 +230,7 @@ export const SelectDestination = ({
               mr: route?.warning?.type === 'BAD_PRICE_WARNING' ? '8px' : '12px'
             }}
           >
-            {route ? route.usdAmountOut : ''}
+            {getOutAmount(route)}
           </Text>
 
           {route?.warning?.type === 'BAD_PRICE_WARNING' && (

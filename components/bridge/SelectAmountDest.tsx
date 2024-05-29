@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { useChains, useWalletClient } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Box, NoblePageTitleBar, NobleButton, Text, toast } from '@interchain-ui/react';
@@ -7,6 +7,7 @@ import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, sizes } from '@/config';
 import { BroadcastedTx, SkipChain, TCosmosWallet, useRoute, useUsdcAssets } from '@/hooks';
 import {
+  checkIsInvalidRoute,
   getCosmosChainNameById,
   isUserRejectedRequestError,
   isValidAddress,
@@ -36,7 +37,7 @@ interface SelectAmountDestProps {
 
 const CosmosSigningWalletName: Record<TCosmosWallet, string> = {
   keplr: wallets.keplr.extension?.walletName!,
-  leap: wallets.leap.extension?.walletName!
+  leap: 'leap-capsule-social-login'
 };
 
 export function SelectAmountDest({
@@ -78,6 +79,20 @@ export function SelectAmountDest({
     enabled: !!destAsset
   });
 
+  console.log({ route });
+
+  const [capsuleProvider, setCapsuleProvider] = useState<any>();
+
+  useEffect(() => {
+    import('@leapwallet/cosmos-social-login-capsule-provider').then((m) => {
+      const capsuleProvider = new m.CapsuleProvider({
+        apiKey: '066e2ad566ffb06c1dab2a06dfe0ff46'
+        // env: Environment.BETA
+      });
+      setCapsuleProvider(capsuleProvider);
+    });
+  }, []);
+
   async function onTransfer() {
     if (!route || !evmAddress || !destChain || !destAddress) return;
 
@@ -95,6 +110,8 @@ export function SelectAmountDest({
       toChainAddress: destAddress,
       toChainLogo: destChain.logoURI || ''
     };
+
+    console.log({ transferInfo });
 
     setRoute(route);
     setShowSignTxView(true);
@@ -124,9 +141,23 @@ export function SelectAmountDest({
         userAddresses,
         validateGasBalance: route.txsRequired === 1,
         getCosmosSigner: async (chainID: string) => {
+          // let cosmosSigner: any;
+
+          // if (walletName === 'keplr') {
+          //   cosmosSigner =
+          //     cosmosWalletClient?.getOfflineSignerDirect &&
+          //     cosmosWalletClient.getOfflineSignerDirect(chainID);
+          // } else {
+          //   cosmosSigner =
+          //     capsuleProvider?.getOfflineSignerAmino &&
+          //     capsuleProvider.getOfflineSignerAmino(chainID);
+          // }
+          // const walletClient = walletName === 'keplr' ? cosmosWalletClient : capsuleProvider;
+
           const cosmosSigner =
             cosmosWalletClient?.getOfflineSignerDirect &&
             cosmosWalletClient.getOfflineSignerDirect(chainID);
+          console.log({ [`${walletName} signer`]: cosmosSigner });
 
           if (!cosmosSigner) {
             throw new Error(
@@ -178,13 +209,13 @@ export function SelectAmountDest({
     }
   }
 
-  const isBadRoute = route && BigNumber(route.usdAmountOut || 0).lte(0);
+  const isInvalidRoute = useMemo(() => checkIsInvalidRoute(route), [route]);
 
-  const showTransferInfo = !!route && !!destChain && !!evmAddress && !isBadRoute;
+  const showTransferInfo = !!route && !!destChain && !!evmAddress && !isInvalidRoute;
 
   const bridgeButtonText = routeIsFetching
     ? 'Finding best route...'
-    : routeIsError || isBadRoute
+    : routeIsError || isInvalidRoute
     ? 'No route found'
     : 'Bridge';
 
@@ -195,7 +226,7 @@ export function SelectAmountDest({
     +amount > +balance ||
     routeIsFetching ||
     routeIsError ||
-    isBadRoute;
+    isInvalidRoute;
 
   if (showSignTxView) {
     return <SignTx />;
