@@ -1,10 +1,9 @@
 import Image from 'next/image';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
-import { WalletKey, colors } from '@/config';
+import { WALLET_KEY_TO_LOGO_URL, WALLET_KEY_TO_PRETTY_NAME, WalletKey, colors } from '@/config';
 import { FadeIn } from '@/components/common';
 import { PulsingBox } from '@/components/common/PulsingBox';
 import { AbstractWallet } from '@/components/common/icons/AbstractWallet';
-import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
@@ -19,30 +18,16 @@ const TransactionSigningModal = dynamic(
 export function SignTx() {
   const searchParams = useSearchParams();
 
-  const walletInfo = useMemo(() => {
-    const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
+  const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
 
-    const walletKeyToWalletInfo: Record<WalletKey, { name: string; logo: string }> = {
-      keplr: {
-        name: 'Keplr',
-        logo: '/logos/keplr.svg'
-      },
-      metamask: {
-        name: 'MetaMask',
-        logo: '/logos/metamask.svg'
-      },
-      'leap-social-login': {
-        name: 'Leap',
-        logo: '/logos/leap.svg'
-      }
-    };
-
-    return walletKeyToWalletInfo[walletKey];
-  }, [searchParams]);
+  const walletInfo = {
+    logo: WALLET_KEY_TO_LOGO_URL[walletKey],
+    name: WALLET_KEY_TO_PRETTY_NAME[walletKey]
+  };
 
   return (
     <>
-      <TransactionSigningModal dAppInfo={{ name: 'Noble Express' }} />
+      {walletKey === 'capsule' && <TransactionSigningModal dAppInfo={{ name: 'Noble Express' }} />}
       <FadeIn>
         <Box mx="auto" mt="60px" width="300px">
           <Box minHeight="50rem" textAlign="center">

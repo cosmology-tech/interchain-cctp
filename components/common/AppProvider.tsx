@@ -14,7 +14,11 @@ const queryClient = new QueryClient();
 
 export const AppProvider = ({ children }: { children?: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [wallets, setWallets] = useState([_wallets.keplr.extension!, _wallets.leap.extension!]);
+  const [wallets, setWallets] = useState([
+    _wallets.leap.extension!,
+    _wallets.keplr.extension!,
+    _wallets.cosmostation.extension!
+  ]);
   const hasRun = useRef(false);
 
   useEffect(() => {

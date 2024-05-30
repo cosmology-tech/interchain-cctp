@@ -24,7 +24,8 @@ import {
   colors,
   CosmosWalletKey,
   WalletKey,
-  getChainTypeFromWalletKey
+  getChainTypeFromWalletKey,
+  WALLET_KEY_TO_LOGO_URL
 } from '@/config';
 import { scrollBar } from '@/styles/Shared.css';
 import {
@@ -108,11 +109,11 @@ export const SelectDestination = ({
       const chainContext = Object.values(cosmosChainContexts)[0];
       walletName = chainContext.wallet?.prettyName ?? '';
       username = chainContext.username ?? '';
-      logoUrl = selectedWallet === 'keplr' ? '/logos/keplr.svg' : '/logos/leap.svg';
+      logoUrl = WALLET_KEY_TO_LOGO_URL[selectedWallet];
     }
     if (sourceChainType === 'cosmos') {
       walletName = 'MetaMask';
-      logoUrl = '/logos/metamask.svg';
+      logoUrl = WALLET_KEY_TO_LOGO_URL.metamask;
     }
     return { walletName, username, logoUrl };
   }, [sourceChainType, cosmosChainContexts]);

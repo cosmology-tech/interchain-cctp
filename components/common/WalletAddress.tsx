@@ -9,7 +9,12 @@ import { BaseButton } from './BaseButton';
 import { useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useRouter } from 'next/router';
-import { WalletKey, checkIsCosmosWallet } from '@/config';
+import {
+  WALLET_KEY_TO_LOGO_URL,
+  WALLET_KEY_TO_PRETTY_NAME,
+  WalletKey,
+  checkIsCosmosWallet
+} from '@/config';
 
 export function WalletAddress() {
   const { address: evmAddress } = useAccount();
@@ -23,7 +28,7 @@ export function WalletAddress() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const walletKey = searchParams.get('wallet') as WalletKey;
+  const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
   const address = checkIsCosmosWallet(walletKey) ? '' : evmAddress;
 
   const { disconnect: disconnectMetamask } = useDisconnect();
@@ -41,17 +46,16 @@ export function WalletAddress() {
     router.push('/');
   };
 
+  const walletInfo = {
+    logo: WALLET_KEY_TO_LOGO_URL[walletKey],
+    name: WALLET_KEY_TO_PRETTY_NAME[walletKey]
+  };
+
   const addressColor = useColorModeValue('$textSecondary', '$primary');
 
   return (
     <Box display="flex" alignItems="center" gap="8px">
-      {walletKey === 'metamask' ? (
-        <Image src="/logos/metamask.svg" alt="MetaMask" width={16} height={16} />
-      ) : walletKey === 'keplr' ? (
-        <Image src="/logos/keplr.svg" alt="Keplr" width={16} height={16} />
-      ) : (
-        <Image src="/logos/leap.svg" alt="Leap" width={16} height={16} />
-      )}
+      <Image src={walletInfo.logo} alt={walletInfo.name} width={16} height={16} />
 
       {address ? (
         <>

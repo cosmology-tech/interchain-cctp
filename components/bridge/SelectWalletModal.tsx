@@ -36,7 +36,7 @@ export const SelectWalletModal = ({
   const { connectAsync: connectKeplrAsync, isConnected: isKeplrConnected } =
     useCosmosWallet('keplr');
   const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } =
-    useCosmosWallet('leap-social-login');
+    useCosmosWallet('capsule');
 
   const onSelectedWalletChange = (wallet: CosmosWalletKey | null) => {
     setSelectedWallet(wallet);
@@ -123,7 +123,7 @@ export const SelectWalletModal = ({
                 walletName={wallets.leap[0].walletPrettyName ?? ''}
                 walletLogoSrc={wallets.leap[0].walletInfo.logo as string}
                 onPress={() => {
-                  handleConnect('leap-social-login', connectLeapAsync, isLeapConnected);
+                  handleConnect('capsule', connectLeapAsync, isLeapConnected);
                 }}
               />
             </Stack>
@@ -147,8 +147,8 @@ export const SelectWalletModal = ({
                 if (selectedWallet && selectedWallet === 'keplr') {
                   return handleConnect('keplr', connectKeplrAsync, isKeplrConnected);
                 }
-                if (selectedWallet && selectedWallet === 'leap-social-login') {
-                  return handleConnect('leap-social-login', connectLeapAsync, isLeapConnected);
+                if (selectedWallet && selectedWallet === 'capsule') {
+                  return handleConnect('capsule', connectLeapAsync, isLeapConnected);
                 }
               }}
             />
