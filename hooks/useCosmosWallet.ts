@@ -1,15 +1,22 @@
 import { useMemo } from 'react';
 import { useWallet } from '@cosmos-kit/react';
 import { COSMOS_CHAIN_NAMES, COSMOS_WALLET_KEY_TO_NAME, CosmosWalletKey } from '@/config';
+import { ChainWalletBase } from 'cosmos-kit';
 
 // TODO: handle Error: Extension context invalidated
 export const useCosmosWallet = (walletKey: CosmosWalletKey) => {
   const { chainWallets } = useWallet(COSMOS_WALLET_KEY_TO_NAME[walletKey]);
 
-  const chains = useMemo(() => {
-    return chainWallets.filter((chainWallet) =>
+  const { chains, chainIdToChainContext } = useMemo(() => {
+    const chains = chainWallets.filter((chainWallet) =>
       COSMOS_CHAIN_NAMES.includes(chainWallet.chainRecord.name)
     );
+
+    const chainIdToChainContext = chains.reduce((acc, chainWallet) => {
+      return { ...acc, [chainWallet.chainId]: chainWallet };
+    }, {}) as Record<string, ChainWalletBase>;
+
+    return { chains, chainIdToChainContext };
   }, [chainWallets, COSMOS_CHAIN_NAMES]);
 
   const isConnected = chains.every((chain) => chain.isWalletConnected);
@@ -39,5 +46,5 @@ export const useCosmosWallet = (walletKey: CosmosWalletKey) => {
     });
   };
 
-  return { isConnected, connect, connectAsync, disconnect, chains };
+  return { isConnected, connect, connectAsync, disconnect, chainIdToChainContext };
 };

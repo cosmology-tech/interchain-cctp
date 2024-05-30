@@ -13,13 +13,13 @@ export const useStargateClients = () => {
     queryFn: async () => {
       const clients = await Promise.all(
         COSMOS_CHAIN_NAMES.map(async (chainName) => {
-          const { getStargateClient } = cosmosChains[chainName];
+          const { getStargateClient, chain } = cosmosChains[chainName];
           const client = await getStargateClient();
-          return { chainName, client };
+          return { chainId: chain.chain_id, client };
         })
       );
-      return clients.reduce((acc, { chainName, client }) => {
-        return { ...acc, [chainName]: client };
+      return clients.reduce((acc, { chainId, client }) => {
+        return { ...acc, [chainId]: client };
       }, {}) as StargateClients;
     },
     refetchOnMount: false,

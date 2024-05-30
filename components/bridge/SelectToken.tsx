@@ -17,7 +17,15 @@ import {
   EyeSlashIcon,
   EyeIcon
 } from '@/components/common';
-import { CHAIN_TYPE, CosmosWalletKey, DEFAULT_USDC_LOGO, colors, sizes } from '@/config';
+import {
+  CHAIN_TYPE,
+  CosmosWalletKey,
+  DEFAULT_USDC_LOGO,
+  WalletKey,
+  colors,
+  getChainTypeFromWalletKey,
+  sizes
+} from '@/config';
 import {
   useUsdcPrice,
   useIsMounted,
@@ -49,15 +57,16 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
   const { data: chains = [], isLoading: isChainsLoading } = useSkipChains();
   const { data: assets } = useUsdcAssets();
 
-  const walletName = (searchParams.get('wallet') ?? 'keplr') as CosmosWalletKey;
-  const sourceChainType = searchParams.get('chain_type') ?? CHAIN_TYPE.EVM;
+  const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
+  const sourceChainType = getChainTypeFromWalletKey(walletKey);
   const sourceChains = chains.filter((chain) => chain.chainType === sourceChainType);
 
   const { data: balances } = useUsdcBalances({
     assets,
     chains: sourceChains,
-    cosmosWallet: walletName
+    walletKey
   });
+
   const { data: usdcPrice } = useUsdcPrice();
 
   const displayedChains = useMemo(() => {

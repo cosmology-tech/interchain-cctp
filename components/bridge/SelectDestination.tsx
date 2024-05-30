@@ -18,7 +18,14 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import type { RouteResponse } from '@skip-router/core';
 
 import { ExitIcon, Tooltip, BaseButton } from '@/components/common';
-import { CHAIN_TYPE, COSMOS_CHAIN_NAMES, ChainType, colors, CosmosWalletKey } from '@/config';
+import {
+  CHAIN_TYPE,
+  COSMOS_CHAIN_NAMES,
+  colors,
+  CosmosWalletKey,
+  WalletKey,
+  getChainTypeFromWalletKey
+} from '@/config';
 import { scrollBar } from '@/styles/Shared.css';
 import {
   checkIsInvalidRoute,
@@ -61,7 +68,8 @@ export const SelectDestination = ({
   const { isConnected: isCosmosWalletConnected, disconnect: disconnectCosmosWallet } =
     useCosmosWallet(selectedWallet);
 
-  const sourceChainType = (searchParams.get('chain_type') ?? CHAIN_TYPE.EVM) as ChainType;
+  const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
+  const sourceChainType = getChainTypeFromWalletKey(walletKey);
 
   const destChains = useMemo(() => {
     if (isValidEvmAddress(destAddress)) {

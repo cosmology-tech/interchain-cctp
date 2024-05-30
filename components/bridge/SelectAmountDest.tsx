@@ -7,9 +7,10 @@ import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import {
   CHAIN_TYPE,
   COSMOS_CHAIN_NAMES,
-  COSMOS_WALLET_KEY_TO_NAME,
-  CosmosWalletKey,
-  sizes
+  sizes,
+  WalletKey,
+  checkIsCosmosWallet,
+  COSMOS_WALLET_KEY_TO_NAME
 } from '@/config';
 import { BroadcastedTx, SkipChain, useRoute, useUsdcAssets } from '@/hooks';
 import {
@@ -57,8 +58,10 @@ export function SelectAmountDest({
   const [showSignTxView, setShowSignTxView] = useState(false);
 
   const searchParams = useSearchParams();
-  const walletKey = (searchParams.get('wallet') ?? 'keplr') as CosmosWalletKey;
-  const { client: cosmosWalletClient } = useWalletClient(COSMOS_WALLET_KEY_TO_NAME[walletKey]);
+  const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
+  const { client: cosmosWalletClient } = useWalletClient(
+    COSMOS_WALLET_KEY_TO_NAME[checkIsCosmosWallet(walletKey) ? walletKey : 'keplr']
+  );
   const { address: evmAddress, chainId: connectedChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { data: assets } = useUsdcAssets();

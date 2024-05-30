@@ -9,7 +9,7 @@ import { BaseButton } from './BaseButton';
 import { useSearchParams } from 'next/navigation';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useRouter } from 'next/router';
-import { CosmosWalletKey } from '@/config';
+import { WalletKey, checkIsCosmosWallet } from '@/config';
 
 export function WalletAddress() {
   const { address: evmAddress } = useAccount();
@@ -23,17 +23,21 @@ export function WalletAddress() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const walletName = searchParams.get('wallet') as CosmosWalletKey | null;
-  const address = walletName ? '' : evmAddress;
+  const walletKey = searchParams.get('wallet') as WalletKey;
+  const address = checkIsCosmosWallet(walletKey) ? '' : evmAddress;
 
   const { disconnect: disconnectMetamask } = useDisconnect();
-  const { disconnect: disconnectKeplr } = useCosmosWallet('keplr');
-  const { disconnect: disconnectLeapSocialLogin } = useCosmosWallet('leap-social-login');
+  const { disconnect: disconnectCosmosWallet } = useCosmosWallet(
+    checkIsCosmosWallet(walletKey) ? walletKey : 'keplr'
+  );
 
   const onDisconnect = () => {
-    if (walletName === 'keplr') disconnectKeplr();
-    if (walletName === 'leap-social-login') disconnectLeapSocialLogin();
-    if (!walletName) disconnectMetamask();
+    if (walletKey === 'metamask') {
+      disconnectMetamask();
+      router.push('/');
+      return;
+    }
+    disconnectCosmosWallet();
     router.push('/');
   };
 
@@ -41,9 +45,9 @@ export function WalletAddress() {
 
   return (
     <Box display="flex" alignItems="center" gap="8px">
-      {!walletName ? (
+      {walletKey === 'metamask' ? (
         <Image src="/logos/metamask.svg" alt="MetaMask" width={16} height={16} />
-      ) : walletName === 'keplr' ? (
+      ) : walletKey === 'keplr' ? (
         <Image src="/logos/keplr.svg" alt="Keplr" width={16} height={16} />
       ) : (
         <Image src="/logos/leap.svg" alt="Leap" width={16} height={16} />

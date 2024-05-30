@@ -15,14 +15,6 @@ const DynamicAppProvider = dynamic(
   }
 );
 
-const TransactionSigningModal = dynamic(
-  () =>
-    import('@leapwallet/cosmos-social-login-capsule-provider-ui').then(
-      (m) => m.TransactionSigningModal
-    ),
-  { ssr: false }
-);
-
 const CustomHead = () => {
   return (
     <Head>
@@ -46,7 +38,6 @@ function NobleExpressApp({ Component, pageProps }: AppProps) {
         >
           <Component {...pageProps} />
           <Toaster position={'top-right'} closeButton={true} />
-          <TransactionSigningModal dAppInfo={{ name: 'Noble Express' }} />
         </Box>
       </DynamicAppProvider>
     </>

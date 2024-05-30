@@ -1,16 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { Asset } from '@skip-router/core';
 import { useQuery } from '@tanstack/react-query';
 import { readContract } from '@wagmi/core';
-import { useChains } from '@cosmos-kit/react';
 import { useAccount, useConnect } from 'wagmi';
 
 import { SkipChain } from './useSkipChains';
-import { getCosmosChainNameById, shiftDecimals } from '@/utils';
+import { shiftDecimals } from '@/utils';
 import {
-  COSMOS_CHAIN_NAMES,
-  CosmosWalletKey,
+  COSMOS_CHAINS,
   USDC_CONTRACT_ABI,
+  WalletKey,
+  checkIsCosmosWallet,
   config as wagmiConfig
 } from '@/config';
 import { useCosmosWallet } from './useCosmosWallet';
@@ -21,16 +21,18 @@ export type EVMAddress = `0x${string}`;
 interface Args {
   chains?: SkipChain[];
   assets?: Record<string, Asset>;
-  cosmosWallet?: CosmosWalletKey;
+  walletKey?: WalletKey;
 }
 
-export const useUsdcBalances = ({ chains = [], assets = {}, cosmosWallet = 'keplr' }: Args) => {
+export const useUsdcBalances = ({ chains = [], assets = {}, walletKey = 'keplr' }: Args) => {
   const { connect: connectEvmWallet, connectors } = useConnect();
   const { address: evmAddress, isConnected: isEvmWalletConnected } = useAccount();
 
-  const cosmosChains = useChains(COSMOS_CHAIN_NAMES);
-  const { isConnected: isCosmosWalletConnected, connect: connectCosmosWallet } =
-    useCosmosWallet(cosmosWallet);
+  const {
+    isConnected: isCosmosWalletConnected,
+    connect: connectCosmosWallet,
+    chainIdToChainContext
+  } = useCosmosWallet(checkIsCosmosWallet(walletKey) ? walletKey : 'keplr');
 
   const { data: stargateClients } = useStargateClients();
 
@@ -60,13 +62,16 @@ export const useUsdcBalances = ({ chains = [], assets = {}, cosmosWallet = 'kepl
     Object.keys(assets).length > 0 &&
     (hasCosmosChains ? !!stargateClients : true);
 
+  const queryKey = useMemo(() => {
+    const accountAddr = checkIsCosmosWallet(walletKey)
+      ? chainIdToChainContext[COSMOS_CHAINS[0].chain_id].address
+      : evmAddress;
+
+    return ['usdc-balances', walletKey, accountAddr];
+  }, [walletKey, evmAddress, chainIdToChainContext]);
+
   return useQuery({
-    queryKey: [
-      'usdc-balances',
-      cosmosWallet ?? '',
-      chains.map((chain) => chain.chainID),
-      Object.keys(assets)
-    ],
+    queryKey,
     queryFn: async () => {
       if (!isEnabled) return {};
 
@@ -86,19 +91,13 @@ export const useUsdcBalances = ({ chains = [], assets = {}, cosmosWallet = 'kepl
             };
           }
           if (chain.chainType === 'cosmos') {
-            const chainName = getCosmosChainNameById(chain.chainID);
-            const { address: cosmosAddress } = cosmosChains[chainName];
-
-            const stargateClient = (stargateClients as StargateClients)[chainName];
+            const { address: cosmosAddress } = chainIdToChainContext[chain.chainID];
+            const stargateClient = (stargateClients as StargateClients)[chain.chainID];
             const coin = await stargateClient.getBalance(
               cosmosAddress!,
               assets[chain.chainID].denom
             );
-            if (chainName === 'nobletestnet')
-              console.log({
-                nobleAddress: cosmosAddress,
-                balance: shiftDecimals(coin.amount, -(assets[chain.chainID]?.decimals ?? 6))
-              });
+
             return {
               chainId: chain.chainID,
               usdcBalance: shiftDecimals(coin.amount, -(assets[chain.chainID]?.decimals ?? 6))

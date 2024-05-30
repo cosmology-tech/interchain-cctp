@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useAccount, useConnect } from 'wagmi';
 import { Box, NobleSelectWalletButton, toast } from '@interchain-ui/react';
 
-import { ChainType, CosmosWalletKey } from '@/config';
+import { WalletKey } from '@/config';
 import { useCapsuleClient, useCosmosWallet, useDetectWallets } from '@/hooks';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
@@ -18,8 +18,7 @@ const CustomCapsuleModalView = dynamic(
 export type BridgeHref = {
   pathname: string;
   query: {
-    wallet?: CosmosWalletKey;
-    chain_type: ChainType;
+    wallet: WalletKey;
   };
 };
 
@@ -39,7 +38,7 @@ export function WalletList() {
   const handleConnectMetamask = () => {
     const href: BridgeHref = {
       pathname: '/bridge',
-      query: { chain_type: 'evm' }
+      query: { wallet: 'metamask' }
     };
     if (address) {
       return router.push(href);
@@ -54,7 +53,7 @@ export function WalletList() {
   const handleConnectKeplr = () => {
     const href: BridgeHref = {
       pathname: '/bridge',
-      query: { chain_type: 'cosmos', wallet: 'keplr' }
+      query: { wallet: 'keplr' }
     };
     if (isKeplrConnected) {
       return router.push(href);
@@ -68,7 +67,7 @@ export function WalletList() {
 
   const leapHref: BridgeHref = {
     pathname: '/bridge',
-    query: { chain_type: 'cosmos', wallet: 'leap-social-login' }
+    query: { wallet: 'leap-social-login' }
   };
 
   const handleConnectLeap = () => {
