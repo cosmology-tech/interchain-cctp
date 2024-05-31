@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useIsMounted } from './useIsMounted';
 
 export const useDetectWallets = () => {
   const isMetamaskInstalled = useDetect(detectMetamask);
@@ -16,36 +15,18 @@ export const useDetectWallets = () => {
 };
 
 function useDetect(detectFn: () => boolean) {
-  const isMounted = useIsMounted();
-  const [isInstalled, setIsInstalled] = React.useState<boolean>(true);
+  const [isInstalled, setIsInstalled] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    if (!isMounted) return;
-
-    const detect = () => {
-      setIsInstalled(detectFn());
-    };
-
-    window.addEventListener('load', detect);
-
-    return () => {
-      window.removeEventListener('load', detect);
-    };
-  }, [detectFn, isMounted]);
+    setIsInstalled(detectFn());
+  }, [detectFn]);
 
   return isInstalled;
 }
 
 function detectMetamask() {
-  if (window.ethereum) {
-    if (window.ethereum.isMetaMask) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return false;
-  }
+  const { ethereum } = window;
+  return !!(ethereum?.isMetaMask && !ethereum?.isCypherWallet);
 }
 
 declare global {

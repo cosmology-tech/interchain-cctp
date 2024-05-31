@@ -61,6 +61,10 @@ export function WalletList() {
       });
     };
 
+  const connectMetaMaskAsync = async () => {
+    return connectAsync({ connector: connectors[0] }).then((connectData) => !!connectData);
+  };
+
   const capsuleHref: BridgeHref = {
     pathname: '/bridge',
     query: { wallet: 'capsule' }
@@ -118,9 +122,7 @@ export function WalletList() {
       >
         <NobleSelectWalletButton
           {...getWalletButtonProps('metamask')}
-          onClick={handleConnectWallet('metamask', !!evmAddress, () =>
-            connectAsync({ connector: connectors[0] }).then((connectData) => !!connectData)
-          )}
+          onClick={handleConnectWallet('metamask', !!evmAddress, connectMetaMaskAsync)}
           subTitle={isWalletInstalled.metamask ? 'Connect' : 'Install MetaMask'}
           disabled={!isWalletInstalled.metamask}
         />
