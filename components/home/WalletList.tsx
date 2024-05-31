@@ -1,5 +1,4 @@
 import { useRouter } from 'next/router';
-import { useAccount, useConnect } from 'wagmi';
 import {
   Box,
   NobleSelectWalletButton,
@@ -8,7 +7,7 @@ import {
 } from '@interchain-ui/react';
 
 import { WALLET_KEY_TO_LOGO_URL, WALLET_KEY_TO_PRETTY_NAME, WalletKey } from '@/config';
-import { useCapsuleClient, useCosmosWallet, useDetectWallets } from '@/hooks';
+import { useCapsuleClient, useCosmosWallet, useEvmWallet } from '@/hooks';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 
@@ -29,15 +28,34 @@ export type BridgeHref = {
 
 export function WalletList() {
   const router = useRouter();
-  const { address: evmAddress } = useAccount();
-  const { connectAsync, connectors } = useConnect();
   const [showCapsuleModal, setShowCapsuleModal] = useState(false);
 
-  const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } = useCosmosWallet('leap');
-  const { connectAsync: connectKeplrAsync, isConnected: isKeplrConnected } =
-    useCosmosWallet('keplr');
-  const { connectAsync: connectCosmostationAsync, isConnected: isCosmostationConnected } =
-    useCosmosWallet('cosmostation');
+  // EVM Wallet
+  const {
+    connectAsync: connectMetaMaskAsync,
+    isConnected: isMetaMaskConnected,
+    isInstalled: isMetaMaskInstalled
+  } = useEvmWallet('metamask');
+
+  // Cosmos Wallets
+  const {
+    connectAsync: connectLeapAsync,
+    isConnected: isLeapConnected,
+    isInstalled: isLeapInstalled
+  } = useCosmosWallet('leap');
+
+  const {
+    connectAsync: connectKeplrAsync,
+    isConnected: isKeplrConnected,
+    isInstalled: isKeplrInstalled
+  } = useCosmosWallet('keplr');
+
+  const {
+    connectAsync: connectCosmostationAsync,
+    isConnected: isCosmostationConnected,
+    isInstalled: isCosmostationInstalled
+  } = useCosmosWallet('cosmostation');
+
   const { connectAsync: connectCapsuleAsync, isConnected: isCapsuleConnected } =
     useCosmosWallet('capsule');
 
@@ -61,10 +79,6 @@ export function WalletList() {
       });
     };
 
-  const connectMetaMaskAsync = async () => {
-    return connectAsync({ connector: connectors[0] }).then((connectData) => !!connectData);
-  };
-
   const capsuleHref: BridgeHref = {
     pathname: '/bridge',
     query: { wallet: 'capsule' }
@@ -86,8 +100,6 @@ export function WalletList() {
       title: WALLET_KEY_TO_PRETTY_NAME[walletKey]
     };
   };
-
-  const isWalletInstalled = useDetectWallets();
 
   return (
     <>
@@ -122,16 +134,16 @@ export function WalletList() {
       >
         <NobleSelectWalletButton
           {...getWalletButtonProps('metamask')}
-          onClick={handleConnectWallet('metamask', !!evmAddress, connectMetaMaskAsync)}
-          subTitle={isWalletInstalled.metamask ? 'Connect' : 'Install MetaMask'}
-          disabled={!isWalletInstalled.metamask}
+          onClick={handleConnectWallet('metamask', isMetaMaskConnected, connectMetaMaskAsync)}
+          subTitle={isMetaMaskInstalled ? 'Connect' : 'Install MetaMask'}
+          disabled={!isMetaMaskInstalled}
         />
 
         <NobleSelectWalletButton
           {...getWalletButtonProps('keplr')}
           onClick={handleConnectWallet('keplr', isKeplrConnected, connectKeplrAsync)}
-          subTitle={isWalletInstalled.keplr ? 'Connect' : 'Install Keplr'}
-          disabled={!isWalletInstalled.keplr}
+          subTitle={isKeplrInstalled ? 'Connect' : 'Install Keplr'}
+          disabled={!isKeplrInstalled}
         />
 
         <NobleSelectWalletButton
@@ -151,20 +163,20 @@ export function WalletList() {
         {/* Other Wallets */}
         <NobleSelectWalletButton
           {...getWalletButtonProps('leap')}
-          subTitle={isWalletInstalled.leap ? 'Connect' : 'Install Leap'}
           onClick={handleConnectWallet('leap', isLeapConnected, connectLeapAsync)}
-          disabled={!isWalletInstalled.leap}
+          subTitle={isLeapInstalled ? 'Connect' : 'Install Leap'}
+          disabled={!isLeapInstalled}
         />
 
         <NobleSelectWalletButton
           {...getWalletButtonProps('cosmostation')}
-          subTitle={isWalletInstalled.cosmostation ? 'Connect' : 'Install Cosmostation'}
           onClick={handleConnectWallet(
             'cosmostation',
             isCosmostationConnected,
             connectCosmostationAsync
           )}
-          disabled={!isWalletInstalled.cosmostation}
+          subTitle={isCosmostationInstalled ? 'Connect' : 'Install Cosmostation'}
+          disabled={!isCosmostationInstalled}
         />
       </Box>
     </>

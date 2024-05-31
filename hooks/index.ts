@@ -10,5 +10,5 @@ export * from './useTxsStatus';
 export * from './useFinalityTimeEstimate';
 export * from './useStargateClients';
 export * from './useUsdcChains';
-export * from './useDetectWallets';
 export * from './useCapsuleClient';
+export * from './useEvmWallet';

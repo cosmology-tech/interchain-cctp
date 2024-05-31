@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import type { Asset } from '@skip-router/core';
 import { useQuery } from '@tanstack/react-query';
 import { readContract } from '@wagmi/core';
-import { useAccount, useConnect } from 'wagmi';
 
 import { SkipChain } from './useSkipChains';
 import { shiftDecimals } from '@/utils';
@@ -15,6 +14,7 @@ import {
 } from '@/config';
 import { useCosmosWallet } from './useCosmosWallet';
 import { StargateClients, useStargateClients } from './useStargateClients';
+import { useEvmWallet } from './useEvmWallet';
 
 export type EVMAddress = `0x${string}`;
 
@@ -25,8 +25,11 @@ interface Args {
 }
 
 export const useUsdcBalances = ({ chains = [], assets = {}, walletKey = 'keplr' }: Args) => {
-  const { connect: connectEvmWallet, connectors } = useConnect();
-  const { address: evmAddress, isConnected: isEvmWalletConnected } = useAccount();
+  const {
+    connect: connectEvmWallet,
+    address: evmAddress,
+    isConnected: isEvmWalletConnected
+  } = useEvmWallet('metamask');
 
   const {
     isConnected: isCosmosWalletConnected,
@@ -47,8 +50,8 @@ export const useUsdcBalances = ({ chains = [], assets = {}, walletKey = 'keplr' 
 
   useEffect(() => {
     if (isEvmWalletConnected || isCosmosChainsOnly) return;
-    connectEvmWallet({ connector: connectors[0] });
-  }, [connectors, isCosmosChainsOnly, isEvmWalletConnected, connectEvmWallet]);
+    connectEvmWallet();
+  }, [isCosmosChainsOnly, isEvmWalletConnected, connectEvmWallet]);
 
   const isConnected = isEvmChainsOnly
     ? isEvmWalletConnected

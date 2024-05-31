@@ -13,7 +13,6 @@ import {
   NobleChainCombobox
 } from '@interchain-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import type { RouteResponse } from '@skip-router/core';
 
 import { ExitIcon, Tooltip, BaseButton } from '@/components/common';
@@ -34,7 +33,7 @@ import {
   isValidCosmosAddress,
   isValidEvmAddress
 } from '@/utils';
-import { SkipChain, useCosmosWallet, useSkipChains } from '@/hooks';
+import { SkipChain, useCosmosWallet, useEvmWallet, useSkipChains } from '@/hooks';
 import { SelectWalletModal } from './SelectWalletModal';
 
 interface SelectDestinationProps {
@@ -55,9 +54,13 @@ export const SelectDestination = ({
   sourceChainId
 }: SelectDestinationProps) => {
   const searchParams = useSearchParams();
-  const { address: evmAddress, isConnected: isEvmWalletConnected } = useAccount();
-  const { connect: connectMetamask, connectors } = useConnect();
-  const { disconnect: disconnectMetamask } = useDisconnect();
+
+  const {
+    address: evmAddress,
+    isConnected: isEvmWalletConnected,
+    connect: connectMetaMask,
+    disconnect: disconnectMetaMask
+  } = useEvmWallet('metamask');
 
   const { data: chains = [] } = useSkipChains();
 
@@ -87,7 +90,7 @@ export const SelectDestination = ({
       setIsOpen(true);
     }
     if (sourceChainType === 'cosmos') {
-      connectMetamask({ connector: connectors[0] });
+      connectMetaMask();
     }
   };
 
@@ -96,7 +99,7 @@ export const SelectDestination = ({
       disconnectCosmosWallet();
     }
     if (sourceChainType === 'cosmos') {
-      disconnectMetamask();
+      disconnectMetaMask();
     }
     setDestChain(null);
     setDestAddress('');

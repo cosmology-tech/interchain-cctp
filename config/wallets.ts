@@ -1,9 +1,11 @@
 import { ChainType } from './chains';
 
-export const EVM_WALLET_KEY_TO_NAME = {
-  metamask: 'metamask'
+// ID refers to the connector ID from wagmi
+export const EVM_WALLET_KEY_TO_ID = {
+  metamask: 'io.metamask'
 } as const;
 
+// https://github.com/cosmology-tech/cosmos-kit/tree/main/wallets
 export const COSMOS_WALLET_KEY_TO_NAME = {
   leap: 'leap-extension',
   keplr: 'keplr-extension',
@@ -11,9 +13,10 @@ export const COSMOS_WALLET_KEY_TO_NAME = {
   capsule: 'leap-capsule-social-login'
 } as const;
 
-export const WALLET_KEY_TO_NAME = { ...EVM_WALLET_KEY_TO_NAME, ...COSMOS_WALLET_KEY_TO_NAME };
+const WALLET_KEY_MAP = { ...EVM_WALLET_KEY_TO_ID, ...COSMOS_WALLET_KEY_TO_NAME };
 
-export type WalletKey = keyof typeof WALLET_KEY_TO_NAME;
+export type WalletKey = keyof typeof WALLET_KEY_MAP;
+export type EvmWalletKey = keyof typeof EVM_WALLET_KEY_TO_ID;
 export type CosmosWalletKey = keyof typeof COSMOS_WALLET_KEY_TO_NAME;
 
 export const WALLET_KEY_TO_PRETTY_NAME: Record<WalletKey, string> = {
@@ -33,7 +36,7 @@ export const WALLET_KEY_TO_LOGO_URL: Record<WalletKey, string> = {
 };
 
 export const getChainTypeFromWalletKey = (walletKey: WalletKey): ChainType => {
-  return walletKey in EVM_WALLET_KEY_TO_NAME ? 'evm' : 'cosmos';
+  return walletKey in EVM_WALLET_KEY_TO_ID ? 'evm' : 'cosmos';
 };
 
 export const checkIsCosmosWallet = (walletKey: WalletKey): walletKey is CosmosWalletKey => {
