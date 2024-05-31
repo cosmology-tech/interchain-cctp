@@ -72,10 +72,11 @@ export const SelectAmount = ({
       id="token-amount"
       size="md"
       label="Select amount"
-      placeholder="Enter amount"
+      placeholder="0"
       value={amount}
       type="number"
       onChange={(e) => {
+        if (BigNumber(e.target.value).isNegative()) return;
         setAmount(e.target.value);
         setPartialPercent(null);
       }}
