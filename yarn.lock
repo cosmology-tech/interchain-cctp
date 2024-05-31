@@ -3590,10 +3590,10 @@
     bignumber.js "^9.1.2"
     long "^5.2.3"
 
-"@leapwallet/cosmos-social-login-capsule-provider-ui@^0.0.50":
-  version "0.0.50"
-  resolved "https://registry.yarnpkg.com/@leapwallet/cosmos-social-login-capsule-provider-ui/-/cosmos-social-login-capsule-provider-ui-0.0.50.tgz#982ee72d1816921034f6a6e80f54caaf027aefb1"
-  integrity sha512-tZ7r783+H/oz1knLI0lh/wNTMgFLytpAYEPzG9GjB6PG91uhLRKUxskmGv0C98EcTa0DzdG8WFvNNrS/MHCk2w==
+"@leapwallet/cosmos-social-login-capsule-provider-ui@0.0.51":
+  version "0.0.51"
+  resolved "https://registry.yarnpkg.com/@leapwallet/cosmos-social-login-capsule-provider-ui/-/cosmos-social-login-capsule-provider-ui-0.0.51.tgz#093a5d610c866c95db8cdb6396ee014cfc71ee73"
+  integrity sha512-RGL9FMhvjVFppIuWitY4AfyTw7GEB6TU2n04wTPRtC6pQ6vbnTa3KNo+o5KV+56C5NPcjLoLajc7QyUaPhN7ZQ==
   dependencies:
     "@chakra-ui/react" "^2.8.1"
     "@cosmjs/amino" "0.31.3"
@@ -3628,7 +3628,7 @@
     "@usecapsule/web-sdk" "1.12.0"
     long "5.2.3"
 
-"@leapwallet/cosmos-social-login-capsule-provider@^0.0.33":
+"@leapwallet/cosmos-social-login-capsule-provider@0.0.33":
   version "0.0.33"
   resolved "https://registry.yarnpkg.com/@leapwallet/cosmos-social-login-capsule-provider/-/cosmos-social-login-capsule-provider-0.0.33.tgz#d621e09f26a00a07314a9e6faad98003152440b0"
   integrity sha512-vHutBY6S6a1w+fhVsF78u/plGR4xmK4+/22pJaiaZCeekBTJRgLGr7bmloEswOQlZUUS6VGL29lm76r111bbrQ==
