@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { getWalletClient } from '@wagmi/core';
 import { WalletClient } from 'viem';
-import { SKIP_API_CLIENT_ID } from '@/config';
+import { envConfig } from '@/config';
 import { config } from '@/config/wagmi';
 import type { SkipRouter } from '@skip-router/core';
 import { useSkipRouter } from '@/hooks/useSkipRouter';
@@ -23,7 +23,7 @@ export function SkipProvider({ children }: { children: React.ReactNode }) {
       setSkipClient(
         // @ts-ignore
         new SkipRouterClass({
-          clientID: SKIP_API_CLIENT_ID,
+          clientID: envConfig.skipApiKey,
           // @ts-ignore
           getEVMSigner: async (chainID) => {
             const evmWalletClient = (await getWalletClient(config, {

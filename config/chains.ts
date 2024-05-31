@@ -27,6 +27,7 @@ import nobletestnet from 'chain-registry/testnet/nobletestnet/chain';
 import osmosistestnet from 'chain-registry/testnet/osmosistestnet/chain';
 
 import type { Chain as CosmosChain } from '@chain-registry/types';
+import { envConfig } from '@/config';
 
 // Supported EVM chains
 export const EVM_MAINNETS: EVMChain[] = [mainnet, base, arbitrum, optimism, avalanche, polygon];
@@ -41,7 +42,7 @@ const COSMOS_TESTNETS: CosmosChain[] = [nobletestnet, osmosistestnet];
 const getEvmChainId = (chain: EVMChain) => chain.id.toString();
 const getCosmosChainId = (chain: CosmosChain) => chain.chain_id;
 
-export const isTestnetMode = process.env.NEXT_PUBLIC_IS_TESTNET === 'true';
+export const isTestnetMode = envConfig.isTestnet === 'true';
 
 export const SUPPORTED_CHAIN_IDS = isTestnetMode
   ? [...EVM_TESTNETS.map(getEvmChainId), ...COSMOS_TESTNETS.map(getCosmosChainId)]
