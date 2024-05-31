@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 import { DEFAULT_USDC_LOGO, colors } from '@/config';
 import { ChainList } from './ChainList';
+import { data } from '@/data';
 
 export const HomeHeader = () => {
   return (
@@ -66,8 +67,7 @@ function Subtitle() {
         fontWeight="400"
         lineHeight="20px"
       >
-        Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam
-        ultricies nisi vel augue.
+        {data.header.subtitle}
       </Text>
     </Box>
   );

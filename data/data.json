@@ -1,0 +1,31 @@
+{
+  "header": {
+    "subtitle": "Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue."
+  },
+  "footer": {
+    "title": "The new standard for digital asset issuance",
+    "subtitle": "We are liquidity infrastructure for asset issuers to participate in the Interchain economy"
+  },
+  "faqList": [
+    {
+      "question": "Which networks are supported?",
+      "answer": "Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar."
+    },
+    {
+      "question": "Are there any fees?",
+      "answer": "Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar."
+    },
+    {
+      "question": "What tokens can I send?",
+      "answer": "Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar."
+    },
+    {
+      "question": "What is Noble?",
+      "answer": "Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar."
+    },
+    {
+      "question": "How does Noble Express work?",
+      "answer": "Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar."
+    }
+  ]
+}

@@ -1,11 +1,12 @@
-import * as React from "react";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { Box, Link, Text, useColorModeValue } from "@interchain-ui/react";
-import { colors } from "@/config";
-import { FaqTriggerButton } from "@/components/common/FaqList";
-import { LayoutContext } from "@/contexts/layout.context";
-import { ChevronDown } from "@/components/common/icons/Chevron";
+import * as React from 'react';
+import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Box, Link, Text, useColorModeValue } from '@interchain-ui/react';
+import { colors } from '@/config';
+import { FaqTriggerButton } from '@/components/common/FaqList';
+import { LayoutContext } from '@/contexts/layout.context';
+import { ChevronDown } from '@/components/common/icons/Chevron';
+import { data } from '@/data';
 
 export function Footer() {
   const { isFaqExpanded, setIsFaqExpanded } = React.useContext(LayoutContext);
@@ -14,8 +15,8 @@ export function Footer() {
     <Box
       as="footer"
       position={{
-        mobile: "relative",
-        tablet: "absolute",
+        mobile: 'relative',
+        tablet: 'absolute'
       }}
       bottom="0"
       left="0"
@@ -55,21 +56,15 @@ export function Footer() {
         paddingBottom="38px"
         borderTopWidth="1px"
         borderTopStyle="solid"
-        borderTopColor={useColorModeValue(
-          colors.divider.light,
-          colors.divider.dark
-        )}
+        borderTopColor={useColorModeValue(colors.divider.light, colors.divider.dark)}
       >
         <Image
           width={149}
           height={39}
           alt="Noble"
-          src={useColorModeValue(
-            "/logos/noble-light.svg",
-            "/logos/noble-dark.svg"
-          )}
+          src={useColorModeValue('/logos/noble-light.svg', '/logos/noble-dark.svg')}
           style={{
-            flexShrink: "0",
+            flexShrink: '0'
           }}
         />
 
@@ -79,7 +74,7 @@ export function Footer() {
             fontSize="20px"
             fontWeight="600"
           >
-            The new standard for digital asset issuance
+            {data.footer.title}
           </Text>
 
           <Text
@@ -87,20 +82,19 @@ export function Footer() {
             fontWeight="400"
             fontSize="14px"
             attributes={{
-              marginBottom: "16px",
+              marginBottom: '16px'
             }}
           >
-            We are liquidity infrastructure for asset issuers to participate in
-            the Interchain economy
+            {data.footer.subtitle}
           </Text>
 
           <Link
             href="https://nobleassets.xyz"
             target="_blank"
             attributes={{
-              display: "inline-block",
-              fontSize: "16px",
-              fontWeight: "500",
+              display: 'inline-block',
+              fontSize: '16px',
+              fontWeight: '500'
             }}
             color={useColorModeValue(colors.gray200, colors.white)}
           >
