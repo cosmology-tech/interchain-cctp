@@ -64,7 +64,6 @@ export function FaqAccordion(props: FaqAccordionProps) {
           bg="$cardBg"
           paddingLeft="$10"
           paddingRight="$10"
-          paddingTop="$10"
           paddingBottom="$10"
           borderRadius="$lg"
           borderWidth="1px"
@@ -76,7 +75,7 @@ export function FaqAccordion(props: FaqAccordionProps) {
           fontSize="$sm"
           fontWeight="$normal"
           color="$textSecondary"
-          maxHeight="150px"
+          maxHeight="180px"
           overflowY="auto"
           className={sharedStyles.scrollBar[theme]}
         >

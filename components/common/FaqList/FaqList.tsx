@@ -112,7 +112,7 @@ export function FaqList(props: FaqListProps) {
                   'data-expanded': isFaqExpanded
                 }}
               >
-                <Box display="flex" flexDirection="column" gap="$6">
+                <Box display="flex" flexDirection="column" gap="$6" flex="1">
                   {firstHalfFAQ.map((faq) => (
                     <FaqAccordion
                       isExpanded={activeFaqId === faq.id}
@@ -124,7 +124,7 @@ export function FaqList(props: FaqListProps) {
                   ))}
                 </Box>
 
-                <Box display="flex" flexDirection="column" gap="$6">
+                <Box display="flex" flexDirection="column" gap="$6" flex="1">
                   {secondHalfFAQ.map((faq) => (
                     <FaqAccordion
                       isExpanded={activeFaqId === faq.id}
