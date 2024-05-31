@@ -51,7 +51,7 @@ export function SelectAmountDest({
 
   const [destChain, setDestChain] = useState<SkipChain | null>(null);
   const [destAddress, setDestAddress] = useState<string>('');
-  const [amount, setAmount] = useState('0');
+  const [amount, setAmount] = useState('');
   const [showSignTxView, setShowSignTxView] = useState(false);
 
   const searchParams = useSearchParams();

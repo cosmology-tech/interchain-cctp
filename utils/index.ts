@@ -103,7 +103,7 @@ export function isUserRejectedRequestError(input: unknown): input is Error {
 const USDC_DECIMALS = 6;
 
 export const getOutAmount = (route: RouteResponse | undefined) => {
-  if (!route) return '0';
+  if (!route) return '';
   return route.usdAmountOut
     ? route.usdAmountOut
     : BigNumber(route.estimatedAmountOut || route.amountOut)
@@ -112,6 +112,6 @@ export const getOutAmount = (route: RouteResponse | undefined) => {
 };
 
 export const checkIsInvalidRoute = (route: RouteResponse | undefined) => {
-  if (!route) return true;
+  if (!route) return false;
   return BigNumber(getOutAmount(route)).lte(0);
 };
