@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 import { WALLET_KEY_TO_LOGO_URL, WALLET_KEY_TO_PRETTY_NAME, WalletKey, colors } from '@/config';
-import { FadeIn } from '@/components/common';
+import { FaqList, FadeIn } from '@/components/common';
 import { PulsingBox } from '@/components/common/PulsingBox';
 import { AbstractWallet } from '@/components/common/icons/AbstractWallet';
 import { useSearchParams } from 'next/navigation';
@@ -91,6 +91,8 @@ export function SignTx() {
             */}
           </Box>
         </Box>
+
+        <FaqList />
       </FadeIn>
     </>
   );
