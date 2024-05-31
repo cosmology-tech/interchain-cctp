@@ -1,21 +1,19 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
-import { useChains, useWalletClient } from '@cosmos-kit/react';
+import { useWalletClient } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Box, NoblePageTitleBar, NobleButton, Text, toast } from '@interchain-ui/react';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import {
   CHAIN_TYPE,
-  COSMOS_CHAIN_NAMES,
   sizes,
   WalletKey,
   checkIsCosmosWallet,
   COSMOS_WALLET_KEY_TO_NAME
 } from '@/config';
-import { BroadcastedTx, SkipChain, useRoute, useUsdcAssets } from '@/hooks';
+import { BroadcastedTx, SkipChain, useCosmosWallet, useRoute, useUsdcAssets } from '@/hooks';
 import {
   checkIsInvalidRoute,
-  getCosmosChainNameById,
   isUserRejectedRequestError,
   isValidAddress,
   randomId,
@@ -50,7 +48,6 @@ export function SelectAmountDest({
   const { chain: sourceChain, asset: sourceAsset, balance } = selectedToken;
 
   const skipClient = useSkipClient();
-  const cosmosChainContexts = useChains(COSMOS_CHAIN_NAMES);
 
   const [destChain, setDestChain] = useState<SkipChain | null>(null);
   const [destAddress, setDestAddress] = useState<string>('');
@@ -59,8 +56,11 @@ export function SelectAmountDest({
 
   const searchParams = useSearchParams();
   const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
+
+  const cosmosWalletKey = checkIsCosmosWallet(walletKey) ? walletKey : 'keplr';
+  const { chainIdToChainContext } = useCosmosWallet(cosmosWalletKey);
   const { client: cosmosWalletClient } = useWalletClient(
-    COSMOS_WALLET_KEY_TO_NAME[checkIsCosmosWallet(walletKey) ? walletKey : 'keplr']
+    COSMOS_WALLET_KEY_TO_NAME[cosmosWalletKey]
   );
   const { address: evmAddress, chainId: connectedChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
@@ -87,7 +87,7 @@ export function SelectAmountDest({
     const sourceChainAddress =
       sourceChain.chainType === CHAIN_TYPE.EVM
         ? evmAddress
-        : cosmosChainContexts[getCosmosChainNameById(sourceChain.chainID)].address!;
+        : chainIdToChainContext[sourceChain.chainID].address!;
 
     const transferInfo: TransferInfo = {
       amount,
@@ -107,7 +107,7 @@ export function SelectAmountDest({
       if (/^\d+/.test(chainID)) {
         acc[chainID] = evmAddress;
       } else {
-        acc[chainID] = cosmosChainContexts[getCosmosChainNameById(chainID)].address!;
+        acc[chainID] = chainIdToChainContext[chainID].address!;
       }
       return acc;
     }, {} as Record<string, string>);

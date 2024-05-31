@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import { Key, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useChains } from '@cosmos-kit/react';
 import {
   Box,
   Text,
@@ -20,18 +19,17 @@ import type { RouteResponse } from '@skip-router/core';
 import { ExitIcon, Tooltip, BaseButton } from '@/components/common';
 import {
   CHAIN_TYPE,
-  COSMOS_CHAIN_NAMES,
   colors,
   CosmosWalletKey,
   WalletKey,
   getChainTypeFromWalletKey,
-  WALLET_KEY_TO_LOGO_URL
+  WALLET_KEY_TO_LOGO_URL,
+  WALLET_KEY_TO_PRETTY_NAME
 } from '@/config';
 import { scrollBar } from '@/styles/Shared.css';
 import {
   checkIsInvalidRoute,
   cosmosAddressToChainId,
-  getCosmosChainNameById,
   getOutAmount,
   isValidCosmosAddress,
   isValidEvmAddress
@@ -62,12 +60,14 @@ export const SelectDestination = ({
   const { disconnect: disconnectMetamask } = useDisconnect();
 
   const { data: chains = [] } = useSkipChains();
-  const cosmosChainContexts = useChains(COSMOS_CHAIN_NAMES);
 
   const [isOpen, setIsOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<CosmosWalletKey>('keplr');
-  const { isConnected: isCosmosWalletConnected, disconnect: disconnectCosmosWallet } =
-    useCosmosWallet(selectedWallet);
+  const {
+    isConnected: isCosmosWalletConnected,
+    disconnect: disconnectCosmosWallet,
+    chainIdToChainContext
+  } = useCosmosWallet(selectedWallet);
 
   const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
   const sourceChainType = getChainTypeFromWalletKey(walletKey);
@@ -106,17 +106,17 @@ export const SelectDestination = ({
     let username = '';
     let walletName = '';
     if (sourceChainType === 'evm') {
-      const chainContext = Object.values(cosmosChainContexts)[0];
-      walletName = chainContext.wallet?.prettyName ?? '';
+      const chainContext = Object.values(chainIdToChainContext)[0];
       username = chainContext.username ?? '';
+      walletName = WALLET_KEY_TO_PRETTY_NAME[selectedWallet];
       logoUrl = WALLET_KEY_TO_LOGO_URL[selectedWallet];
     }
     if (sourceChainType === 'cosmos') {
-      walletName = 'MetaMask';
+      walletName = WALLET_KEY_TO_PRETTY_NAME.metamask;
       logoUrl = WALLET_KEY_TO_LOGO_URL.metamask;
     }
     return { walletName, username, logoUrl };
-  }, [sourceChainType, cosmosChainContexts]);
+  }, [sourceChainType, chainIdToChainContext]);
 
   const handleAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const address = e.target.value;
@@ -133,8 +133,7 @@ export const SelectDestination = ({
       setDestChain(selectedChain);
       if (!destAddress) {
         if (selectedChain.chainType === CHAIN_TYPE.COSMOS) {
-          const chainName = getCosmosChainNameById(chainId.toString());
-          const cosmosAddress = cosmosChainContexts[chainName].address;
+          const cosmosAddress = chainIdToChainContext[chainId.toString()].address;
           cosmosAddress && setDestAddress(cosmosAddress);
         }
         if (selectedChain.chainType === CHAIN_TYPE.EVM) {
