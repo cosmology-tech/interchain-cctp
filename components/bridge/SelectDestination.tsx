@@ -66,7 +66,8 @@ export const SelectDestination = ({
   const {
     isConnected: isCosmosWalletConnected,
     disconnect: disconnectCosmosWallet,
-    chainIdToChainContext
+    chainIdToChainContext,
+    username
   } = useCosmosWallet(selectedWallet);
 
   const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
@@ -103,11 +104,10 @@ export const SelectDestination = ({
 
   const walletInfo = useMemo(() => {
     let logoUrl = '';
-    let username = '';
+    let _username = '';
     let walletName = '';
     if (sourceChainType === 'evm') {
-      const chainContext = Object.values(chainIdToChainContext)[0];
-      username = chainContext.username ?? '';
+      _username = username;
       walletName = WALLET_KEY_TO_PRETTY_NAME[selectedWallet];
       logoUrl = WALLET_KEY_TO_LOGO_URL[selectedWallet];
     }
@@ -115,7 +115,7 @@ export const SelectDestination = ({
       walletName = WALLET_KEY_TO_PRETTY_NAME.metamask;
       logoUrl = WALLET_KEY_TO_LOGO_URL.metamask;
     }
-    return { walletName, username, logoUrl };
+    return { walletName, username: _username, logoUrl };
   }, [sourceChainType, chainIdToChainContext]);
 
   const handleAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,7 +206,7 @@ export const SelectDestination = ({
                 fontSize="12px"
                 fontWeight="400"
                 color={usernameTextColor}
-                attributes={{ ml: '10px', mr: '8px' }}
+                attributes={{ ml: '10px', mr: walletInfo.username ? '8px' : 0 }}
               >
                 {walletInfo.username}
               </Text>

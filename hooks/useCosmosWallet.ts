@@ -21,6 +21,8 @@ export const useCosmosWallet = (walletKey: CosmosWalletKey) => {
 
   const isConnected = chains.every((chain) => chain.isWalletConnected);
 
+  const username = chains[0]?.username ?? '';
+
   const connectAsync = async () => {
     for (const chain of chains) {
       if (chain.isWalletDisconnected) {
@@ -46,5 +48,5 @@ export const useCosmosWallet = (walletKey: CosmosWalletKey) => {
     });
   };
 
-  return { isConnected, connect, connectAsync, disconnect, chainIdToChainContext };
+  return { isConnected, connect, connectAsync, disconnect, username, chainIdToChainContext };
 };

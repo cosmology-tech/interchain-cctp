@@ -29,12 +29,14 @@ export function WalletAddress() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
-  const address = checkIsCosmosWallet(walletKey) ? '' : evmAddress;
+  const isCosmosWallet = checkIsCosmosWallet(walletKey);
 
   const { disconnect: disconnectMetamask } = useDisconnect();
-  const { disconnect: disconnectCosmosWallet } = useCosmosWallet(
-    checkIsCosmosWallet(walletKey) ? walletKey : 'keplr'
+  const { disconnect: disconnectCosmosWallet, username } = useCosmosWallet(
+    isCosmosWallet ? walletKey : 'keplr'
   );
+
+  const walletIdentifier = isCosmosWallet ? username : evmAddress;
 
   const onDisconnect = () => {
     if (walletKey === 'metamask') {
@@ -57,52 +59,54 @@ export function WalletAddress() {
     <Box display="flex" alignItems="center" gap="8px">
       <Image src={walletInfo.logo} alt={walletInfo.name} width={16} height={16} />
 
-      {address ? (
+      {walletIdentifier && (
         <>
           <Text fontSize="$xs" fontWeight="$normal" color={addressColor}>
-            {shortenAddress(address)}
+            {isCosmosWallet ? walletIdentifier : shortenAddress(walletIdentifier)}
           </Text>
 
-          <BaseButton
-            aria-label="Copy"
-            onPress={() => {
-              setShowSuccessIcon(true);
+          {!isCosmosWallet && (
+            <BaseButton
+              aria-label="Copy"
+              onPress={() => {
+                setShowSuccessIcon(true);
 
-              copyToClipboard(address);
+                copyToClipboard(walletIdentifier);
 
-              setTimeout(() => {
-                setShowSuccessIcon(false);
-              }, 1000);
-            }}
-          >
-            <AnimatePresence mode="wait">
-              {showSuccessIcon ? (
-                <motion.div
-                  key="check"
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.5, opacity: 0 }}
-                >
-                  <Box as="span" maxHeight="16px" color="$textSuccess">
-                    <CheckCircleIcon />
-                  </Box>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="copy"
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.5, opacity: 0 }}
-                >
-                  <Box as="span" maxHeight="16px">
-                    <CopyIcon />
-                  </Box>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </BaseButton>
+                setTimeout(() => {
+                  setShowSuccessIcon(false);
+                }, 1000);
+              }}
+            >
+              <AnimatePresence mode="wait">
+                {showSuccessIcon ? (
+                  <motion.div
+                    key="check"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                  >
+                    <Box as="span" maxHeight="16px" color="$textSuccess">
+                      <CheckCircleIcon />
+                    </Box>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="copy"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                  >
+                    <Box as="span" maxHeight="16px">
+                      <CopyIcon />
+                    </Box>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </BaseButton>
+          )}
         </>
-      ) : null}
+      )}
 
       <BaseButton aria-label="Exit" onPress={onDisconnect}>
         <Box height="16px">
