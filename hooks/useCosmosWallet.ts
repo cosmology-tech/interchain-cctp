@@ -17,7 +17,7 @@ export const useCosmosWallet = (walletKey: CosmosWalletKey) => {
     }, {}) as Record<string, ChainWalletBase>;
 
     return { chains, chainIdToChainContext };
-  }, [chainWallets, COSMOS_CHAIN_NAMES]);
+  }, [chainWallets]);
 
   const isConnected = chains.every((chain) => chain.isWalletConnected);
 

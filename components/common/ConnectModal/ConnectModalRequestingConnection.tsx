@@ -13,7 +13,7 @@ export interface ConnectModalRequestingConnectionProps {
   status?: ConnectModalRequestingConnectionStatus;
   walletName: string;
   walletLogoSrc: string;
-  onTryAgain?: () => void;
+  onReconnect?: () => void;
 }
 
 const titleByStatus: Record<ConnectModalRequestingConnectionStatus, string> = {
@@ -137,7 +137,7 @@ export function ConnectModalRequestingConnection(props: ConnectModalRequestingCo
       {props.status === 'rejected' && (
         <NobleButton
           onClick={() => {
-            props.onTryAgain?.();
+            props.onReconnect?.();
           }}
           size="sm"
         >

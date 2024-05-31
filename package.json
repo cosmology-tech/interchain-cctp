@@ -23,7 +23,7 @@
     "@cosmos-kit/react": "2.13.0",
     "@heroicons/react": "^2.1.3",
     "@interchain-ui/react": "^1.23.12",
-    "@leapwallet/cosmos-social-login-capsule-provider": "0.0.33",
+    "@leapwallet/cosmos-social-login-capsule-provider": "0.0.34",
     "@leapwallet/cosmos-social-login-capsule-provider-ui": "0.0.51",
     "@metamask/providers": "^16.0.0",
     "@next/bundle-analyzer": "^14.2.3",

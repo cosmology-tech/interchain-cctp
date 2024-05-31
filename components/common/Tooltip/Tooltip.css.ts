@@ -67,6 +67,25 @@ export const tooltip = styleVariants({
   ]
 });
 
+export const tooltipInverse = styleVariants({
+  light: [
+    baseTooltip,
+    {
+      vars: {
+        [bgVar]: '#ffffff'
+      }
+    }
+  ],
+  dark: [
+    baseTooltip,
+    {
+      vars: {
+        [bgVar]: '#020418'
+      }
+    }
+  ]
+});
+
 const baseArrow = style({
   color: bgVar,
   height: '16px',

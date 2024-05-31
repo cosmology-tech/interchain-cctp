@@ -1,56 +1,148 @@
 import * as React from 'react';
-import { wallets } from 'cosmos-kit';
-import { AnimatePresence, motion } from 'framer-motion';
+import { wallets as cosmosKitWallets } from 'cosmos-kit';
+import { AnimatePresence, motion, Transition } from 'framer-motion';
 import {
   ConnectModal,
   ConnectModalRequestingConnection,
+  ConnectModalInstallWallet,
   WalletButton
 } from '@/components/common/ConnectModal';
 import { useCosmosWallet } from '@/hooks';
 import { Stack } from '@interchain-ui/react';
-import { CosmosWalletKey } from '@/config';
+import { CosmosWalletKey, COSMOS_WALLET_KEY_TO_NAME } from '@/config';
 
-interface SelectWalletModalProps {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
-  setSelectedWallet: (name: CosmosWalletKey) => void;
+interface WalletListItem {
+  walletName: CosmosWalletKey;
+  isConnected: boolean;
+  isInstalled: boolean;
+  onRequest: () => Promise<boolean>;
 }
 
-const springTransition = {
-  type: 'spring',
-  stiffness: 700,
-  damping: 30
+export interface SelectWalletModalProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  setSelectedWallet?: (name: CosmosWalletKey) => void;
+  closeOnError?: boolean;
+  wallets?: CosmosWalletKey[];
+  onConnectSuccess?: (walletKey: CosmosWalletKey) => void;
+  onConnectError?: () => void;
+}
+
+const transitionConfig: Transition = {
+  type: 'tween',
+  duration: 0.2,
+  ease: 'easeInOut'
 };
+
+const DEFAULT_WALLETS: CosmosWalletKey[] = ['capsule', 'keplr', 'cosmostation', 'leap'];
 
 export const SelectWalletModal = ({
   isOpen,
   setIsOpen,
-  setSelectedWallet: externalSetSelectedWallet
+  setSelectedWallet: externalSetSelectedWallet,
+  wallets = DEFAULT_WALLETS,
+  closeOnError,
+  onConnectSuccess,
+  onConnectError
 }: SelectWalletModalProps) => {
-  const [view, setView] = React.useState<'wallets' | 'request'>('wallets');
+  const [view, setView] = React.useState<'wallets' | 'request' | 'install'>('wallets');
   const [status, setStatus] = React.useState<'requesting' | 'rejected' | 'error' | 'connected'>(
     'requesting'
   );
   const [selectedWallet, setSelectedWallet] = React.useState<CosmosWalletKey | null>(null);
 
-  const { connectAsync: connectKeplrAsync, isConnected: isKeplrConnected } =
-    useCosmosWallet('keplr');
-  const { connectAsync: connectLeapAsync, isConnected: isLeapConnected } =
-    useCosmosWallet('capsule');
+  const selectedCosmosKitWallet = selectedWallet
+    ? cosmosKitWallets.find((w) => {
+        return w.walletName === COSMOS_WALLET_KEY_TO_NAME[selectedWallet];
+      })
+    : null;
+
+  const {
+    connectAsync: connectKeplrAsync,
+    isConnected: isKeplrConnected,
+    isInstalled: isKeplrInstalled
+  } = useCosmosWallet('keplr');
+  const {
+    connectAsync: connectCapsuleAsync,
+    isConnected: isCapsuleConnected,
+    isInstalled: isCapsuleInstalled
+  } = useCosmosWallet('capsule');
+  const {
+    connectAsync: connectCosmostationAsync,
+    isConnected: isCosmostationConnected,
+    isInstalled: isCosmostationInstalled
+  } = useCosmosWallet('cosmostation');
+  const {
+    connectAsync: connectLeapAsync,
+    isConnected: isLeapConnected,
+    isInstalled: isLeapInstalled
+  } = useCosmosWallet('leap');
+
+  const allowWallets = React.useMemo(() => {
+    const result = [
+      {
+        walletName: 'keplr' as CosmosWalletKey,
+        isConnected: isKeplrConnected,
+        isInstalled: isKeplrInstalled,
+        onRequest: connectKeplrAsync
+      },
+      {
+        walletName: 'capsule' as CosmosWalletKey,
+        isConnected: isCapsuleConnected,
+        isInstalled: isCapsuleInstalled,
+        onRequest: connectCapsuleAsync
+      },
+      {
+        walletName: 'cosmostation' as CosmosWalletKey,
+        isConnected: isCosmostationConnected,
+        isInstalled: isCosmostationInstalled,
+        onRequest: connectCosmostationAsync
+      },
+      {
+        walletName: 'leap' as CosmosWalletKey,
+        isConnected: isLeapConnected,
+        isInstalled: isLeapInstalled,
+        onRequest: connectLeapAsync
+      }
+    ]
+      .filter((item) => wallets.includes(item.walletName as CosmosWalletKey))
+      .reduce((result, item) => {
+        result[item.walletName] = item;
+        return result;
+      }, {} as Record<CosmosWalletKey, WalletListItem>);
+
+    return result;
+  }, [
+    connectCapsuleAsync,
+    connectCosmostationAsync,
+    connectKeplrAsync,
+    connectLeapAsync,
+    isCapsuleConnected,
+    isCapsuleInstalled,
+    isCosmostationConnected,
+    isCosmostationInstalled,
+    isKeplrConnected,
+    isKeplrInstalled,
+    isLeapConnected,
+    isLeapInstalled,
+    wallets
+  ]);
 
   const onSelectedWalletChange = (wallet: CosmosWalletKey | null) => {
     setSelectedWallet(wallet);
 
     if (wallet) {
-      externalSetSelectedWallet(wallet);
+      externalSetSelectedWallet?.(wallet);
     }
   };
 
-  const closeModal = (delay?: number) => {
+  const closeModal = (delay?: number, cb?: () => void) => {
     const closeAndReset = () => {
       setIsOpen(false);
       setView('wallets');
       setStatus('requesting');
+      onSelectedWalletChange(null);
+      cb?.();
     };
 
     if (delay) {
@@ -67,15 +159,24 @@ export const SelectWalletModal = ({
     connectAsync: () => Promise<boolean>,
     isConnected: boolean
   ) => {
+    onSelectedWalletChange(walletName);
+
+    const hasOnConnectSuccess = !!onConnectSuccess;
+    const closeModalDelay = hasOnConnectSuccess ? 200 : 1500;
+
     if (isConnected) {
-      onSelectedWalletChange(walletName);
+      setView('request');
       setStatus('connected');
-      closeModal(1500);
+      closeModal(1500, () => onConnectSuccess?.(walletName));
       return;
     }
 
     if (view !== 'request') {
-      setView('request');
+      if (allowWallets[walletName].isInstalled) {
+        setView('request');
+      } else {
+        return setView('install');
+      }
     }
 
     connectAsync()
@@ -85,11 +186,17 @@ export const SelectWalletModal = ({
         if (isSuccess) {
           onSelectedWalletChange(walletName);
           setStatus('connected');
-          closeModal(1500);
+          closeModal(closeModalDelay, () => onConnectSuccess?.(walletName));
         }
       })
       .catch((err) => {
         setStatus('error');
+
+        if (closeOnError) {
+          closeModal(closeModalDelay, onConnectError);
+        } else {
+          onConnectError?.();
+        }
       });
   };
 
@@ -97,64 +204,86 @@ export const SelectWalletModal = ({
     <ConnectModal
       isOpen={isOpen}
       setOpen={setIsOpen}
-      showBackButton={view === 'request'}
+      showBackButton={view === 'request' || view === 'install'}
       onBack={() => {
         setView('wallets');
         setStatus('requesting');
       }}
     >
-      {view === 'wallets' && (
-        <AnimatePresence>
+      <AnimatePresence mode="wait">
+        {view === 'wallets' && (
           <motion.div
-            transition={springTransition}
+            key="wallet-list"
+            transition={transitionConfig}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <Stack direction="vertical" space="$8">
-              <WalletButton
-                walletName={wallets.keplr[0].walletPrettyName ?? ''}
-                walletLogoSrc={wallets.keplr[0].walletInfo.logo as string}
-                onPress={() => {
-                  handleConnect('keplr', connectKeplrAsync, isKeplrConnected);
-                }}
-              />
-              <WalletButton
-                walletName={wallets.leap[0].walletPrettyName ?? ''}
-                walletLogoSrc={wallets.leap[0].walletInfo.logo as string}
-                onPress={() => {
-                  handleConnect('capsule', connectLeapAsync, isLeapConnected);
-                }}
-              />
+              {(Object.keys(allowWallets) as CosmosWalletKey[]).map((walletKey) => {
+                const cosmosWallet = cosmosKitWallets.find((w) => {
+                  return w.walletName === COSMOS_WALLET_KEY_TO_NAME[walletKey];
+                });
+
+                if (!cosmosWallet) return null;
+
+                return (
+                  <WalletButton
+                    key={walletKey}
+                    walletName={cosmosWallet.walletPrettyName}
+                    walletLogoSrc={cosmosWallet.walletInfo.logo as string}
+                    onPress={() => {
+                      handleConnect(
+                        walletKey,
+                        allowWallets[walletKey].onRequest,
+                        allowWallets[walletKey].isConnected
+                      );
+                    }}
+                  />
+                );
+              })}
             </Stack>
           </motion.div>
-        </AnimatePresence>
-      )}
+        )}
 
-      {view === 'request' && (
-        <AnimatePresence>
+        {view === 'request' && selectedCosmosKitWallet && selectedWallet && (
           <motion.div
-            transition={springTransition}
+            key="request"
+            transition={transitionConfig}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <ConnectModalRequestingConnection
               status={status}
-              walletName={wallets.keplr[0].walletPrettyName ?? ''}
-              walletLogoSrc={wallets.keplr[0].walletInfo.logo as string}
-              onTryAgain={() => {
-                if (selectedWallet && selectedWallet === 'keplr') {
-                  return handleConnect('keplr', connectKeplrAsync, isKeplrConnected);
-                }
-                if (selectedWallet && selectedWallet === 'capsule') {
-                  return handleConnect('capsule', connectLeapAsync, isLeapConnected);
-                }
+              walletName={selectedCosmosKitWallet.walletPrettyName ?? ''}
+              walletLogoSrc={selectedCosmosKitWallet.walletInfo.logo as string}
+              onReconnect={() => {
+                const wallet = allowWallets[selectedWallet];
+                if (!wallet) return;
+
+                handleConnect(wallet.walletName, wallet.onRequest, wallet.isConnected);
               }}
             />
           </motion.div>
-        </AnimatePresence>
-      )}
+        )}
+
+        {view === 'install' && selectedCosmosKitWallet && selectedWallet && (
+          <motion.div
+            key="install"
+            transition={transitionConfig}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <ConnectModalInstallWallet
+              walletName={selectedCosmosKitWallet.walletPrettyName ?? ''}
+              walletLogoSrc={selectedCosmosKitWallet.walletInfo.logo as string}
+              walletQRCode={selectedCosmosKitWallet.walletInfo.downloads![0]!.link as string}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </ConnectModal>
   );
 };

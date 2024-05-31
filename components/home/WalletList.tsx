@@ -1,15 +1,19 @@
+import { useState } from 'react';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import {
   Box,
   NobleSelectWalletButton,
   NobleSelectWalletButtonProps,
+  Text,
+  useTheme,
   toast
 } from '@interchain-ui/react';
 
 import { WALLET_KEY_TO_LOGO_URL, WALLET_KEY_TO_PRETTY_NAME, WalletKey } from '@/config';
 import { useCapsuleClient, useCosmosWallet, useEvmWallet } from '@/hooks';
-import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { SelectWalletModal } from '@/components/bridge/SelectWalletModal';
+import { BaseButton } from '@/components/common';
 
 const CustomCapsuleModalView = dynamic(
   () =>
@@ -27,8 +31,10 @@ export type BridgeHref = {
 };
 
 export function WalletList() {
+  const { theme } = useTheme();
   const router = useRouter();
   const [showCapsuleModal, setShowCapsuleModal] = useState(false);
+  const [isOpenWalletModal, setIsOpenWalletModal] = useState(false);
 
   // EVM Wallet
   const {
@@ -39,41 +45,32 @@ export function WalletList() {
 
   // Cosmos Wallets
   const {
-    connectAsync: connectLeapAsync,
-    isConnected: isLeapConnected,
-    isInstalled: isLeapInstalled
-  } = useCosmosWallet('leap');
-
-  const {
     connectAsync: connectKeplrAsync,
     isConnected: isKeplrConnected,
     isInstalled: isKeplrInstalled
   } = useCosmosWallet('keplr');
-
-  const {
-    connectAsync: connectCosmostationAsync,
-    isConnected: isCosmostationConnected,
-    isInstalled: isCosmostationInstalled
-  } = useCosmosWallet('cosmostation');
 
   const { connectAsync: connectCapsuleAsync, isConnected: isCapsuleConnected } =
     useCosmosWallet('capsule');
 
   const { capsuleClient } = useCapsuleClient();
 
+  const goToBridgeView = (walletKey: WalletKey) => {
+    const href: BridgeHref = {
+      pathname: '/bridge',
+      query: { wallet: walletKey }
+    };
+    return router.push(href);
+  };
+
   const handleConnectWallet =
     (walletKey: WalletKey, isConnected: boolean, connectFunc: () => Promise<boolean>) => () => {
-      const href: BridgeHref = {
-        pathname: '/bridge',
-        query: { wallet: walletKey }
-      };
       if (isConnected) {
-        return router.push(href);
+        return goToBridgeView(walletKey);
       }
       connectFunc().then((isSuccess) => {
         if (isSuccess) {
-          router.push(href);
-          return;
+          return goToBridgeView(walletKey);
         }
         toast.error('Connect wallet failed. Please try again.');
       });
@@ -107,7 +104,7 @@ export function WalletList() {
         capsule={capsuleClient}
         showCapsuleModal={showCapsuleModal}
         setShowCapsuleModal={setShowCapsuleModal}
-        theme="dark"
+        theme={theme}
         onAfterLoginSuccessful={() => {
           const toastId = toast.success('Login successful. Hang tight...');
           connectCapsuleAsync().then((isSuccess) => {
@@ -119,6 +116,18 @@ export function WalletList() {
         }}
         onLoginFailure={() => {
           toast.error('Login failed. Please try again.');
+        }}
+      />
+
+      <SelectWalletModal
+        isOpen={isOpenWalletModal}
+        setIsOpen={setIsOpenWalletModal}
+        wallets={['leap', 'cosmostation']}
+        onConnectSuccess={(walletKey) => {
+          goToBridgeView(walletKey);
+        }}
+        onConnectError={() => {
+          toast.error('Connect wallet failed. Please try again.');
         }}
       />
 
@@ -160,24 +169,15 @@ export function WalletList() {
           disabled
         />
 
-        {/* Other Wallets */}
-        <NobleSelectWalletButton
-          {...getWalletButtonProps('leap')}
-          onClick={handleConnectWallet('leap', isLeapConnected, connectLeapAsync)}
-          subTitle={isLeapInstalled ? 'Connect' : 'Install Leap'}
-          disabled={!isLeapInstalled}
-        />
-
-        <NobleSelectWalletButton
-          {...getWalletButtonProps('cosmostation')}
-          onClick={handleConnectWallet(
-            'cosmostation',
-            isCosmostationConnected,
-            connectCosmostationAsync
-          )}
-          subTitle={isCosmostationInstalled ? 'Connect' : 'Install Cosmostation'}
-          disabled={!isCosmostationInstalled}
-        />
+        <BaseButton
+          onPress={() => {
+            setIsOpenWalletModal(true);
+          }}
+        >
+          <Text fontSize="$sm" as="span" fontWeight="$semibold" color="$textSecondary">
+            Other wallets
+          </Text>
+        </BaseButton>
       </Box>
     </>
   );

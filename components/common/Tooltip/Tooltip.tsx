@@ -9,6 +9,7 @@ import type { TooltipProps as AriaTooltipProps } from 'react-aria-components';
 import * as styles from './Tooltip.css';
 
 interface TooltipProps extends Omit<AriaTooltipProps, 'children'> {
+  inverseBg?: boolean;
   padding?: number;
   children: React.ReactNode;
 }
@@ -20,7 +21,9 @@ export function Tooltip({ children, padding = 32, ...props }: TooltipProps) {
     <AriaTooltip
       {...props}
       offset={16}
-      className={styles.tooltip[theme ?? 'light']}
+      className={
+        props.inverseBg ? styles.tooltipInverse[theme ?? 'light'] : styles.tooltip[theme ?? 'light']
+      }
       style={assignInlineVars({
         [styles.paddingVar]: `${padding}px`
       })}

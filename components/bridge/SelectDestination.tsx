@@ -118,8 +118,15 @@ export const SelectDestination = ({
       walletName = WALLET_KEY_TO_PRETTY_NAME.metamask;
       logoUrl = WALLET_KEY_TO_LOGO_URL.metamask;
     }
+
+    if (destChain && destChain.chainType === CHAIN_TYPE.COSMOS) {
+      _username = username;
+      walletName = WALLET_KEY_TO_PRETTY_NAME[selectedWallet];
+      logoUrl = WALLET_KEY_TO_LOGO_URL[selectedWallet];
+    }
+
     return { walletName, username: _username, logoUrl };
-  }, [sourceChainType, chainIdToChainContext]);
+  }, [sourceChainType, destChain, username, selectedWallet]);
 
   const handleAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const address = e.target.value;
@@ -132,6 +139,7 @@ export const SelectDestination = ({
 
   const handleSelectChain = (chainId: Key) => {
     const selectedChain = destChains.find((c) => c.chainID === chainId);
+
     if (selectedChain) {
       setDestChain(selectedChain);
       if (!destAddress) {
@@ -191,7 +199,7 @@ export const SelectDestination = ({
         setIsOpen={setIsOpen}
         setSelectedWallet={setSelectedWallet}
       />
-      <Box display="flex" justifyContent="space-between">
+      <Box display="flex" justifyContent="space-between" overflow="hidden">
         <Box>
           <Text
             fontSize="14px"
@@ -299,8 +307,13 @@ export const SelectDestination = ({
         />
       ) : null}
 
-      <AnimatePresence>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="combobox"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
           {showChainCombobox ? (
             <NobleChainCombobox
               defaultIsOpen
@@ -333,11 +346,10 @@ export const SelectDestination = ({
             </NobleChainCombobox>
           ) : null}
         </motion.div>
-      </AnimatePresence>
 
-      <AnimatePresence>
         {showSelectedChain && destChain ? (
           <motion.div
+            key="selectedChain"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, height: 0 }}

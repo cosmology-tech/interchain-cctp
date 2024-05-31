@@ -21,6 +21,12 @@ html {
   }
 }
 
+button {
+  appearance: none;
+  background: transparent;
+  border: none;
+}
+
 .initial-load-fallback {
   min-height: 100dvh;
   display: flex;
