@@ -27,7 +27,7 @@ import nobletestnet from 'chain-registry/testnet/nobletestnet/chain';
 import osmosistestnet from 'chain-registry/testnet/osmosistestnet/chain';
 
 import type { Chain as CosmosChain } from '@chain-registry/types';
-import { envConfig } from '@/config';
+import { envConfig } from './env';
 
 // Supported EVM chains
 export const EVM_MAINNETS: EVMChain[] = [mainnet, base, arbitrum, optimism, avalanche, polygon];
