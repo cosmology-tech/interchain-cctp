@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLazyLoadModule } from './useLazyLoadModule';
 import type { CapsuleProvider } from '@leapwallet/cosmos-social-login-capsule-provider';
-import { CAPSULE_API_KEY, CAPSULE_ENV } from '@/config';
+import { envConfig } from '../config/env';
 
 export const useCapsuleClient = () => {
   const CapsuleProviderModule = useLazyLoadModule<{
@@ -14,8 +14,8 @@ export const useCapsuleClient = () => {
     const CapsuleProviderClass = CapsuleProviderModule.CapsuleProvider;
 
     const capsuleProvider = new CapsuleProviderClass({
-      apiKey: CAPSULE_API_KEY,
-      env: CAPSULE_ENV
+      apiKey: envConfig.capsuleApiKey,
+      env: envConfig.capsuleEnv
     });
 
     return capsuleProvider.getClient();
