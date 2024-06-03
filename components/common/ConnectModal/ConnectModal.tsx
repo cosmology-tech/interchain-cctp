@@ -85,24 +85,7 @@ export function ConnectModal(props: ConnectModalProps) {
   let lightBg = useMotionTemplate`rgba(0, 0, 0, ${bgOpacity})`;
   let darkBg = useMotionTemplate`rgba(255, 255, 255, ${bgOpacity})`;
 
-  // Scale the body down and adjust the border radius when the sheet is open.
-  let bodyScale = useTransform(
-    y,
-    [0, h],
-    [root ? (window.innerWidth - MODAL_MARGIN) / window.innerWidth : 1, 1]
-  );
-  let bodyTranslate = useTransform(y, [0, h], [MODAL_MARGIN - MODAL_RADIUS, 0]);
   let bodyBorderRadius = useTransform(y, [0, h], [MODAL_RADIUS, 0]);
-
-  useMotionValueEvent(bodyScale, 'change', (v) => {
-    if (!root) return;
-    root.style.scale = `${v}`;
-  });
-
-  useMotionValueEvent(bodyTranslate, 'change', (v) => {
-    if (!root) return;
-    root.style.translate = `0 ${v}px`;
-  });
 
   useMotionValueEvent(bodyBorderRadius, 'change', (v) => {
     if (!root) return;
