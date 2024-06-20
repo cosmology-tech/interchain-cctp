@@ -1,46 +1,28 @@
-import Image from 'next/image';
-import { Key, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Key, useMemo } from 'react';
 import {
   Box,
   Text,
   Icon,
   useTheme,
   useColorModeValue,
-  NobleInput,
   NobleSelectNetworkButton,
-  NobleButton,
   NobleChainCombobox
 } from '@interchain-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { RouteResponse } from '@skip-router/core';
 
-import { ExitIcon, Tooltip, BaseButton } from '@/components/common';
-import {
-  CHAIN_TYPE,
-  colors,
-  CosmosWalletKey,
-  WalletKey,
-  getChainTypeFromWalletKey,
-  WALLET_KEY_TO_LOGO_URL,
-  WALLET_KEY_TO_PRETTY_NAME
-} from '@/config';
+import { colors } from '@/config';
 import { scrollBar } from '@/styles/Shared.css';
-import {
-  checkIsInvalidRoute,
-  cosmosAddressToChainId,
-  getOutAmount,
-  isValidCosmosAddress,
-  isValidEvmAddress
-} from '@/utils';
-import { SkipChain, useCosmosWallet, useEvmWallet, useSkipChains } from '@/hooks';
-import { SelectWalletModal } from './SelectWalletModal';
+import { Tooltip, BaseButton } from '@/components';
+import { SkipChain, useSkipChains } from '@/hooks';
+import { checkIsInvalidRoute, getOutAmount } from '@/utils';
+import { WalletConnector } from './WalletConnector';
 
 interface SelectDestinationProps {
   destChain: SkipChain | null;
   setDestChain: (chain: SkipChain | null) => void;
-  destAddress: string;
-  setDestAddress: (address: string) => void;
+  destAddress: string | undefined;
+  setDestAddress: (address: string | undefined) => void;
   sourceChainId: string;
   route: RouteResponse | undefined;
 }
@@ -53,140 +35,24 @@ export const SelectDestination = ({
   setDestAddress,
   sourceChainId
 }: SelectDestinationProps) => {
-  const searchParams = useSearchParams();
-
-  const {
-    address: evmAddress,
-    isConnected: isEvmWalletConnected,
-    connect: connectMetaMask,
-    disconnect: disconnectMetaMask
-  } = useEvmWallet('metamask');
-
   const { data: chains = [] } = useSkipChains();
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState<CosmosWalletKey>('keplr');
-  const {
-    isConnected: isCosmosWalletConnected,
-    disconnect: disconnectCosmosWallet,
-    chainIdToChainContext,
-    username
-  } = useCosmosWallet(selectedWallet);
-
-  const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
-  const sourceChainType = getChainTypeFromWalletKey(walletKey);
-
   const destChains = useMemo(() => {
-    if (isValidEvmAddress(destAddress)) {
-      return chains
-        .filter((chain) => chain.chainType === CHAIN_TYPE.EVM)
-        .filter((chain) => (sourceChainType === 'evm' ? chain.chainID !== sourceChainId : true));
-    }
     return chains.filter((chain) => chain.chainID !== sourceChainId);
-  }, [chains, destAddress, sourceChainType, sourceChainId]);
-
-  const handleConnectWallet = () => {
-    if (sourceChainType === 'evm') {
-      setIsOpen(true);
-    }
-    if (sourceChainType === 'cosmos') {
-      connectMetaMask();
-    }
-  };
-
-  const handleDisconnectWallet = () => {
-    if (sourceChainType === 'evm') {
-      disconnectCosmosWallet();
-    }
-    if (sourceChainType === 'cosmos') {
-      disconnectMetaMask();
-    }
-    setDestChain(null);
-    setDestAddress('');
-  };
-
-  const walletInfo = useMemo(() => {
-    let logoUrl = '';
-    let _username = '';
-    let walletName = '';
-    if (sourceChainType === 'evm') {
-      _username = username;
-      walletName = WALLET_KEY_TO_PRETTY_NAME[selectedWallet];
-      logoUrl = WALLET_KEY_TO_LOGO_URL[selectedWallet];
-    }
-    if (sourceChainType === 'cosmos') {
-      walletName = WALLET_KEY_TO_PRETTY_NAME.metamask;
-      logoUrl = WALLET_KEY_TO_LOGO_URL.metamask;
-    }
-
-    if (destChain && destChain.chainType === CHAIN_TYPE.COSMOS) {
-      _username = username;
-      walletName = WALLET_KEY_TO_PRETTY_NAME[selectedWallet];
-      logoUrl = WALLET_KEY_TO_LOGO_URL[selectedWallet];
-    }
-
-    return { walletName, username: _username, logoUrl };
-  }, [sourceChainType, destChain, username, selectedWallet]);
-
-  const handleAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const address = e.target.value;
-    setDestAddress(address);
-    if (isValidCosmosAddress(address)) {
-      const chainId = cosmosAddressToChainId(address);
-      setDestChain(chains.find((chain) => chain.chainID === chainId) ?? null);
-    }
-  };
+  }, [chains, sourceChainId]);
 
   const handleSelectChain = (chainId: Key) => {
     const selectedChain = destChains.find((c) => c.chainID === chainId);
 
     if (selectedChain) {
       setDestChain(selectedChain);
-      if (!destAddress) {
-        if (selectedChain.chainType === CHAIN_TYPE.COSMOS) {
-          const cosmosAddress = chainIdToChainContext[chainId.toString()].address;
-          cosmosAddress && setDestAddress(cosmosAddress);
-        }
-        if (selectedChain.chainType === CHAIN_TYPE.EVM) {
-          evmAddress && setDestAddress(evmAddress);
-        }
-      }
     }
   };
 
   const handleChangeChain = () => {
     setDestChain(null);
-    setDestAddress('');
+    setDestAddress(undefined);
   };
-
-  const isWalletConnected = useMemo(() => {
-    if (sourceChainType === 'evm') return isCosmosWalletConnected;
-    if (sourceChainType === 'cosmos') return isEvmWalletConnected;
-    return false;
-  }, [sourceChainType, isCosmosWalletConnected, isEvmWalletConnected]);
-
-  const showAddrInput = useMemo(() => {
-    if (isWalletConnected) return false;
-    if (isValidEvmAddress(destAddress) && destChain) return false;
-    return true;
-  }, [isWalletConnected, destAddress, destChain]);
-
-  const showChainCombobox = useMemo(() => {
-    if (isValidEvmAddress(destAddress) && !destChain) return true;
-    if (isWalletConnected && !destChain) return true;
-    return false;
-  }, [isWalletConnected, destAddress, destChain]);
-
-  const showSelectedChain = useMemo(() => {
-    return !!destChain && !(!isWalletConnected && isValidCosmosAddress(destAddress));
-  }, [destChain, destAddress, isWalletConnected]);
-
-  const isDestAddressValid = useMemo(() => {
-    return isValidEvmAddress(destAddress) || isValidCosmosAddress(destAddress);
-  }, [destAddress]);
-
-  const usernameTextColor = useColorModeValue(colors.gray500, colors.blue600);
-  const sectionTitleColor = useColorModeValue(colors.gray500, colors.blue700);
 
   const isInvalidRoute = checkIsInvalidRoute(route);
 
@@ -194,44 +60,8 @@ export const SelectDestination = ({
 
   return (
     <>
-      <SelectWalletModal
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
-        setSelectedWallet={setSelectedWallet}
-      />
-      <Box display="flex" justifyContent="space-between" overflow="hidden">
-        <Box>
-          <Text
-            fontSize="14px"
-            fontWeight="600"
-            color={sectionTitleColor}
-            attributes={{ mb: showAddrInput ? '0' : '14px' }}
-          >
-            Destination
-          </Text>
-
-          {isWalletConnected ? (
-            <Box mb="20px" display="flex" alignItems="center">
-              <Image width="16" height="16" src={walletInfo.logoUrl} alt={walletInfo.walletName} />
-              <Text
-                fontSize="12px"
-                fontWeight="400"
-                color={usernameTextColor}
-                attributes={{ ml: '10px', mr: walletInfo.username ? '8px' : 0 }}
-              >
-                {walletInfo.username}
-              </Text>
-              <Box
-                width="16px"
-                height="16px"
-                cursor="pointer"
-                attributes={{ onClick: handleDisconnectWallet }}
-              >
-                <ExitIcon />
-              </Box>
-            </Box>
-          ) : null}
-        </Box>
+      <Box display="flex" justifyContent="space-between" overflow="hidden" mb="14px">
+        <WalletConnector label="Destination" chain={destChain} setAddress={setDestAddress} />
 
         <Box display={isInvalidRoute ? 'none' : 'flex'} alignItems="center" height="$min">
           <Text
@@ -269,44 +99,6 @@ export const SelectDestination = ({
         </Box>
       </Box>
 
-      {showAddrInput ? (
-        <NobleInput
-          id="destAddress"
-          size="sm"
-          intent={!destAddress ? undefined : isDestAddressValid ? 'success' : 'error'}
-          placeholder="Paste address"
-          value={destAddress}
-          onChange={handleAddressInput}
-          inputContainerProps={{
-            paddingRight: '8px'
-          }}
-          attributes={{
-            marginBottom: showChainCombobox ? '20px' : '0'
-          }}
-          endAddon={
-            destAddress ? (
-              <Box position="absolute" right="$4" top="50%" transform="translateY(-50%)">
-                <NobleButton
-                  variant="text"
-                  onClick={() => {
-                    setDestChain(null);
-                    setDestAddress('');
-                  }}
-                >
-                  <Text as="span" fontSize="$2xl" color="$textSecondary">
-                    <Icon name="xCircle" />
-                  </Text>
-                </NobleButton>
-              </Box>
-            ) : (
-              <NobleButton variant="solid" size="sm" onClick={handleConnectWallet}>
-                Connect wallet
-              </NobleButton>
-            )
-          }
-        />
-      ) : null}
-
       <AnimatePresence mode="wait">
         <motion.div
           key="combobox"
@@ -314,7 +106,7 @@ export const SelectDestination = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {showChainCombobox ? (
+          {!destChain ? (
             <NobleChainCombobox
               defaultIsOpen
               onSelectionChange={handleSelectChain}
@@ -347,17 +139,17 @@ export const SelectDestination = ({
           ) : null}
         </motion.div>
 
-        {showSelectedChain && destChain ? (
+        {destChain ? (
           <motion.div
             key="selectedChain"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, height: 0 }}
+            exit={{ opacity: 0 }}
           >
             <NobleSelectNetworkButton
               logoUrl={destChain.logoURI!}
               title={destChain.prettyName}
-              subTitle={destAddress}
+              subTitle={destAddress ?? ''}
               actionLabel="Change"
               size="lg"
               onClick={handleChangeChain}

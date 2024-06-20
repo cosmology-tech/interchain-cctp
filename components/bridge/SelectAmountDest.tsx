@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { useWalletClient } from '@cosmos-kit/react';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { Box, NoblePageTitleBar, NobleButton, Text, toast } from '@interchain-ui/react';
+import { Box, NobleButton, Text, toast, useColorModeValue } from '@interchain-ui/react';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
 import {
@@ -9,7 +9,8 @@ import {
   sizes,
   WalletKey,
   checkIsCosmosWallet,
-  COSMOS_WALLET_KEY_TO_NAME
+  COSMOS_WALLET_KEY_TO_NAME,
+  colors
 } from '@/config';
 import { BroadcastedTx, SkipChain, useCosmosWallet, useRoute, useUsdcAssets } from '@/hooks';
 import {
@@ -20,8 +21,8 @@ import {
   shiftDecimals
 } from '@/utils';
 import { useSkipClient } from '@/contexts';
-import { BridgeStep, SelectedToken, TransferInfo } from '@/pages/bridge';
-import { SelectAmount } from './SelectAmount';
+import { BridgeStep, TransferInfo } from '@/pages/bridge';
+import { SelectAmount, SelectedToken } from './SelectAmount';
 import { SelectDestination } from './SelectDestination';
 import { TransferExtraInfo } from './TransferExtraInfo';
 import type { RouteResponse } from '@skip-router/core';
@@ -31,7 +32,6 @@ import { PoweredBy } from './PoweredBy';
 import { useSearchParams } from 'next/navigation';
 
 interface SelectAmountDestProps {
-  selectedToken: SelectedToken;
   setRoute: Dispatch<SetStateAction<RouteResponse | null>>;
   setBridgeStep: Dispatch<SetStateAction<BridgeStep>>;
   setBroadcastedTxs: Dispatch<SetStateAction<BroadcastedTx[]>>;
@@ -39,18 +39,20 @@ interface SelectAmountDestProps {
 }
 
 export function SelectAmountDest({
-  selectedToken,
   setRoute,
   setBridgeStep,
   setTransferInfo,
   setBroadcastedTxs
 }: SelectAmountDestProps) {
-  const { chain: sourceChain, asset: sourceAsset, balance } = selectedToken;
+  const { data: assets } = useUsdcAssets();
+
+  const [balance, setBalance] = useState('0');
+  const [selectedToken, setSelectedToken] = useState<SelectedToken>(null);
 
   const skipClient = useSkipClient();
 
   const [destChain, setDestChain] = useState<SkipChain | null>(null);
-  const [destAddress, setDestAddress] = useState<string>('');
+  const [destAddress, setDestAddress] = useState<string | undefined>();
   const [amount, setAmount] = useState('');
   const [showSignTxView, setShowSignTxView] = useState(false);
 
@@ -58,13 +60,15 @@ export function SelectAmountDest({
   const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
 
   const cosmosWalletKey = checkIsCosmosWallet(walletKey) ? walletKey : 'keplr';
-  const { chainIdToChainContext } = useCosmosWallet(cosmosWalletKey);
+  const { address: cosmosAddress } = useCosmosWallet(
+    cosmosWalletKey,
+    selectedToken?.chain.chainID ?? ''
+  );
   const { client: cosmosWalletClient } = useWalletClient(
     COSMOS_WALLET_KEY_TO_NAME[cosmosWalletKey]
   );
   const { address: evmAddress, chainId: connectedChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
-  const { data: assets } = useUsdcAssets();
 
   const destAsset = assets && destChain ? assets[destChain.chainID] : undefined;
 
@@ -73,21 +77,21 @@ export function SelectAmountDest({
     isError: routeIsError,
     isFetching: routeIsFetching
   } = useRoute({
-    amount: shiftDecimals(amount, sourceAsset.decimals),
-    sourceAssetDenom: sourceAsset.denom,
-    sourceAssetChainID: sourceAsset.chainID,
+    amount: shiftDecimals(amount, selectedToken?.asset?.decimals),
+    sourceAssetDenom: selectedToken?.asset?.denom ?? '',
+    sourceAssetChainID: selectedToken?.asset?.chainID ?? '',
     destAssetDenom: destAsset ? destAsset.denom : '',
     destAssetChainID: destAsset ? destAsset.chainID : '',
-    enabled: !!destAsset
+    enabled: !!destAsset && !!selectedToken
   });
 
   async function onTransfer() {
-    if (!route || !evmAddress || !destChain || !destAddress) return;
+    if (!route || !evmAddress || !destChain || !destAddress || !selectedToken) return;
+
+    const { chain: sourceChain } = selectedToken;
 
     const sourceChainAddress =
-      sourceChain.chainType === CHAIN_TYPE.EVM
-        ? evmAddress
-        : chainIdToChainContext[sourceChain.chainID].address!;
+      sourceChain.chainType === CHAIN_TYPE.EVM ? evmAddress : cosmosAddress!;
 
     const transferInfo: TransferInfo = {
       amount,
@@ -107,7 +111,7 @@ export function SelectAmountDest({
       if (/^\d+/.test(chainID)) {
         acc[chainID] = evmAddress;
       } else {
-        acc[chainID] = chainIdToChainContext[chainID].address!;
+        acc[chainID] = cosmosAddress!;
       }
       return acc;
     }, {} as Record<string, string>);
@@ -207,18 +211,23 @@ export function SelectAmountDest({
   return (
     <FadeIn>
       <Box maxWidth={sizes.main.maxWidth} mx="auto" paddingTop="84px" paddingBottom="120px">
-        <NoblePageTitleBar
-          title="Select amount and destination"
-          onBackButtonClick={() => setBridgeStep('select-token')}
-          mb="$14"
-        />
+        <Text
+          fontSize="$8xl"
+          fontWeight="600"
+          lineHeight="1.4"
+          textAlign="center"
+          color={useColorModeValue(colors.blue50, colors.white)}
+          attributes={{ mb: '50px' }}
+        >
+          Send USDC
+        </Text>
 
         <SelectAmount
           amount={amount}
           setAmount={setAmount}
-          sourceAsset={sourceAsset}
-          sourceChain={sourceChain}
-          balance={balance}
+          selectedToken={selectedToken}
+          setSelectedToken={setSelectedToken}
+          setBalance={setBalance}
         />
 
         <Box my="12px" display="flex" alignItems="center" justifyContent="center">
@@ -227,7 +236,7 @@ export function SelectAmountDest({
 
         <SelectDestination
           route={route}
-          sourceChainId={sourceChain.chainID}
+          sourceChainId={selectedToken?.chain.chainID ?? ''}
           destChain={destChain}
           destAddress={destAddress}
           setDestChain={setDestChain}
@@ -247,8 +256,12 @@ export function SelectAmountDest({
           {bridgeButtonText}
         </NobleButton>
 
-        {showTransferInfo && (
-          <TransferExtraInfo route={route} destChain={destChain} sourceChain={sourceChain} />
+        {showTransferInfo && selectedToken && (
+          <TransferExtraInfo
+            route={route}
+            destChain={destChain}
+            sourceChain={selectedToken.chain}
+          />
         )}
 
         <PoweredBy mt="30px" />

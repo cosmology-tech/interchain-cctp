@@ -1,15 +1,26 @@
-import * as React from 'react';
-import { FaqList, HomeHeader, Layout, WalletList } from '@/components';
-import { useStargateClients } from '@/hooks';
+import { useRouter } from 'next/router';
+import { NobleButton } from '@interchain-ui/react';
+import { FaqList, HomeHeader, Layout } from '@/components';
 
 export default function Home() {
-  // prefetch stargate clients to increase fetching cosmos balances speed
-  useStargateClients();
+  const router = useRouter();
 
   return (
     <Layout>
       <HomeHeader />
-      <WalletList />
+      <NobleButton
+        width="360px"
+        onClick={() => {
+          router.push('/bridge');
+        }}
+        attributes={{
+          mt: '42px',
+          mb: '80px',
+          mx: '$auto'
+        }}
+      >
+        Bridge Tokens
+      </NobleButton>
       <FaqList isDefaultExpanded />
     </Layout>
   );

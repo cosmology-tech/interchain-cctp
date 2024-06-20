@@ -1,3 +1,8 @@
+// @ts-nocheck
+// ==============================
+// This file is for reference only
+// ==============================
+
 import { useSearchParams } from 'next/navigation';
 import { useAccount, useSwitchChain } from 'wagmi';
 import {
@@ -31,14 +36,20 @@ import {
   useIsMounted,
   useSkipChains,
   useUsdcAssets,
-  useUsdcBalances,
+  useUsdcBalance,
   SkipChain
 } from '@/hooks';
-import { BridgeStep, SelectedToken } from '@/pages/bridge';
+import { BridgeStep } from '@/pages/bridge';
 import { Asset } from '@skip-router/core';
 import BigNumber from 'bignumber.js';
 import { useMemo } from 'react';
 import { useSettingsStore } from '@/contexts';
+
+type SelectedToken = {
+  chain: SkipChain;
+  asset: Asset;
+  balance: string;
+};
 
 interface SelectTokenProps {
   setBridgeStep: (bridgeStep: BridgeStep) => void;
@@ -61,7 +72,7 @@ export function SelectToken({ setBridgeStep, setSelectedToken }: SelectTokenProp
   const sourceChainType = getChainTypeFromWalletKey(walletKey);
   const sourceChains = chains.filter((chain) => chain.chainType === sourceChainType);
 
-  const { data: balances } = useUsdcBalances({
+  const { data: balances } = useUsdcBalance({
     assets,
     chains: sourceChains,
     walletKey

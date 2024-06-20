@@ -1,33 +1,88 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Asset } from '@skip-router/core';
-import { Box, Stack, Text, NobleTokenAvatar, NobleInput, NobleButton } from '@interchain-ui/react';
+import {
+  Box,
+  Stack,
+  Text,
+  NobleTokenAvatar,
+  NobleInput,
+  NobleButton,
+  Skeleton,
+  Icon,
+  useColorModeValue,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  NobleSelectTokenButton
+} from '@interchain-ui/react';
 import { calcDollarValue } from '@/utils';
-import { SkipChain, useUsdcPrice } from '@/hooks';
+import { SkipChain, useSkipChains, useUsdcAssets, useUsdcBalance, useUsdcPrice } from '@/hooks';
 import BigNumber from 'bignumber.js';
-import { NOBLE_CHAIN_IDS } from '@/config';
+import { NOBLE_CHAIN_ID, colors } from '@/config';
+import { WalletConnector } from './WalletConnector';
 
 const PARTIAL_PERCENTAGES = [0.1, 0.25, 0.5, 0.8, 1.0];
 const DEFAULT_GAS_AMOUNT = (200_000).toString();
 
+export type SelectedToken = {
+  chain: SkipChain;
+  asset: Asset;
+} | null;
+
 interface SelectAmountProps {
   amount: string;
   setAmount: (amount: string) => void;
-  balance: string;
-  sourceAsset: Asset;
-  sourceChain: SkipChain;
+  selectedToken: SelectedToken;
+  setSelectedToken: (selectedToken: SelectedToken) => void;
+  setBalance: (balance: string) => void;
 }
 
 export const SelectAmount = ({
-  balance,
   amount,
   setAmount,
-  sourceAsset,
-  sourceChain
+  selectedToken,
+  setSelectedToken,
+  setBalance
 }: SelectAmountProps) => {
+  const { data: chains = [], isLoading: isFetchingChains } = useSkipChains();
+  const { data: assets = {}, isLoading: isFetchingAssets } = useUsdcAssets();
+
+  const [isChainDropdownOpened, setIsChainDropdownOpened] = useState(false);
+  const [address, setAddress] = useState<string | undefined>();
+
+  const isLoading = isFetchingChains || isFetchingAssets;
+
+  useEffect(() => {
+    if (isLoading || !chains.length || selectedToken) return;
+
+    const defaultSelectedChain = chains.find(({ chainID }) => chainID === NOBLE_CHAIN_ID)!;
+
+    setSelectedToken({
+      chain: defaultSelectedChain,
+      asset: assets[defaultSelectedChain.chainID]
+    });
+  }, [isLoading]);
+
   const [partialPercent, setPartialPercent] = useState<number | null>(null);
   const { data: usdcPrice } = useUsdcPrice();
 
+  const { data: balance, isPending: isFetchingBalance } = useUsdcBalance({
+    chain: selectedToken?.chain,
+    asset: selectedToken?.asset,
+    address
+  });
+
+  useEffect(() => {
+    if (balance) {
+      setBalance(balance);
+    }
+  }, [balance]);
+
   const onPartialButtonClick = (selectedPartialPercent: number) => {
+    if (!selectedToken || !balance) return;
+
+    const { asset: sourceAsset } = selectedToken;
+
     setPartialPercent(selectedPartialPercent);
 
     if (BigNumber(selectedPartialPercent).eq(1)) {
@@ -44,7 +99,11 @@ export const SelectAmount = ({
   };
 
   const onMaxAmountClick = () => {
-    const isNobleChain = NOBLE_CHAIN_IDS.includes(sourceChain.chainID);
+    if (!selectedToken || !balance) return;
+
+    const { asset: sourceAsset, chain: sourceChain } = selectedToken;
+
+    const isNobleChain = sourceChain.chainID === NOBLE_CHAIN_ID;
 
     if (!isNobleChain) {
       setAmount(balance);
@@ -63,15 +122,15 @@ export const SelectAmount = ({
     setAmount(newAmountIn.decimalPlaces(decimals).toString());
   };
 
-  const shouldShowPartialButtons = isNaN(+balance) ? false : +balance > 0;
   const parsedAmount = amount ? (isNaN(+amount) ? '0' : amount) : '0';
   const amountInUsdcValue = usdcPrice ? calcDollarValue(parsedAmount, usdcPrice) : '$0';
+  const dropdownIconColor = useColorModeValue(colors.gray500, colors.blue700);
 
   return (
     <NobleInput
       id="token-amount"
       size="md"
-      label="Select amount"
+      // label="Select amount"
       placeholder="0"
       value={amount}
       type="number"
@@ -82,23 +141,76 @@ export const SelectAmount = ({
       }}
       inputTextAlign="right"
       startAddon={
-        <Box display="flex" gap="$8">
-          <NobleTokenAvatar
-            mainLogoUrl={sourceAsset.logoURI ?? ''}
-            mainLogoAlt={sourceAsset.symbol}
-            subLogoUrl={sourceChain.logoURI ?? ''}
-            subLogoAlt={sourceChain.prettyName}
-          />
+        selectedToken ? (
+          <Popover
+            placement="bottom"
+            // @ts-ignore
+            arrowRef={null}
+            triggerType="click"
+            offset={{ mainAxis: 30, crossAxis: 130 }}
+            isOpen={isChainDropdownOpened}
+            setIsOpen={setIsChainDropdownOpened}
+          >
+            <PopoverTrigger>
+              <Box display="flex" alignItems="center" cursor="pointer">
+                <NobleTokenAvatar
+                  mainLogoUrl={selectedToken.asset.logoURI ?? ''}
+                  mainLogoAlt={selectedToken.asset.symbol}
+                  subLogoUrl={selectedToken.chain.logoURI ?? ''}
+                  subLogoAlt={selectedToken.chain.prettyName}
+                />
+                <Box display="flex" flexDirection="column" ml="$8" mr="$7">
+                  <Text as="span" color="$text" fontSize="$xl" fontWeight="$semibold">
+                    {selectedToken.asset.symbol}
+                  </Text>
+                  <Text as="span" color="$textSecondary" fontSize="$sm" fontWeight="$normal">
+                    {selectedToken.chain.prettyName}
+                  </Text>
+                </Box>
+                <Icon name="arrowDropDown" size="$2xl" color={dropdownIconColor} />
+              </Box>
+            </PopoverTrigger>
+            <PopoverContent showArrow={false}>
+              <Box
+                bg="$white"
+                width="466px"
+                maxHeight="400px"
+                display="flex"
+                flexDirection="column"
+                overflowY="auto"
+              >
+                {chains.map((chain) => {
+                  const usdcAsset = assets[chain.chainID];
 
-          <Box display="flex" flexDirection="column">
-            <Text as="span" color="$text" fontSize="$xl" fontWeight="$semibold">
-              {sourceAsset.symbol}
-            </Text>
-            <Text as="span" color="$textSecondary" fontSize="$sm" fontWeight="$normal">
-              On {sourceChain.prettyName}
-            </Text>
-          </Box>
-        </Box>
+                  return (
+                    <NobleSelectTokenButton
+                      key={chain.chainID}
+                      token={{
+                        mainLogoUrl: usdcAsset?.logoURI ?? '',
+                        mainLogoAlt: usdcAsset?.symbol ?? '',
+                        subLogoUrl: chain.logoURI ?? '',
+                        subLogoAlt: chain.prettyName,
+                        symbol: usdcAsset?.symbol ?? '',
+                        network: chain.prettyName,
+                        tokenAmount: '',
+                        notionalValue: ''
+                      }}
+                      onClick={() => {
+                        setSelectedToken({
+                          chain,
+                          asset: usdcAsset
+                        });
+                        setIsChainDropdownOpened(false);
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <Skeleton width="120px" height="48px" borderRadius="$md" />
+        )
       }
       labelContainerProps={{
         display: 'flex',
@@ -106,7 +218,8 @@ export const SelectAmount = ({
         alignItems: 'center'
       }}
       labelExtra={
-        shouldShowPartialButtons ? (
+        <>
+          <WalletConnector label="Origin" chain={selectedToken?.chain} setAddress={setAddress} />
           <Stack space="$4">
             {PARTIAL_PERCENTAGES.map((percent, index) => {
               const isMax = index === PARTIAL_PERCENTAGES.length - 1;
@@ -124,20 +237,29 @@ export const SelectAmount = ({
               );
             })}
           </Stack>
-        ) : null
+        </>
       }
       helperText={
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" justifyContent="center" gap="$6">
-            <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">
-              Available: {balance}
-            </Text>
+            <Box display="flex" alignItems="center">
+              <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">
+                Available:&nbsp;
+              </Text>
+              {isFetchingBalance && address ? (
+                <Skeleton width="40px" height="20px" borderRadius="$md" />
+              ) : (
+                <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">
+                  {balance ? balance : '--'}
+                </Text>
+              )}
+            </Box>
 
-            {+amount > +balance ? (
+            {balance && +amount > +balance && (
               <Text color="$textWarning" fontSize="$sm" fontWeight="$normal">
                 Insufficient balance
               </Text>
-            ) : null}
+            )}
           </Box>
 
           <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">

@@ -4,7 +4,7 @@ import { EVM_WALLET_KEY_TO_ID, EvmWalletKey } from '@/config';
 
 export const useEvmWallet = (walletKey: EvmWalletKey) => {
   const { address, chainId, isConnected } = useAccount();
-  const { connect: _connect, connectAsync: _connectAsync, connectors } = useConnect();
+  const { connect: _connect, connectAsync: _connectAsync, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
 
   const connector = useMemo(() => {
@@ -24,5 +24,14 @@ export const useEvmWallet = (walletKey: EvmWalletKey) => {
 
   const isInstalled = Boolean(connector);
 
-  return { connect, connectAsync, address, chainId, disconnect, isInstalled, isConnected };
+  return {
+    connect,
+    connectAsync,
+    address,
+    chainId,
+    disconnect,
+    isInstalled,
+    isConnected,
+    isConnecting: isPending
+  };
 };
