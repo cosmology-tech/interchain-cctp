@@ -11,7 +11,14 @@ import {
 } from '@interchain-ui/react';
 import { useAccount, useSwitchChain } from 'wagmi';
 
-import { useEvmWallet, useCosmosWallet, SkipChain, WalletDirection, useWalletKey } from '@/hooks';
+import {
+  useEvmWallet,
+  useCosmosWallet,
+  SkipChain,
+  WalletDirection,
+  useWalletKey,
+  useDisclosure
+} from '@/hooks';
 import {
   colors,
   CHAIN_TYPE,
@@ -39,6 +46,9 @@ type WalletConnectorProps = {
 };
 
 export const WalletConnector = ({ label, chain, setAddress, direction }: WalletConnectorProps) => {
+  const { isOpen, onToggle } = useDisclosure(
+    direction === 'source' ? 'source_wallet_popover' : 'dest_wallet_popover'
+  );
   const { evmWalletKey, cosmosWalletKey, setEvmWalletKey, setCosmosWalletKey } = useWalletKey({
     direction
   });
@@ -146,6 +156,8 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
       arrowRef={null}
       triggerType="click"
       offset={{ mainAxis: 10 }}
+      isOpen={isOpen}
+      setIsOpen={onToggle}
     >
       <PopoverTrigger>
         <Box display="flex" alignItems="center" gap="4px" cursor="pointer">
