@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Text,
@@ -9,25 +9,39 @@ import {
   Icon,
   PopoverContent
 } from '@interchain-ui/react';
+import { useAccount, useSwitchChain } from 'wagmi';
 
-import { useEvmWallet, useCosmosWallet, SkipChain } from '@/hooks';
+import { useEvmWallet, useCosmosWallet, SkipChain, WalletDirection, useWalletKey } from '@/hooks';
 import {
   colors,
   CHAIN_TYPE,
   CosmosWalletKey,
   EvmWalletKey,
-  WALLET_KEY_TO_PRETTY_NAME
+  WALLET_KEY_TO_PRETTY_NAME,
+  ChainType,
+  WalletKey
 } from '@/config';
 
-type WalletConnectProps = {
+type WalletState = {
+  type: ChainType;
+  walletKey: WalletKey;
+  isConnected: boolean;
+  isConnecting: boolean;
+  connect: () => void;
+  disconnect: () => void;
+};
+
+type WalletConnectorProps = {
   label: string;
   chain: SkipChain | null | undefined;
+  direction: WalletDirection;
   setAddress: (address: string | undefined) => void;
 };
 
-export const WalletConnector = ({ label, chain, setAddress }: WalletConnectProps) => {
-  const [selectedEvmWallet, setSelectedEvmWallet] = useState<EvmWalletKey | null>(null);
-  const [selectedCosmosWallet, setSelectedCosmosWallet] = useState<CosmosWalletKey | null>(null);
+export const WalletConnector = ({ label, chain, setAddress, direction }: WalletConnectorProps) => {
+  const { evmWalletKey, cosmosWalletKey, setEvmWalletKey, setCosmosWalletKey } = useWalletKey({
+    direction
+  });
 
   const selectedChainId = chain?.chainID ?? '';
   const isCosmosChain = chain?.chainType === CHAIN_TYPE.COSMOS;
@@ -43,27 +57,87 @@ export const WalletConnector = ({ label, chain, setAddress }: WalletConnectProps
     cosmostation: useCosmosWallet('cosmostation', selectedChainId)
   };
 
-  useEffect(() => {
-    if (
-      isCosmosChain &&
-      selectedCosmosWallet &&
-      !cosmosWalletMap[selectedCosmosWallet].isConnected
-    ) {
-      cosmosWalletMap[selectedCosmosWallet].connect();
-    }
+  const allWallets: WalletState[] = useMemo(() => {
+    return [
+      ...Object.entries(evmWalletMap).map(([walletKey, wallet]) => ({
+        walletKey: walletKey as EvmWalletKey,
+        type: CHAIN_TYPE.EVM,
+        isConnected: wallet.isConnected,
+        isConnecting: wallet.isConnecting,
+        connect: wallet.connect,
+        disconnect: wallet.disconnect
+      })),
+      ...Object.entries(cosmosWalletMap).map(([walletKey, wallet]) => ({
+        walletKey: walletKey as CosmosWalletKey,
+        type: CHAIN_TYPE.COSMOS,
+        isConnected: wallet.isConnected,
+        isConnecting: wallet.isConnecting,
+        connect: wallet.connect,
+        disconnect: wallet.disconnect
+      }))
+    ];
+  }, [evmWalletMap, cosmosWalletMap]);
 
-    if (!isCosmosChain && selectedEvmWallet && !evmWalletMap[selectedEvmWallet].isConnected) {
-      evmWalletMap[selectedEvmWallet].connect();
+  const { switchChainAsync } = useSwitchChain();
+  const { chainId: connectedChainId } = useAccount();
+
+  useEffect(() => {
+    const shouldConnectCosmosChain =
+      isCosmosChain && cosmosWalletKey && !cosmosWalletMap[cosmosWalletKey].isConnected;
+
+    if (shouldConnectCosmosChain) cosmosWalletMap[cosmosWalletKey].connect();
+  }, [chain]);
+
+  const switchEvmChain = useCallback(async () => {
+    if (!chain || isCosmosChain || !evmWalletKey) return;
+    try {
+      await switchChainAsync({ chainId: Number(chain.chainID) });
+    } catch (error) {
+      console.error(error);
+      evmWalletMap[evmWalletKey].disconnect();
     }
-  }, [isCosmosChain, selectedEvmWallet, selectedCosmosWallet, cosmosWalletMap, evmWalletMap]);
+  }, [chain]);
+
+  useEffect(() => {
+    const shouldSwitchChain =
+      chain &&
+      !isCosmosChain &&
+      evmWalletKey &&
+      evmWalletMap[evmWalletKey].isConnected &&
+      connectedChainId !== Number(chain.chainID) &&
+      direction === 'source';
+
+    if (shouldSwitchChain) switchEvmChain();
+  }, [chain, evmWalletMap[evmWalletKey ?? 'metamask'].isConnected]);
 
   useEffect(() => {
     if (isCosmosChain) {
-      setAddress(selectedCosmosWallet ? cosmosWalletMap[selectedCosmosWallet].address : undefined);
+      setAddress(cosmosWalletKey ? cosmosWalletMap[cosmosWalletKey].address : undefined);
       return;
     }
-    setAddress(selectedEvmWallet ? evmWalletMap[selectedEvmWallet].address : undefined);
-  }, [isCosmosChain, cosmosWalletMap, evmWalletMap, selectedEvmWallet, selectedCosmosWallet]);
+    setAddress(evmWalletKey ? evmWalletMap[evmWalletKey].address : undefined);
+  }, [
+    isCosmosChain,
+    cosmosWalletMap[cosmosWalletKey ?? 'keplr'].address,
+    evmWalletMap[evmWalletKey ?? 'metamask'].address
+  ]);
+
+  const displayedWallets = allWallets.filter((wallet) => wallet.type === chain?.chainType);
+  const connectedWallet = displayedWallets.find(
+    (wallet) => wallet.walletKey === (isCosmosChain ? cosmosWalletKey : evmWalletKey)
+  );
+
+  const handleConnect = (wallet: WalletState) => () => {
+    wallet.connect();
+    wallet.type === 'cosmos'
+      ? setCosmosWalletKey(wallet.walletKey as CosmosWalletKey)
+      : setEvmWalletKey(wallet.walletKey as EvmWalletKey);
+  };
+
+  const handleDisconnect = (wallet: WalletState) => () => {
+    if (direction === 'source') wallet.disconnect();
+    wallet.type === 'cosmos' ? setCosmosWalletKey(null) : setEvmWalletKey(null);
+  };
 
   return (
     <Popover
@@ -98,51 +172,34 @@ export const WalletConnector = ({ label, chain, setAddress }: WalletConnectProps
           flexDirection="column"
           gap="6px"
           bg="$white"
-          p="10px 16px"
+          p="12px 16px"
         >
-          {isCosmosChain
-            ? (Object.keys(cosmosWalletMap) as CosmosWalletKey[]).map((walletKey) => (
-                <Button
-                  key={walletKey}
-                  size="sm"
-                  onClick={
-                    cosmosWalletMap[walletKey].isConnected
-                      ? () => {
-                          cosmosWalletMap[walletKey].disconnect();
-                          setSelectedCosmosWallet(null);
-                        }
-                      : () => {
-                          cosmosWalletMap[walletKey].connect();
-                          setSelectedCosmosWallet(walletKey);
-                        }
-                  }
-                  isLoading={cosmosWalletMap[walletKey].isConnecting}
-                >
-                  {WALLET_KEY_TO_PRETTY_NAME[walletKey]} -&nbsp;
-                  {cosmosWalletMap[walletKey].isConnected ? 'Connected' : 'Connect'}
-                </Button>
-              ))
-            : (Object.keys(evmWalletMap) as EvmWalletKey[]).map((walletKey) => (
-                <Button
-                  key={walletKey}
-                  size="sm"
-                  onClick={
-                    evmWalletMap[walletKey].isConnected
-                      ? () => {
-                          evmWalletMap[walletKey].disconnect();
-                          setSelectedEvmWallet(null);
-                        }
-                      : () => {
-                          evmWalletMap[walletKey].connect();
-                          setSelectedEvmWallet(walletKey);
-                        }
-                  }
-                  isLoading={evmWalletMap[walletKey].isConnecting}
-                >
-                  {WALLET_KEY_TO_PRETTY_NAME[walletKey]} -&nbsp;
-                  {evmWalletMap[walletKey].isConnected ? 'Connected' : 'Connect'}
-                </Button>
-              ))}
+          <Text textAlign="center" attributes={{ mb: '6px' }}>
+            {connectedWallet?.isConnected ? 'Connected' : 'Connect'}
+          </Text>
+          {connectedWallet?.isConnected ? (
+            <Button
+              key={connectedWallet.walletKey}
+              size="sm"
+              onClick={handleDisconnect(connectedWallet)}
+              isLoading={connectedWallet.isConnecting}
+              rightIcon={direction === 'source' ? 'close' : 'pencilLine'}
+              iconSize="$lg"
+            >
+              {WALLET_KEY_TO_PRETTY_NAME[connectedWallet.walletKey]}
+            </Button>
+          ) : (
+            displayedWallets.map((wallet) => (
+              <Button
+                key={wallet.walletKey}
+                size="sm"
+                onClick={handleConnect(wallet)}
+                isLoading={wallet.isConnecting}
+              >
+                {WALLET_KEY_TO_PRETTY_NAME[wallet.walletKey]}
+              </Button>
+            ))
+          )}
         </Box>
       </PopoverContent>
     </Popover>

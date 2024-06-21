@@ -61,7 +61,12 @@ export const SelectDestination = ({
   return (
     <>
       <Box display="flex" justifyContent="space-between" overflow="hidden" mb="14px">
-        <WalletConnector label="Destination" chain={destChain} setAddress={setDestAddress} />
+        <WalletConnector
+          label="Destination"
+          chain={destChain}
+          setAddress={setDestAddress}
+          direction="destination"
+        />
 
         <Box display={isInvalidRoute ? 'none' : 'flex'} alignItems="center" height="$min">
           <Text

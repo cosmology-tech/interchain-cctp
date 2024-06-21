@@ -122,6 +122,11 @@ export const SelectAmount = ({
     setAmount(newAmountIn.decimalPlaces(decimals).toString());
   };
 
+  const handleSelectChain = (chain: SkipChain, asset: Asset) => async () => {
+    setSelectedToken({ chain, asset });
+    setIsChainDropdownOpened(false);
+  };
+
   const parsedAmount = amount ? (isNaN(+amount) ? '0' : amount) : '0';
   const amountInUsdcValue = usdcPrice ? calcDollarValue(parsedAmount, usdcPrice) : '$0';
   const dropdownIconColor = useColorModeValue(colors.gray500, colors.blue700);
@@ -195,13 +200,7 @@ export const SelectAmount = ({
                         tokenAmount: '',
                         notionalValue: ''
                       }}
-                      onClick={() => {
-                        setSelectedToken({
-                          chain,
-                          asset: usdcAsset
-                        });
-                        setIsChainDropdownOpened(false);
-                      }}
+                      onClick={handleSelectChain(chain, usdcAsset)}
                     />
                   );
                 })}
@@ -219,7 +218,12 @@ export const SelectAmount = ({
       }}
       labelExtra={
         <>
-          <WalletConnector label="Origin" chain={selectedToken?.chain} setAddress={setAddress} />
+          <WalletConnector
+            label="Origin"
+            chain={selectedToken?.chain}
+            setAddress={setAddress}
+            direction="source"
+          />
           <Stack space="$4">
             {PARTIAL_PERCENTAGES.map((percent, index) => {
               const isMax = index === PARTIAL_PERCENTAGES.length - 1;
