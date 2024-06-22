@@ -13,13 +13,7 @@ import {
   useRoute,
   useUsdcAssets
 } from '@/hooks';
-import {
-  checkIsInvalidRoute,
-  isUserRejectedRequestError,
-  isValidAddress,
-  randomId,
-  shiftDecimals
-} from '@/utils';
+import { checkIsInvalidRoute, isUserRejectedRequestError, randomId, shiftDecimals } from '@/utils';
 import { useSkipClient, useSourceWallet } from '@/contexts';
 import { BridgeStep, TransferInfo } from '@/pages/bridge';
 import { SelectAmount, SelectedToken } from './SelectAmount';
@@ -29,6 +23,7 @@ import type { RouteResponse } from '@skip-router/core';
 import { SignTx } from './SignTx';
 import { txHistory } from '@/contexts';
 import { PoweredBy } from './PoweredBy';
+import BigNumber from 'bignumber.js';
 
 interface SelectAmountDestProps {
   setRoute: Dispatch<SetStateAction<RouteResponse | null>>;
@@ -192,7 +187,7 @@ export function SelectAmountDest({
 
   const isDestWalletDisconnected = !!destChain && !destAddress;
 
-  const onBridgeButtonClick = () => {
+  const onButtonClick = () => {
     if (isSrcWalletDisconnected) {
       openSrcWalletPopover();
       return;
@@ -204,18 +199,12 @@ export function SelectAmountDest({
     onTransfer();
   };
 
-  const bridgeButtonText = useMemo(() => {
-    if (isSrcWalletDisconnected) {
-      return 'Connect Wallet';
-    }
-    if (isDestWalletDisconnected) {
-      return 'Set Destination Address';
-    }
-    return routeIsFetching
-      ? 'Finding best route...'
-      : routeIsError || isInvalidRoute
-      ? 'No route found'
-      : 'Bridge';
+  const buttonText = useMemo(() => {
+    if (isSrcWalletDisconnected) return 'Connect Wallet';
+    if (isDestWalletDisconnected) return 'Set Destination Address';
+    if (routeIsFetching) return 'Finding best route...';
+    if (routeIsError || isInvalidRoute) return 'No route found';
+    return 'Bridge';
   }, [
     routeIsFetching,
     routeIsError,
@@ -224,23 +213,19 @@ export function SelectAmountDest({
     isDestWalletDisconnected
   ]);
 
-  const isBridgeButtonDisabled = useMemo(() => {
-    if (isSrcWalletDisconnected || isDestWalletDisconnected) return false;
+  const isButtonEnabled = useMemo(() => {
+    const isWalletDisconnected = isSrcWalletDisconnected || isDestWalletDisconnected;
 
-    return (
-      !route ||
-      !destAddress ||
-      !isValidAddress(destAddress) ||
-      +amount > +balance ||
-      routeIsFetching ||
-      routeIsError ||
-      isInvalidRoute
-    );
+    const isAmountValid = !!amount && BigNumber(amount).lte(balance);
+    const isRouteValid = !!route && !routeIsFetching && !routeIsError && !isInvalidRoute;
+    const isReadyToTransfer = isAmountValid && isRouteValid && !!destAddress;
+
+    return isWalletDisconnected || isReadyToTransfer;
   }, [
-    route,
-    destAddress,
     amount,
     balance,
+    destAddress,
+    route,
     routeIsFetching,
     routeIsError,
     isInvalidRoute,
@@ -295,10 +280,10 @@ export function SelectAmountDest({
             marginTop: '20px',
             fontWeight: '$semibold'
           }}
-          onClick={onBridgeButtonClick}
-          disabled={isBridgeButtonDisabled}
+          onClick={onButtonClick}
+          disabled={!isButtonEnabled}
         >
-          {bridgeButtonText}
+          {buttonText}
         </NobleButton>
 
         {showTransferInfo && selectedToken && (
