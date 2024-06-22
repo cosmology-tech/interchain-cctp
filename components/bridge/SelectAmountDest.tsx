@@ -1,67 +1,48 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
-import { useWalletClient } from '@cosmos-kit/react';
-import { useAccount } from 'wagmi';
-import { Box, NobleButton, Text, toast, useColorModeValue } from '@interchain-ui/react';
+import { Box, NobleButton, Text, useColorModeValue } from '@interchain-ui/react';
+import type { RouteResponse } from '@skip-router/core';
+import BigNumber from 'bignumber.js';
 
-import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
-import { CHAIN_TYPE, sizes, COSMOS_WALLET_KEY_TO_NAME, colors } from '@/config';
+import { ArrowDownIcon, FaqList, FadeIn } from '@/components';
+import { sizes, colors } from '@/config';
 import {
   BroadcastedTx,
   SkipChain,
-  useCosmosWallet,
   useDisclosure,
   useRoute,
-  useUsdcAssets
+  useUsdcAssets,
+  useUsdcTransfer
 } from '@/hooks';
-import { checkIsInvalidRoute, isUserRejectedRequestError, randomId, shiftDecimals } from '@/utils';
-import { useSkipClient, useSourceWallet } from '@/contexts';
+import { checkIsInvalidRoute, shiftDecimals } from '@/utils';
+import { useCurrentWallets } from '@/contexts';
 import { BridgeStep, TransferInfo } from '@/pages/bridge';
 import { SelectAmount, SelectedToken } from './SelectAmount';
 import { SelectDestination } from './SelectDestination';
 import { TransferExtraInfo } from './TransferExtraInfo';
-import type { RouteResponse } from '@skip-router/core';
 import { SignTx } from './SignTx';
-import { txHistory } from '@/contexts';
 import { PoweredBy } from './PoweredBy';
-import BigNumber from 'bignumber.js';
 
 interface SelectAmountDestProps {
-  setRoute: Dispatch<SetStateAction<RouteResponse | null>>;
-  setBridgeStep: Dispatch<SetStateAction<BridgeStep>>;
+  setRoute: (route: RouteResponse | undefined) => void;
+  setBridgeStep: (step: BridgeStep) => void;
   setBroadcastedTxs: Dispatch<SetStateAction<BroadcastedTx[]>>;
-  setTransferInfo: Dispatch<SetStateAction<TransferInfo | null>>;
+  setTransferInfo: (info: TransferInfo | undefined) => void;
 }
 
-export function SelectAmountDest({
+export const SelectAmountDest = ({
   setRoute,
   setBridgeStep,
   setTransferInfo,
   setBroadcastedTxs
-}: SelectAmountDestProps) {
+}: SelectAmountDestProps) => {
   const { data: assets } = useUsdcAssets();
 
-  const [balance, setBalance] = useState('0');
-  const [selectedToken, setSelectedToken] = useState<SelectedToken>(null);
-
-  const skipClient = useSkipClient();
-
-  const [destChain, setDestChain] = useState<SkipChain | null>(null);
-  const [destAddress, setDestAddress] = useState<string | undefined>();
   const [amount, setAmount] = useState('');
-  const [showSignTxView, setShowSignTxView] = useState(false);
+  const [balance, setBalance] = useState('0');
+  const [selectedToken, setSelectedToken] = useState<SelectedToken>();
+  const [destChain, setDestChain] = useState<SkipChain>();
 
-  const { srcCosmosWallet } = useSourceWallet();
-
-  const cosmosWalletKey = srcCosmosWallet ?? 'keplr';
-  const { address: cosmosAddress, isDisconnected: isCosmosWalletDisconnected } = useCosmosWallet(
-    cosmosWalletKey,
-    selectedToken?.chain.chainID ?? ''
-  );
-  const { client: cosmosWalletClient } = useWalletClient(
-    COSMOS_WALLET_KEY_TO_NAME[cosmosWalletKey]
-  );
-
-  const { address: evmAddress, isDisconnected: isEvmWalletDisconnected } = useAccount();
+  const { srcWallet, destWallet } = useCurrentWallets();
 
   const destAsset = assets && destChain ? assets[destChain.chainID] : undefined;
 
@@ -75,117 +56,25 @@ export function SelectAmountDest({
     sourceAssetChainID: selectedToken?.asset?.chainID ?? '',
     destAssetDenom: destAsset ? destAsset.denom : '',
     destAssetChainID: destAsset ? destAsset.chainID : '',
-    enabled: !!destAsset && !!selectedToken
+    enabled: !!selectedToken && !!destAsset
   });
 
-  // TODO: extract to a hook potentially
-  const onTransfer = async () => {
-    if (!route || !evmAddress || !destChain || !destAddress || !selectedToken) return;
-
-    const { chain: sourceChain } = selectedToken;
-
-    const sourceChainAddress =
-      sourceChain.chainType === CHAIN_TYPE.EVM ? evmAddress : cosmosAddress!;
-
-    const transferInfo: TransferInfo = {
-      amount,
-      fromChainID: sourceChain.chainID,
-      fromChainAddress: sourceChainAddress,
-      fromChainLogo: sourceChain.logoURI || '',
-      toChainID: destChain.chainID,
-      toChainAddress: destAddress,
-      toChainLogo: destChain.logoURI || ''
-    };
-
-    setRoute(route);
-    setShowSignTxView(true);
-    setTransferInfo(transferInfo);
-
-    const userAddresses = route.chainIDs.reduce((acc, chainID) => {
-      if (/^\d+/.test(chainID)) {
-        acc[chainID] = evmAddress;
-      } else {
-        acc[chainID] = cosmosAddress!;
-      }
-      return acc;
-    }, {} as Record<string, string>);
-
-    const historyId = randomId();
-
-    try {
-      await skipClient?.executeRoute({
-        route,
-        userAddresses,
-        validateGasBalance: route.txsRequired === 1,
-        getCosmosSigner: async (chainID: string) => {
-          const cosmosSigner =
-            cosmosWalletClient?.getOfflineSignerDirect &&
-            cosmosWalletClient.getOfflineSignerDirect(chainID);
-
-          if (!cosmosSigner) {
-            throw new Error(
-              `getCosmosSigner error: no offline signer available for chain ${chainID}`
-            );
-          }
-
-          return cosmosSigner;
-        },
-        onTransactionTracked: async (tx) => {
-          txHistory.addItem({
-            route,
-            transferInfo,
-            id: historyId,
-            broadcastedTx: tx
-          });
-
-          setBroadcastedTxs((prev) => {
-            const txs = [...prev, { chainID: tx.chainID, txHash: tx.txHash }];
-            if (route.txsRequired === txs.length) {
-              setBridgeStep('view-status');
-            }
-            return txs;
-          });
-        }
-      });
-    } catch (err: any) {
-      console.error(err);
-      if (isUserRejectedRequestError(err)) {
-        setShowSignTxView(false);
-        return;
-      }
-      toast.error(
-        <Text
-          as="p"
-          color="inherit"
-          attributes={{
-            maxHeight: '250px',
-            overflow: 'auto'
-          }}
-        >
-          {`Failed to execute transaction: ${err.message}`}
-        </Text>,
-        {
-          duration: 6000
-        }
-      );
-      setShowSignTxView(false);
-    }
-  };
+  const { onTransfer, showSignTxView } = useUsdcTransfer({
+    setRoute,
+    setBridgeStep,
+    setTransferInfo,
+    setBroadcastedTxs
+  });
 
   const isInvalidRoute = useMemo(() => checkIsInvalidRoute(route), [route]);
 
-  const showTransferInfo = !!route && !!destChain && !!evmAddress && !isInvalidRoute;
+  const showTransferInfo = !!route && !!destChain && !!destWallet.address && !isInvalidRoute;
 
   const { onOpen: openSrcWalletPopover } = useDisclosure('source_wallet_popover');
   const { onOpen: openDestWalletPopover } = useDisclosure('dest_wallet_popover');
 
-  const isSrcWalletDisconnected =
-    selectedToken &&
-    (selectedToken.chain.chainType === CHAIN_TYPE.EVM
-      ? isEvmWalletDisconnected
-      : isCosmosWalletDisconnected);
-
-  const isDestWalletDisconnected = !!destChain && !destAddress;
+  const isSrcWalletDisconnected = !!srcWallet.chainId && !srcWallet.address;
+  const isDestWalletDisconnected = !!destWallet.chainId && !destWallet.address;
 
   const onButtonClick = () => {
     if (isSrcWalletDisconnected) {
@@ -196,7 +85,12 @@ export function SelectAmountDest({
       openDestWalletPopover();
       return;
     }
-    onTransfer();
+    onTransfer({
+      route,
+      amount,
+      destChain,
+      srcChain: selectedToken?.chain
+    });
   };
 
   const buttonText = useMemo(() => {
@@ -218,13 +112,13 @@ export function SelectAmountDest({
 
     const isAmountValid = !!amount && BigNumber(amount).lte(balance);
     const isRouteValid = !!route && !routeIsFetching && !routeIsError && !isInvalidRoute;
-    const isReadyToTransfer = isAmountValid && isRouteValid && !!destAddress;
+    const isReadyToTransfer = isAmountValid && isRouteValid && !!destWallet.address;
 
     return isWalletDisconnected || isReadyToTransfer;
   }, [
     amount,
     balance,
-    destAddress,
+    destWallet.address,
     route,
     routeIsFetching,
     routeIsError,
@@ -268,9 +162,7 @@ export function SelectAmountDest({
           route={route}
           sourceChainId={selectedToken?.chain.chainID}
           destChain={destChain}
-          destAddress={destAddress}
           setDestChain={setDestChain}
-          setDestAddress={setDestAddress}
         />
 
         <NobleButton
@@ -300,4 +192,4 @@ export function SelectAmountDest({
       <FaqList />
     </FadeIn>
   );
-}
+};

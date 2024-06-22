@@ -12,5 +12,6 @@ export * from './useStargateClient';
 export * from './useUsdcChains';
 export * from './useCapsuleClient';
 export * from './useEvmWallet';
-export * from './useWalletKey';
+export * from './useSelectedWalletKeys';
 export * from './useDisclosure';
+export * from './useUsdcTransfer';

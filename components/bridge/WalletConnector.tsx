@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import {
   Box,
   Text,
@@ -16,7 +16,7 @@ import {
   useCosmosWallet,
   SkipChain,
   WalletDirection,
-  useWalletKey,
+  useSelectedWalletKeys,
   useDisclosure
 } from '@/hooks';
 import {
@@ -29,6 +29,7 @@ import {
   WalletKey
 } from '@/config';
 import { isCosmosChain } from '@/utils';
+import { useCurrentWallets } from '@/contexts';
 
 type WalletState = {
   type: ChainType;
@@ -44,16 +45,23 @@ type WalletConnectorProps = {
   label: string;
   chain: SkipChain | null | undefined;
   direction: WalletDirection;
-  setAddress: (address: string | undefined) => void;
 };
 
-export const WalletConnector = ({ label, chain, setAddress, direction }: WalletConnectorProps) => {
+export const WalletConnector = ({ label, chain, direction }: WalletConnectorProps) => {
+  const [address, setAddress] = useState<string>();
+
+  const {
+    selectedEvmWalletKey,
+    selectedCosmosWalletKey,
+    setSelectedEvmWalletKey,
+    setSelectedCosmosWalletKey
+  } = useSelectedWalletKeys({ direction });
+
+  const { setSrcWallet, setDestWallet } = useCurrentWallets();
+
   const { isOpen, onToggle } = useDisclosure(
     direction === 'source' ? 'source_wallet_popover' : 'dest_wallet_popover'
   );
-  const { evmWalletKey, cosmosWalletKey, setEvmWalletKey, setCosmosWalletKey } = useWalletKey({
-    direction
-  });
 
   const selectedChainId = chain?.chainID ?? '';
 
@@ -98,19 +106,19 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
     const shouldConnectCosmosChain =
       chain &&
       isCosmosChain(chain) &&
-      cosmosWalletKey &&
-      !cosmosWalletMap[cosmosWalletKey].isConnected;
+      selectedCosmosWalletKey &&
+      !cosmosWalletMap[selectedCosmosWalletKey].isConnected;
 
-    if (shouldConnectCosmosChain) cosmosWalletMap[cosmosWalletKey].connect();
-  }, [chain, cosmosWalletKey]);
+    if (shouldConnectCosmosChain) cosmosWalletMap[selectedCosmosWalletKey].connect();
+  }, [chain, selectedCosmosWalletKey]);
 
   const switchEvmChain = useCallback(async () => {
-    if (!chain || isCosmosChain(chain) || !evmWalletKey) return;
+    if (!chain || isCosmosChain(chain) || !selectedEvmWalletKey) return;
     try {
       await switchChainAsync({ chainId: Number(chain.chainID) });
     } catch (error) {
       console.error(error);
-      evmWalletMap[evmWalletKey].disconnect();
+      evmWalletMap[selectedEvmWalletKey].disconnect();
     }
   }, [chain]);
 
@@ -118,13 +126,13 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
     const shouldSwitchChain =
       chain &&
       !isCosmosChain &&
-      evmWalletKey &&
-      evmWalletMap[evmWalletKey].isConnected &&
+      selectedEvmWalletKey &&
+      evmWalletMap[selectedEvmWalletKey].isConnected &&
       connectedChainId !== Number(chain.chainID) &&
       direction === 'source';
 
     if (shouldSwitchChain) switchEvmChain();
-  }, [chain, evmWalletMap[evmWalletKey ?? 'metamask'].isConnected]);
+  }, [chain, evmWalletMap[selectedEvmWalletKey ?? 'metamask'].isConnected]);
 
   useEffect(() => {
     if (!chain) {
@@ -132,29 +140,44 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
       return;
     }
     if (isCosmosChain(chain)) {
-      setAddress(cosmosWalletKey ? cosmosWalletMap[cosmosWalletKey].address : undefined);
+      setAddress(
+        selectedCosmosWalletKey ? cosmosWalletMap[selectedCosmosWalletKey].address : undefined
+      );
       return;
     }
-    setAddress(evmWalletKey ? evmWalletMap[evmWalletKey].address : undefined);
+    setAddress(selectedEvmWalletKey ? evmWalletMap[selectedEvmWalletKey].address : undefined);
   }, [
     chain,
-    evmWalletKey,
-    cosmosWalletKey,
-    cosmosWalletMap[cosmosWalletKey ?? 'keplr'].address,
-    evmWalletMap[evmWalletKey ?? 'metamask'].address
+    selectedEvmWalletKey,
+    selectedCosmosWalletKey,
+    cosmosWalletMap[selectedCosmosWalletKey ?? 'keplr'].address,
+    evmWalletMap[selectedEvmWalletKey ?? 'metamask'].address
   ]);
+
+  useEffect(() => {
+    const walletKey = chain
+      ? isCosmosChain(chain)
+        ? selectedCosmosWalletKey
+        : selectedEvmWalletKey
+      : null;
+    const chainId = chain?.chainID;
+    direction === 'source'
+      ? setSrcWallet({ chainId, walletKey, address })
+      : setDestWallet({ chainId, walletKey, address });
+  }, [address, chain, selectedEvmWalletKey, selectedCosmosWalletKey]);
 
   const displayedWallets = allWallets.filter((wallet) => wallet.type === chain?.chainType);
   const connectedWallet = chain
     ? displayedWallets.find(
-        ({ walletKey }) => walletKey === (isCosmosChain(chain) ? cosmosWalletKey : evmWalletKey)
+        ({ walletKey }) =>
+          walletKey === (isCosmosChain(chain) ? selectedCosmosWalletKey : selectedEvmWalletKey)
       )
     : null;
 
   const setWalletKey = (wallet: WalletState) => {
     wallet.type === 'cosmos'
-      ? setCosmosWalletKey(wallet.walletKey as CosmosWalletKey)
-      : setEvmWalletKey(wallet.walletKey as EvmWalletKey);
+      ? setSelectedCosmosWalletKey(wallet.walletKey as CosmosWalletKey)
+      : setSelectedEvmWalletKey(wallet.walletKey as EvmWalletKey);
   };
 
   const handleConnect = (wallet: WalletState) => () => {
@@ -170,7 +193,7 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
 
   const handleDisconnect = (wallet: WalletState) => () => {
     if (direction === 'source') wallet.disconnect();
-    wallet.type === 'cosmos' ? setCosmosWalletKey(null) : setEvmWalletKey(null);
+    wallet.type === 'cosmos' ? setSelectedCosmosWalletKey(null) : setSelectedEvmWalletKey(null);
   };
 
   return (

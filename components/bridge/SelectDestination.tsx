@@ -17,12 +17,11 @@ import { Tooltip, BaseButton } from '@/components';
 import { SkipChain, useSkipChains } from '@/hooks';
 import { checkIsInvalidRoute, getOutAmount } from '@/utils';
 import { WalletConnector } from './WalletConnector';
+import { useCurrentWallets } from '@/contexts';
 
 interface SelectDestinationProps {
-  destChain: SkipChain | null;
-  setDestChain: (chain: SkipChain | null) => void;
-  destAddress: string | undefined;
-  setDestAddress: (address: string | undefined) => void;
+  destChain: SkipChain | undefined;
+  setDestChain: (chain: SkipChain | undefined) => void;
   sourceChainId: string | undefined;
   route: RouteResponse | undefined;
 }
@@ -31,11 +30,10 @@ export const SelectDestination = ({
   route,
   destChain,
   setDestChain,
-  destAddress,
-  setDestAddress,
   sourceChainId
 }: SelectDestinationProps) => {
   const { data: chains = [] } = useSkipChains();
+  const { destWallet } = useCurrentWallets();
 
   const destChains = useMemo(() => {
     return chains.filter((chain) => chain.chainID !== sourceChainId);
@@ -50,8 +48,7 @@ export const SelectDestination = ({
   };
 
   const handleChangeChain = () => {
-    setDestChain(null);
-    setDestAddress(undefined);
+    setDestChain(undefined);
   };
 
   const isInvalidRoute = checkIsInvalidRoute(route);
@@ -61,12 +58,7 @@ export const SelectDestination = ({
   return (
     <>
       <Box display="flex" justifyContent="space-between" overflow="hidden" mb="14px">
-        <WalletConnector
-          label="Destination"
-          chain={destChain}
-          setAddress={setDestAddress}
-          direction="destination"
-        />
+        <WalletConnector label="Destination" chain={destChain} direction="destination" />
 
         <Box display={isInvalidRoute ? 'none' : 'flex'} alignItems="center" height="$min">
           <Text
@@ -154,7 +146,7 @@ export const SelectDestination = ({
             <NobleSelectNetworkButton
               logoUrl={destChain.logoURI!}
               title={destChain.prettyName}
-              subTitle={destAddress ?? ''}
+              subTitle={destWallet.address ?? ''}
               actionLabel="Change"
               size="lg"
               onClick={handleChangeChain}

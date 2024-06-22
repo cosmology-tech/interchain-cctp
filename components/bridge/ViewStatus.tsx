@@ -173,7 +173,7 @@ export const ViewStatus = ({
               <Box display="flex" flexDirection="column" alignItems="center">
                 <NobleButton
                   attributes={{ mb: '18px' }}
-                  onClick={() => setBridgeStep('select-token')}
+                  onClick={() => setBridgeStep('select-amount-dest')}
                 >
                   Start another transaction
                 </NobleButton>

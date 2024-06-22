@@ -20,6 +20,7 @@ import { SkipChain, useSkipChains, useUsdcAssets, useUsdcBalance, useUsdcPrice }
 import BigNumber from 'bignumber.js';
 import { NOBLE_CHAIN_ID, colors } from '@/config';
 import { WalletConnector } from './WalletConnector';
+import { useCurrentWallets } from '@/contexts';
 
 const PARTIAL_PERCENTAGES = [0.1, 0.25, 0.5, 0.8, 1.0];
 const DEFAULT_GAS_AMOUNT = (200_000).toString();
@@ -27,14 +28,14 @@ const DEFAULT_GAS_AMOUNT = (200_000).toString();
 export type SelectedToken = {
   chain: SkipChain;
   asset: Asset;
-} | null;
+};
 
 interface SelectAmountProps {
   amount: string;
   destChainId: string | undefined;
   setAmount: (amount: string) => void;
-  selectedToken: SelectedToken;
-  setSelectedToken: (selectedToken: SelectedToken) => void;
+  selectedToken: SelectedToken | undefined;
+  setSelectedToken: (selectedToken: SelectedToken | undefined) => void;
   setBalance: (balance: string) => void;
 }
 
@@ -50,7 +51,7 @@ export const SelectAmount = ({
   const { data: assets = {}, isLoading: isFetchingAssets } = useUsdcAssets();
 
   const [isChainDropdownOpened, setIsChainDropdownOpened] = useState(false);
-  const [address, setAddress] = useState<string | undefined>();
+  const { srcWallet } = useCurrentWallets();
 
   const isLoading = isFetchingChains || isFetchingAssets;
 
@@ -75,7 +76,7 @@ export const SelectAmount = ({
   const { data: balance, isPending: isFetchingBalance } = useUsdcBalance({
     chain: selectedToken?.chain,
     asset: selectedToken?.asset,
-    address
+    address: srcWallet.address
   });
 
   useEffect(() => {
@@ -224,12 +225,7 @@ export const SelectAmount = ({
       }}
       labelExtra={
         <>
-          <WalletConnector
-            label="Origin"
-            chain={selectedToken?.chain}
-            setAddress={setAddress}
-            direction="source"
-          />
+          <WalletConnector label="Origin" chain={selectedToken?.chain} direction="source" />
           <Stack space="$4">
             {PARTIAL_PERCENTAGES.map((percent, index) => {
               const isMax = index === PARTIAL_PERCENTAGES.length - 1;
@@ -256,7 +252,7 @@ export const SelectAmount = ({
               <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">
                 Available:&nbsp;
               </Text>
-              {isFetchingBalance && address ? (
+              {isFetchingBalance && srcWallet.address ? (
                 <Skeleton width="40px" height="20px" borderRadius="$md" />
               ) : (
                 <Text color="$textSecondary" fontSize="$sm" fontWeight="$normal">

@@ -19,8 +19,8 @@ export type TransferInfo = {
 const Bridge = () => {
   const [bridgeStep, setBridgeStep] = useState<BridgeStep>('select-amount-dest');
   const [broadcastedTxs, setBroadcastedTxs] = useState<BroadcastedTx[]>([]);
-  const [route, setRoute] = useState<RouteResponse | null>(null);
-  const [transferInfo, setTransferInfo] = useState<TransferInfo | null>(null);
+  const [route, setRoute] = useState<RouteResponse>();
+  const [transferInfo, setTransferInfo] = useState<TransferInfo>();
 
   const currentStep = useMemo(() => {
     const bridgeStepsMap: Record<BridgeStep, React.ReactNode> = {
@@ -28,8 +28,8 @@ const Bridge = () => {
         <SelectAmountDest
           setRoute={setRoute}
           setBridgeStep={setBridgeStep}
-          setBroadcastedTxs={setBroadcastedTxs}
           setTransferInfo={setTransferInfo}
+          setBroadcastedTxs={setBroadcastedTxs}
         />
       ),
       'view-status': route && transferInfo && (

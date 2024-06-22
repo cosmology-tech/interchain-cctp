@@ -1,3 +1,8 @@
+// @ts-nocheck
+// ==============================
+// This file is for reference only
+// ==============================
+
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';

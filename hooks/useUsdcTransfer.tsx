@@ -1,0 +1,139 @@
+import { Dispatch, SetStateAction, useState } from 'react';
+import { useWalletClient } from '@cosmos-kit/react';
+import { Text, toast } from '@interchain-ui/react';
+import { RouteResponse } from '@skip-router/core';
+
+import { COSMOS_WALLET_KEY_TO_NAME, CosmosWalletKey, checkIsCosmosWallet } from '@/config';
+import { BroadcastedTx, SkipChain } from '@/hooks';
+import { isUserRejectedRequestError, randomId } from '@/utils';
+import { useSkipClient, useCurrentWallets } from '@/contexts';
+import { BridgeStep, TransferInfo } from '@/pages/bridge';
+import { txHistory } from '@/contexts';
+
+export const useUsdcTransfer = ({
+  setRoute,
+  setBridgeStep,
+  setBroadcastedTxs,
+  setTransferInfo
+}: {
+  setRoute: (route: RouteResponse | undefined) => void;
+  setBridgeStep: (step: BridgeStep) => void;
+  setBroadcastedTxs: Dispatch<SetStateAction<BroadcastedTx[]>>;
+  setTransferInfo: (info: TransferInfo | undefined) => void;
+}) => {
+  const skipClient = useSkipClient();
+  const { srcWallet, destWallet } = useCurrentWallets();
+
+  const cosmosWalletKey: CosmosWalletKey =
+    srcWallet.walletKey && checkIsCosmosWallet(srcWallet.walletKey) ? srcWallet.walletKey : 'keplr';
+
+  const [showSignTxView, setShowSignTxView] = useState(false);
+
+  const { client: cosmosWalletClient } = useWalletClient(
+    COSMOS_WALLET_KEY_TO_NAME[cosmosWalletKey]
+  );
+
+  const srcAddress = srcWallet.address;
+  const destAddress = destWallet.address;
+
+  const onTransfer = async ({
+    route,
+    amount,
+    srcChain,
+    destChain
+  }: {
+    route: RouteResponse | undefined;
+    amount: string;
+    srcChain: SkipChain | undefined;
+    destChain: SkipChain | undefined;
+  }) => {
+    if (!route || !srcChain || !destChain || !srcAddress || !destAddress) return;
+
+    const transferInfo: TransferInfo = {
+      amount,
+      fromChainID: srcChain.chainID,
+      fromChainAddress: srcAddress,
+      fromChainLogo: srcChain.logoURI || '',
+      toChainID: destChain.chainID,
+      toChainAddress: destAddress,
+      toChainLogo: destChain.logoURI || ''
+    };
+
+    setRoute(route);
+    setShowSignTxView(true);
+    setTransferInfo(transferInfo);
+
+    const wallets = [srcWallet, destWallet];
+
+    const userAddresses = route.chainIDs.reduce((acc, chainID) => {
+      const wallet = wallets.find((w) => w.chainId === chainID);
+      if (!wallet?.address) {
+        throw new Error(`No address found for chain: ${chainID}`);
+      }
+      return { ...acc, [chainID]: wallet.address };
+    }, {} as Record<string, string>);
+
+    const historyId = randomId();
+
+    try {
+      await skipClient?.executeRoute({
+        route,
+        userAddresses,
+        validateGasBalance: route.txsRequired === 1,
+        getCosmosSigner: async (chainID: string) => {
+          const cosmosSigner =
+            cosmosWalletClient?.getOfflineSignerDirect &&
+            cosmosWalletClient.getOfflineSignerDirect(chainID);
+
+          if (!cosmosSigner) {
+            throw new Error(
+              `getCosmosSigner error: no offline signer available for chain ${chainID}`
+            );
+          }
+
+          return cosmosSigner;
+        },
+        onTransactionTracked: async (tx) => {
+          txHistory.addItem({
+            route,
+            transferInfo,
+            id: historyId,
+            broadcastedTx: tx
+          });
+
+          setBroadcastedTxs((prev) => {
+            const txs = [...prev, { chainID: tx.chainID, txHash: tx.txHash }];
+            if (route.txsRequired === txs.length) {
+              setBridgeStep('view-status');
+            }
+            return txs;
+          });
+        }
+      });
+    } catch (err: any) {
+      console.error(err);
+      if (isUserRejectedRequestError(err)) {
+        setShowSignTxView(false);
+        return;
+      }
+      toast.error(
+        <Text
+          as="p"
+          color="inherit"
+          attributes={{
+            maxHeight: '250px',
+            overflow: 'auto'
+          }}
+        >
+          {`Failed to execute transaction: ${err.message}`}
+        </Text>,
+        {
+          duration: 6000
+        }
+      );
+      setShowSignTxView(false);
+    }
+  };
+
+  return { showSignTxView, onTransfer };
+};

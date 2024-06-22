@@ -1,11 +1,12 @@
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
-import { WALLET_KEY_TO_LOGO_URL, WALLET_KEY_TO_PRETTY_NAME, WalletKey, colors } from '@/config';
+
+import { WALLET_KEY_TO_LOGO_URL, WALLET_KEY_TO_PRETTY_NAME, colors } from '@/config';
 import { FaqList, FadeIn } from '@/components/common';
 import { PulsingBox } from '@/components/common/PulsingBox';
 import { AbstractWallet } from '@/components/common/icons/AbstractWallet';
-import { useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
+import { useCurrentWallets } from '@/contexts';
 
 const TransactionSigningModal = dynamic(
   () =>
@@ -15,10 +16,9 @@ const TransactionSigningModal = dynamic(
   { ssr: false }
 );
 
-export function SignTx() {
-  const searchParams = useSearchParams();
-
-  const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
+export const SignTx = () => {
+  const { srcWallet } = useCurrentWallets();
+  const walletKey = srcWallet.walletKey ?? 'keplr';
 
   const walletInfo = {
     logo: WALLET_KEY_TO_LOGO_URL[walletKey],
@@ -64,31 +64,6 @@ export function SignTx() {
                 <AbstractWallet />
               </PulsingBox>
             </Box>
-            {/* 
-            * The button is included in the design but actually useless
-            * The user can reject from the wallet itself if they want to cancel the transaction
-            <Box mt="12px" textAlign="center">
-              <BaseButton
-                style={{
-                  margin: '0 auto'
-                }}
-                onPress={() => {
-                  router.back();
-                }}
-              >
-                <Text
-                  as="span"
-                  fontSize="14px"
-                  fontWeight="600"
-                  lineHeight="20px"
-                  attributes={{ cursor: 'pointer' }}
-                  color={useColorModeValue(colors.gray500, colors.blue700)}
-                >
-                  Cancel
-                </Text>
-              </BaseButton>
-            </Box> 
-            */}
           </Box>
         </Box>
 
@@ -96,4 +71,4 @@ export function SignTx() {
       </FadeIn>
     </>
   );
-}
+};
