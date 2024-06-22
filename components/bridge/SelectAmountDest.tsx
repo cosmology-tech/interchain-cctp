@@ -1,18 +1,18 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { useWalletClient } from '@cosmos-kit/react';
-import { useAccount, useSwitchChain } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { Box, NobleButton, Text, toast, useColorModeValue } from '@interchain-ui/react';
 
 import { ArrowDownIcon, FaqList, FadeIn } from '@/components/common';
+import { CHAIN_TYPE, sizes, COSMOS_WALLET_KEY_TO_NAME, colors } from '@/config';
 import {
-  CHAIN_TYPE,
-  sizes,
-  WalletKey,
-  checkIsCosmosWallet,
-  COSMOS_WALLET_KEY_TO_NAME,
-  colors
-} from '@/config';
-import { BroadcastedTx, SkipChain, useCosmosWallet, useRoute, useUsdcAssets } from '@/hooks';
+  BroadcastedTx,
+  SkipChain,
+  useCosmosWallet,
+  useDisclosure,
+  useRoute,
+  useUsdcAssets
+} from '@/hooks';
 import {
   checkIsInvalidRoute,
   isUserRejectedRequestError,
@@ -20,7 +20,7 @@ import {
   randomId,
   shiftDecimals
 } from '@/utils';
-import { useSkipClient } from '@/contexts';
+import { useSkipClient, useSourceWallet } from '@/contexts';
 import { BridgeStep, TransferInfo } from '@/pages/bridge';
 import { SelectAmount, SelectedToken } from './SelectAmount';
 import { SelectDestination } from './SelectDestination';
@@ -29,7 +29,6 @@ import type { RouteResponse } from '@skip-router/core';
 import { SignTx } from './SignTx';
 import { txHistory } from '@/contexts';
 import { PoweredBy } from './PoweredBy';
-import { useSearchParams } from 'next/navigation';
 
 interface SelectAmountDestProps {
   setRoute: Dispatch<SetStateAction<RouteResponse | null>>;
@@ -56,19 +55,18 @@ export function SelectAmountDest({
   const [amount, setAmount] = useState('');
   const [showSignTxView, setShowSignTxView] = useState(false);
 
-  const searchParams = useSearchParams();
-  const walletKey = (searchParams.get('wallet') ?? 'keplr') as WalletKey;
+  const { srcCosmosWallet } = useSourceWallet();
 
-  const cosmosWalletKey = checkIsCosmosWallet(walletKey) ? walletKey : 'keplr';
-  const { address: cosmosAddress } = useCosmosWallet(
+  const cosmosWalletKey = srcCosmosWallet ?? 'keplr';
+  const { address: cosmosAddress, isDisconnected: isCosmosWalletDisconnected } = useCosmosWallet(
     cosmosWalletKey,
     selectedToken?.chain.chainID ?? ''
   );
   const { client: cosmosWalletClient } = useWalletClient(
     COSMOS_WALLET_KEY_TO_NAME[cosmosWalletKey]
   );
-  const { address: evmAddress, chainId: connectedChainId } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+
+  const { address: evmAddress, isDisconnected: isEvmWalletDisconnected } = useAccount();
 
   const destAsset = assets && destChain ? assets[destChain.chainID] : undefined;
 
@@ -85,7 +83,8 @@ export function SelectAmountDest({
     enabled: !!destAsset && !!selectedToken
   });
 
-  async function onTransfer() {
+  // TODO: extract to a hook potentially
+  const onTransfer = async () => {
     if (!route || !evmAddress || !destChain || !destAddress || !selectedToken) return;
 
     const { chain: sourceChain } = selectedToken;
@@ -119,13 +118,6 @@ export function SelectAmountDest({
     const historyId = randomId();
 
     try {
-      if (
-        sourceChain.chainType === CHAIN_TYPE.EVM &&
-        connectedChainId !== Number(sourceChain.chainID)
-      ) {
-        await switchChainAsync({ chainId: Number(sourceChain.chainID) });
-      }
-
       await skipClient?.executeRoute({
         route,
         userAddresses,
@@ -183,26 +175,78 @@ export function SelectAmountDest({
       );
       setShowSignTxView(false);
     }
-  }
+  };
 
   const isInvalidRoute = useMemo(() => checkIsInvalidRoute(route), [route]);
 
   const showTransferInfo = !!route && !!destChain && !!evmAddress && !isInvalidRoute;
 
-  const bridgeButtonText = routeIsFetching
-    ? 'Finding best route...'
-    : routeIsError || isInvalidRoute
-    ? 'No route found'
-    : 'Bridge';
+  const { onOpen: openSrcWalletPopover } = useDisclosure('source_wallet_popover');
+  const { onOpen: openDestWalletPopover } = useDisclosure('dest_wallet_popover');
 
-  const isBridgeButtonDisabled =
-    !route ||
-    !destAddress ||
-    !isValidAddress(destAddress) ||
-    +amount > +balance ||
-    routeIsFetching ||
-    routeIsError ||
-    isInvalidRoute;
+  const isSrcWalletDisconnected =
+    selectedToken &&
+    (selectedToken.chain.chainType === CHAIN_TYPE.EVM
+      ? isEvmWalletDisconnected
+      : isCosmosWalletDisconnected);
+
+  const isDestWalletDisconnected = !!destChain && !destAddress;
+
+  const onBridgeButtonClick = () => {
+    if (isSrcWalletDisconnected) {
+      openSrcWalletPopover();
+      return;
+    }
+    if (isDestWalletDisconnected) {
+      openDestWalletPopover();
+      return;
+    }
+    onTransfer();
+  };
+
+  const bridgeButtonText = useMemo(() => {
+    if (isSrcWalletDisconnected) {
+      return 'Connect Wallet';
+    }
+    if (isDestWalletDisconnected) {
+      return 'Set Destination Address';
+    }
+    return routeIsFetching
+      ? 'Finding best route...'
+      : routeIsError || isInvalidRoute
+      ? 'No route found'
+      : 'Bridge';
+  }, [
+    routeIsFetching,
+    routeIsError,
+    isInvalidRoute,
+    isSrcWalletDisconnected,
+    isDestWalletDisconnected
+  ]);
+
+  const isBridgeButtonDisabled = useMemo(() => {
+    if (isSrcWalletDisconnected || isDestWalletDisconnected) return false;
+
+    return (
+      !route ||
+      !destAddress ||
+      !isValidAddress(destAddress) ||
+      +amount > +balance ||
+      routeIsFetching ||
+      routeIsError ||
+      isInvalidRoute
+    );
+  }, [
+    route,
+    destAddress,
+    amount,
+    balance,
+    routeIsFetching,
+    routeIsError,
+    isInvalidRoute,
+    isSrcWalletDisconnected,
+    isDestWalletDisconnected
+  ]);
 
   if (showSignTxView) {
     return <SignTx />;
@@ -224,6 +268,7 @@ export function SelectAmountDest({
 
         <SelectAmount
           amount={amount}
+          destChainId={destChain?.chainID}
           setAmount={setAmount}
           selectedToken={selectedToken}
           setSelectedToken={setSelectedToken}
@@ -236,7 +281,7 @@ export function SelectAmountDest({
 
         <SelectDestination
           route={route}
-          sourceChainId={selectedToken?.chain.chainID ?? ''}
+          sourceChainId={selectedToken?.chain.chainID}
           destChain={destChain}
           destAddress={destAddress}
           setDestChain={setDestChain}
@@ -250,7 +295,7 @@ export function SelectAmountDest({
             marginTop: '20px',
             fontWeight: '$semibold'
           }}
-          onClick={() => onTransfer()}
+          onClick={onBridgeButtonClick}
           disabled={isBridgeButtonDisabled}
         >
           {bridgeButtonText}

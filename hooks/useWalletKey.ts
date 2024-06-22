@@ -12,12 +12,10 @@ export const useWalletKey = ({ direction }: { direction: WalletDirection }) => {
   const [destCosmosWallet, setDestCosmosWallet] = useState<CosmosWalletKey | null>(null);
 
   useEffect(() => {
-    if (!srcEvmWallet) return;
     setDestEvmWallet(srcEvmWallet);
   }, [srcEvmWallet]);
 
   useEffect(() => {
-    if (!srcCosmosWallet) return;
     setDestCosmosWallet(srcCosmosWallet);
   }, [srcCosmosWallet]);
 

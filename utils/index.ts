@@ -1,11 +1,10 @@
 import { chains } from 'chain-registry';
 import { Asset, Chain } from '@chain-registry/types';
-// import { skipChainById } from '@/contexts';
-// import { COSMOS_BECH32_PREFIX_TO_CHAIN_ID } from '@/config';
-import { COSMOS_CHAINS } from '@/config/chains';
+import { CHAIN_TYPE, COSMOS_CHAINS } from '@/config/chains';
 import BigNumber from 'bignumber.js';
 import { fromBech32 } from '@cosmjs/encoding';
-import { RouteResponse, Asset as SkipAsset } from '@skip-router/core';
+import { RouteResponse } from '@skip-router/core';
+import { SkipChain } from '@/hooks';
 
 export const USDC_TO_UUSDC = 1e6;
 export function uusdcToUsdc(uusdc: string | bigint = '0') {
@@ -48,6 +47,10 @@ export function getChainLogo(name: string) {
   const chain = chains.find((chain) => chain.chain_name === name);
   return chain ? getLogo(chain) : null;
 }
+
+export const isCosmosChain = (chain: SkipChain) => {
+  return chain.chainType === CHAIN_TYPE.COSMOS;
+};
 
 export const getCosmosChainNameById = (chainId: string) => {
   return COSMOS_CHAINS.find((chain) => chain.chain_id === chainId)!.chain_name;

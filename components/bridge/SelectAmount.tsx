@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Asset } from '@skip-router/core';
 import {
   Box,
@@ -31,6 +31,7 @@ export type SelectedToken = {
 
 interface SelectAmountProps {
   amount: string;
+  destChainId: string | undefined;
   setAmount: (amount: string) => void;
   selectedToken: SelectedToken;
   setSelectedToken: (selectedToken: SelectedToken) => void;
@@ -39,6 +40,7 @@ interface SelectAmountProps {
 
 export const SelectAmount = ({
   amount,
+  destChainId,
   setAmount,
   selectedToken,
   setSelectedToken,
@@ -62,6 +64,10 @@ export const SelectAmount = ({
       asset: assets[defaultSelectedChain.chainID]
     });
   }, [isLoading]);
+
+  const filteredChains = useMemo(() => {
+    return chains.filter((chain) => chain.chainID !== destChainId);
+  }, [chains, destChainId]);
 
   const [partialPercent, setPartialPercent] = useState<number | null>(null);
   const { data: usdcPrice } = useUsdcPrice();
@@ -184,7 +190,7 @@ export const SelectAmount = ({
                 flexDirection="column"
                 overflowY="auto"
               >
-                {chains.map((chain) => {
+                {filteredChains.map((chain) => {
                   const usdcAsset = assets[chain.chainID];
 
                   return (

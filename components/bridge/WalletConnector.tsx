@@ -28,6 +28,7 @@ import {
   ChainType,
   WalletKey
 } from '@/config';
+import { isCosmosChain } from '@/utils';
 
 type WalletState = {
   type: ChainType;
@@ -36,6 +37,7 @@ type WalletState = {
   isConnecting: boolean;
   connect: () => void;
   disconnect: () => void;
+  connectAsync: () => Promise<boolean>;
 };
 
 type WalletConnectorProps = {
@@ -54,7 +56,6 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
   });
 
   const selectedChainId = chain?.chainID ?? '';
-  const isCosmosChain = chain?.chainType === CHAIN_TYPE.COSMOS;
 
   const evmWalletMap: Record<EvmWalletKey, ReturnType<typeof useEvmWallet>> = {
     metamask: useEvmWallet('metamask')
@@ -75,7 +76,8 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
         isConnected: wallet.isConnected,
         isConnecting: wallet.isConnecting,
         connect: wallet.connect,
-        disconnect: wallet.disconnect
+        disconnect: wallet.disconnect,
+        connectAsync: wallet.connectAsync
       })),
       ...Object.entries(cosmosWalletMap).map(([walletKey, wallet]) => ({
         walletKey: walletKey as CosmosWalletKey,
@@ -83,7 +85,8 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
         isConnected: wallet.isConnected,
         isConnecting: wallet.isConnecting,
         connect: wallet.connect,
-        disconnect: wallet.disconnect
+        disconnect: wallet.disconnect,
+        connectAsync: wallet.connectAsync
       }))
     ];
   }, [evmWalletMap, cosmosWalletMap]);
@@ -93,13 +96,16 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
 
   useEffect(() => {
     const shouldConnectCosmosChain =
-      isCosmosChain && cosmosWalletKey && !cosmosWalletMap[cosmosWalletKey].isConnected;
+      chain &&
+      isCosmosChain(chain) &&
+      cosmosWalletKey &&
+      !cosmosWalletMap[cosmosWalletKey].isConnected;
 
     if (shouldConnectCosmosChain) cosmosWalletMap[cosmosWalletKey].connect();
-  }, [chain]);
+  }, [chain, cosmosWalletKey]);
 
   const switchEvmChain = useCallback(async () => {
-    if (!chain || isCosmosChain || !evmWalletKey) return;
+    if (!chain || isCosmosChain(chain) || !evmWalletKey) return;
     try {
       await switchChainAsync({ chainId: Number(chain.chainID) });
     } catch (error) {
@@ -121,27 +127,45 @@ export const WalletConnector = ({ label, chain, setAddress, direction }: WalletC
   }, [chain, evmWalletMap[evmWalletKey ?? 'metamask'].isConnected]);
 
   useEffect(() => {
-    if (isCosmosChain) {
+    if (!chain) {
+      setAddress(undefined);
+      return;
+    }
+    if (isCosmosChain(chain)) {
       setAddress(cosmosWalletKey ? cosmosWalletMap[cosmosWalletKey].address : undefined);
       return;
     }
     setAddress(evmWalletKey ? evmWalletMap[evmWalletKey].address : undefined);
   }, [
-    isCosmosChain,
+    chain,
+    evmWalletKey,
+    cosmosWalletKey,
     cosmosWalletMap[cosmosWalletKey ?? 'keplr'].address,
     evmWalletMap[evmWalletKey ?? 'metamask'].address
   ]);
 
   const displayedWallets = allWallets.filter((wallet) => wallet.type === chain?.chainType);
-  const connectedWallet = displayedWallets.find(
-    (wallet) => wallet.walletKey === (isCosmosChain ? cosmosWalletKey : evmWalletKey)
-  );
+  const connectedWallet = chain
+    ? displayedWallets.find(
+        ({ walletKey }) => walletKey === (isCosmosChain(chain) ? cosmosWalletKey : evmWalletKey)
+      )
+    : null;
 
-  const handleConnect = (wallet: WalletState) => () => {
-    wallet.connect();
+  const setWalletKey = (wallet: WalletState) => {
     wallet.type === 'cosmos'
       ? setCosmosWalletKey(wallet.walletKey as CosmosWalletKey)
       : setEvmWalletKey(wallet.walletKey as EvmWalletKey);
+  };
+
+  const handleConnect = (wallet: WalletState) => () => {
+    if (wallet.isConnected) {
+      setWalletKey(wallet);
+      return;
+    }
+    wallet.connectAsync().then((isSuccessful) => {
+      if (!isSuccessful) return;
+      setWalletKey(wallet);
+    });
   };
 
   const handleDisconnect = (wallet: WalletState) => () => {

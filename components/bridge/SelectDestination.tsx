@@ -23,7 +23,7 @@ interface SelectDestinationProps {
   setDestChain: (chain: SkipChain | null) => void;
   destAddress: string | undefined;
   setDestAddress: (address: string | undefined) => void;
-  sourceChainId: string;
+  sourceChainId: string | undefined;
   route: RouteResponse | undefined;
 }
 
