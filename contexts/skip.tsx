@@ -23,7 +23,7 @@ export function SkipProvider({ children }: { children: React.ReactNode }) {
       setSkipClient(
         // @ts-ignore
         new SkipRouterClass({
-          clientID: envConfig.skipApiKey,
+          // apiKey: envConfig.skipApiKey,
           // @ts-ignore
           getEVMSigner: async (chainID) => {
             const evmWalletClient = (await getWalletClient(config, {

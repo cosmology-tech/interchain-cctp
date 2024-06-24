@@ -19,7 +19,8 @@ export const useUsdcAssets = () => {
         SUPPORTED_CHAIN_IDS.map(async (chainId) => {
           const chainAssets = await skipClient.assets({
             chainID: chainId,
-            includeEvmAssets: true
+            includeEvmAssets: true,
+            onlyTestnets: isTestnetMode
           });
           const usdcAsset = chainAssets[chainId].find(
             ({ recommendedSymbol }) => recommendedSymbol === 'USDC'

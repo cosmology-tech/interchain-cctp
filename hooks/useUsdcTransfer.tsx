@@ -9,6 +9,7 @@ import { isUserRejectedRequestError, randomId } from '@/utils';
 import { useSkipClient, useCurrentWallets } from '@/contexts';
 import { BridgeStep, TransferInfo } from '@/pages/bridge';
 import { txHistory } from '@/contexts';
+import { useUserAddresses } from './useUserAddresses';
 
 export const useUsdcTransfer = ({
   setRoute,
@@ -32,6 +33,8 @@ export const useUsdcTransfer = ({
   const { client: cosmosWalletClient } = useWalletClient(
     COSMOS_WALLET_KEY_TO_NAME[cosmosWalletKey]
   );
+
+  const { getUserAddresses } = useUserAddresses();
 
   const srcAddress = srcWallet.address;
   const destAddress = destWallet.address;
@@ -63,19 +66,11 @@ export const useUsdcTransfer = ({
     setShowSignTxView(true);
     setTransferInfo(transferInfo);
 
-    const wallets = [srcWallet, destWallet];
-
-    const userAddresses = route.chainIDs.reduce((acc, chainID) => {
-      const wallet = wallets.find((w) => w.chainId === chainID);
-      if (!wallet?.address) {
-        throw new Error(`No address found for chain: ${chainID}`);
-      }
-      return { ...acc, [chainID]: wallet.address };
-    }, {} as Record<string, string>);
-
     const historyId = randomId();
 
     try {
+      const userAddresses = await getUserAddresses({ route });
+
       await skipClient?.executeRoute({
         route,
         userAddresses,

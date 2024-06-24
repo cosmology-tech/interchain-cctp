@@ -22,7 +22,7 @@ export const useSkipChains = () => {
       const chains = await skipClient.chains({
         includeEVM: true,
         includeSVM: false,
-        includeTestnets: isTestnetMode
+        onlyTestnets: isTestnetMode
       });
 
       return chains

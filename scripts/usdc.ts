@@ -1,65 +1,75 @@
-import { SkipRouter, Chain, Asset } from "@skip-router/core";
+import { SkipRouter, Chain, Asset } from '@skip-router/core';
 
-type Group = { chain: Chain, asset: Asset }
+type Group = { chain: Chain; asset: Asset };
 
 (async function main() {
   const router = new SkipRouter({
-    clientID: "29b79e8e-3d14-4610-893e-0368174b116e"
+    apiKey: '29b79e8e-3d14-4610-893e-0368174b116e'
   });
 
   const chains = await router.chains({
     includeEVM: true,
-    includeSVM: true,
-    includeTestnets: true,
-  })
+    includeSVM: true
+  });
 
-  const results = await Promise.all(chains.map(chain => router.assets({
-    chainID: chain.chainID,
-    includeEvmAssets: true,
-    includeSvmAssets: true,
-    includeCW20Assets: true,
-  })))
+  const results = await Promise.all(
+    chains.map((chain) =>
+      router.assets({
+        chainID: chain.chainID,
+        includeEvmAssets: true,
+        includeSvmAssets: true,
+        includeCW20Assets: true
+      })
+    )
+  );
 
-  const evm: Group[] = []
-  const svm: Group[] = []
-  const cosmos: Group[] = []
-  const testnets: Group[] = []
+  const evm: Group[] = [];
+  const svm: Group[] = [];
+  const cosmos: Group[] = [];
+  const testnets: Group[] = [];
 
   results.forEach((result, index) => {
-    const chain = chains[index]
+    const chain = chains[index];
     const assets = result[chain.chainID];
-    const asset = assets.find(asset => asset.recommendedSymbol === 'USDC')
+    const asset = assets.find((asset) => asset.recommendedSymbol === 'USDC');
     if (asset) {
       if (chain.isTestnet) {
-        testnets.push({ chain, asset })
+        testnets.push({ chain, asset });
       } else if (chain.chainType === 'cosmos') {
-        cosmos.push({ chain, asset })
+        cosmos.push({ chain, asset });
       } else if (chain.chainType === 'evm') {
-        evm.push({ chain, asset })
+        evm.push({ chain, asset });
       } else if (chain.chainType === 'svm') {
-        svm.push({ chain, asset })
+        svm.push({ chain, asset });
       }
     }
-  })
+  });
 
-  evm.sort((a, b) => a.chain.chainID.localeCompare(b.chain.chainID))
-  svm.sort((a, b) => a.chain.chainID.localeCompare(b.chain.chainID))
-  cosmos.sort((a, b) => a.chain.chainID.localeCompare(b.chain.chainID))
-  testnets.sort((a, b) => a.chain.chainID.localeCompare(b.chain.chainID))
+  evm.sort((a, b) => a.chain.chainID.localeCompare(b.chain.chainID));
+  svm.sort((a, b) => a.chain.chainID.localeCompare(b.chain.chainID));
+  cosmos.sort((a, b) => a.chain.chainID.localeCompare(b.chain.chainID));
+  testnets.sort((a, b) => a.chain.chainID.localeCompare(b.chain.chainID));
 
-  console.log('\nEVM:')
-  evm.forEach(log)
-  console.log('\nSVM:')
-  svm.forEach(log)
-  console.log('\nCosmos:')
-  cosmos.forEach(log)
-  console.log('\nTestnets:')
-  testnets.forEach(log)
-
+  console.log('\nEVM:');
+  evm.forEach(log);
+  console.log('\nSVM:');
+  svm.forEach(log);
+  console.log('\nCosmos:');
+  cosmos.forEach(log);
+  console.log('\nTestnets:');
+  testnets.forEach(log);
 })().catch(console.error);
 
-function log({ chain, asset }: { chain: Chain, asset: Asset }) {
-  console.log(chain.chainID, chain.chainName, chain.chainType, asset.denom, asset.chainID, asset.originDenom, asset.originChainID)
+function log({ chain, asset }: { chain: Chain; asset: Asset }) {
+  console.log(
+    chain.chainID,
+    chain.chainName,
+    chain.chainType,
+    asset.denom,
+    asset.chainID,
+    asset.originDenom,
+    asset.originChainID
+  );
 }
 
 // "0xc0a5119053e8e9e31ac3d6257e3e24781705ee8bd179816814a5cc6047af777d"

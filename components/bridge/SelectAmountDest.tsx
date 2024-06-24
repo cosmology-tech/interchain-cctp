@@ -127,6 +127,8 @@ export const SelectAmountDest = ({
     isDestWalletDisconnected
   ]);
 
+  const textColor = useColorModeValue(colors.blue50, colors.white);
+
   if (showSignTxView) {
     return <SignTx />;
   }
@@ -139,7 +141,7 @@ export const SelectAmountDest = ({
           fontWeight="600"
           lineHeight="1.4"
           textAlign="center"
-          color={useColorModeValue(colors.blue50, colors.white)}
+          color={textColor}
           attributes={{ mb: '50px' }}
         >
           Send USDC

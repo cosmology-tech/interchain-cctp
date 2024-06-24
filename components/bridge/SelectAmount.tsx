@@ -118,7 +118,7 @@ export const SelectAmount = ({
     }
 
     const feeAsset = sourceChain.feeAssets.find(({ denom }) => denom === 'uusdc');
-    const gasPrice = feeAsset?.gasPrice.average ?? '0.1';
+    const gasPrice = feeAsset?.gasPrice?.average ?? '0.1';
     const decimals = sourceAsset.decimals ?? 6;
     const gasRequired = BigNumber(gasPrice)
       .multipliedBy(DEFAULT_GAS_AMOUNT)

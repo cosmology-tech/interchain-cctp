@@ -28,7 +28,7 @@
     "@leapwallet/cosmos-social-login-capsule-provider-ui": "0.0.51",
     "@metamask/providers": "^16.0.0",
     "@next/bundle-analyzer": "^14.2.3",
-    "@skip-router/core": "^2.4.1",
+    "@skip-router/core": "5.1.0",
     "@tanstack/query-core": "^5.29.0",
     "@tanstack/react-query": "^5.29.2",
     "@vanilla-extract/css": "^1.14.2",
