@@ -1,6 +1,23 @@
 import { useMemo } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { EVM_WALLET_KEY_TO_ID, EvmWalletKey } from '@/config';
+import { EVM_WALLET_KEY_TO_ID, WALLET_KEY_TO_PRETTY_NAME, EvmWalletKey, ChainType } from '@/config';
+
+type WagmiAccount = ReturnType<typeof useAccount>;
+
+export type UseEvmWalletReturnType = {
+  type: ChainType;
+  walletName: string;
+  isConnected: boolean;
+  isDisconnected: boolean;
+  isConnecting: boolean;
+  isInstalled: boolean;
+  connect: () => void;
+  connectAsync: () => Promise<boolean>;
+  disconnect: () => void;
+  username?: string;
+  chainId: WagmiAccount['chainId'];
+  address: WagmiAccount['address'];
+};
 
 export const useEvmWallet = (walletKey: EvmWalletKey) => {
   const { address, chainId, isConnected } = useAccount();
@@ -10,7 +27,7 @@ export const useEvmWallet = (walletKey: EvmWalletKey) => {
   const connector = useMemo(() => {
     const connectorId = EVM_WALLET_KEY_TO_ID[walletKey];
     return connectors.find(({ id }) => id === connectorId);
-  }, [connectors]);
+  }, [connectors, walletKey]);
 
   const connectAsync = async () => {
     if (!connector) return false;
@@ -25,6 +42,8 @@ export const useEvmWallet = (walletKey: EvmWalletKey) => {
   const isInstalled = Boolean(connector);
 
   return {
+    type: 'evm',
+    walletName: WALLET_KEY_TO_PRETTY_NAME[walletKey],
     connect,
     connectAsync,
     address,
@@ -32,6 +51,7 @@ export const useEvmWallet = (walletKey: EvmWalletKey) => {
     disconnect,
     isInstalled,
     isConnected,
+    isDisconnected: !isConnected,
     isConnecting: isPending
-  };
+  } satisfies UseEvmWalletReturnType;
 };

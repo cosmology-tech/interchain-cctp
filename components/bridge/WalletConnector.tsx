@@ -1,14 +1,4 @@
-import { useEffect, useMemo, useCallback, useState } from 'react';
-import {
-  Box,
-  Text,
-  Popover,
-  Button,
-  PopoverTrigger,
-  useColorModeValue,
-  Icon,
-  PopoverContent
-} from '@interchain-ui/react';
+import { useEffect, useMemo, useCallback, useState, use } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
 
 import {
@@ -17,29 +7,49 @@ import {
   SkipChain,
   WalletDirection,
   useSelectedWalletKeys,
-  useDisclosure
+  useDisclosure,
+  UseEvmWalletReturnType,
+  UseCosmosWalletReturnType
 } from '@/hooks';
 import {
-  colors,
-  CHAIN_TYPE,
+  ConnectDropdown,
+  ConnectDropdownWallet,
+  ConnectViewStatus,
+  ConnectionStatus
+} from '@/components/common/ConnectView';
+import {
+  ChainType,
   CosmosWalletKey,
   EvmWalletKey,
+  CHAIN_TYPE,
   WALLET_KEY_TO_PRETTY_NAME,
-  ChainType,
-  WalletKey
+  WALLET_KEY_TO_LOGO_URL,
+  WALLET_KEY_TO_DOWNLOAD_URL
 } from '@/config';
 import { isCosmosChain } from '@/utils';
 import { useCurrentWallets } from '@/contexts';
 
-type WalletState = {
-  type: ChainType;
-  walletKey: WalletKey;
-  isConnected: boolean;
-  isConnecting: boolean;
-  connect: () => void;
-  disconnect: () => void;
-  connectAsync: () => Promise<boolean>;
-};
+function useWalletConnectionMap(chainId: SkipChain['chainID']) {
+  const metamaskConn = useEvmWallet('metamask');
+  const keplrConn = useCosmosWallet('keplr', chainId);
+  const leapConn = useCosmosWallet('leap', chainId);
+  const capsuleConn = useCosmosWallet('capsule', chainId);
+  const cosmostationConn = useCosmosWallet('cosmostation', chainId);
+
+  return useMemo(() => {
+    return {
+      evmWalletMap: {
+        metamask: metamaskConn
+      },
+      cosmosWalletMap: {
+        keplr: keplrConn,
+        leap: leapConn,
+        capsule: capsuleConn,
+        cosmostation: cosmostationConn
+      }
+    } as const;
+  }, [capsuleConn, cosmostationConn, keplrConn, leapConn, metamaskConn]);
+}
 
 type WalletConnectorProps = {
   label: string;
@@ -64,43 +74,13 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
   );
 
   const selectedChainId = chain?.chainID ?? '';
-
-  const evmWalletMap: Record<EvmWalletKey, ReturnType<typeof useEvmWallet>> = {
-    metamask: useEvmWallet('metamask')
-  };
-
-  const cosmosWalletMap: Record<CosmosWalletKey, ReturnType<typeof useCosmosWallet>> = {
-    keplr: useCosmosWallet('keplr', selectedChainId),
-    leap: useCosmosWallet('leap', selectedChainId),
-    capsule: useCosmosWallet('capsule', selectedChainId),
-    cosmostation: useCosmosWallet('cosmostation', selectedChainId)
-  };
-
-  const allWallets: WalletState[] = useMemo(() => {
-    return [
-      ...Object.entries(evmWalletMap).map(([walletKey, wallet]) => ({
-        walletKey: walletKey as EvmWalletKey,
-        type: CHAIN_TYPE.EVM,
-        isConnected: wallet.isConnected,
-        isConnecting: wallet.isConnecting,
-        connect: wallet.connect,
-        disconnect: wallet.disconnect,
-        connectAsync: wallet.connectAsync
-      })),
-      ...Object.entries(cosmosWalletMap).map(([walletKey, wallet]) => ({
-        walletKey: walletKey as CosmosWalletKey,
-        type: CHAIN_TYPE.COSMOS,
-        isConnected: wallet.isConnected,
-        isConnecting: wallet.isConnecting,
-        connect: wallet.connect,
-        disconnect: wallet.disconnect,
-        connectAsync: wallet.connectAsync
-      }))
-    ];
-  }, [evmWalletMap, cosmosWalletMap]);
+  const { cosmosWalletMap, evmWalletMap } = useWalletConnectionMap(selectedChainId);
 
   const { switchChainAsync } = useSwitchChain();
   const { chainId: connectedChainId } = useAccount();
+
+  const [viewStatus, setViewStatus] = useState<ConnectViewStatus>('wallets');
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('requesting');
 
   useEffect(() => {
     const shouldConnectCosmosChain =
@@ -110,7 +90,7 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
       !cosmosWalletMap[selectedCosmosWalletKey].isConnected;
 
     if (shouldConnectCosmosChain) cosmosWalletMap[selectedCosmosWalletKey].connect();
-  }, [chain, selectedCosmosWalletKey]);
+  }, [chain, cosmosWalletMap, selectedCosmosWalletKey]);
 
   const switchEvmChain = useCallback(async () => {
     if (!chain || isCosmosChain(chain) || !selectedEvmWalletKey) return;
@@ -166,101 +146,184 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
       : setDestWallet({ chainId, walletKey, address });
   }, [address, chain, selectedEvmWalletKey, selectedCosmosWalletKey]);
 
-  const displayedWallets = allWallets.filter((wallet) => wallet.type === chain?.chainType);
+  const [selectedWalletKey, setSelectedWalletKey] = useState<CosmosWalletKey | EvmWalletKey | null>(
+    null
+  );
+
+  const displayWallets: Array<ConnectDropdownWallet> = useMemo(() => {
+    const setWalletKey = (walletType: ChainType, walletKey: CosmosWalletKey | EvmWalletKey) => {
+      walletType === 'cosmos'
+        ? setSelectedCosmosWalletKey(walletKey as CosmosWalletKey)
+        : setSelectedEvmWalletKey(walletKey as EvmWalletKey);
+    };
+
+    const handleConnect =
+      ({
+        wallet,
+        walletKey
+      }: {
+        wallet: UseEvmWalletReturnType | UseCosmosWalletReturnType;
+        walletKey: CosmosWalletKey | EvmWalletKey;
+      }) =>
+      () => {
+        // Internal use for transition state in ConnectDropdown
+        setSelectedWalletKey(walletKey);
+
+        if (wallet.isConnected) {
+          setWalletKey(wallet.type, walletKey);
+          setViewStatus('request');
+          setConnectionStatus('connected');
+          return;
+        }
+
+        if (viewStatus !== 'request') {
+          if (wallet.isInstalled) {
+            setViewStatus('request');
+          } else {
+            return setViewStatus('install');
+          }
+        }
+
+        wallet.connectAsync().then((isSuccessful) => {
+          if (!isSuccessful) {
+            setConnectionStatus('error');
+            return;
+          }
+
+          setWalletKey(wallet.type, walletKey);
+          setConnectionStatus('connected');
+        });
+      };
+
+    const handleDisconnect = (wallet: UseEvmWalletReturnType | UseCosmosWalletReturnType) => () => {
+      if (direction === 'source') {
+        wallet.disconnect();
+      }
+
+      if (wallet.type === 'cosmos') {
+        setSelectedCosmosWalletKey(null);
+      } else {
+        setSelectedEvmWalletKey(null);
+      }
+
+      setViewStatus('wallets');
+      setConnectionStatus('requesting');
+      setSelectedWalletKey(null);
+    };
+
+    const cosmosWallets = Object.entries(cosmosWalletMap).map(
+      ([walletKey, wallet]) =>
+        ({
+          type: CHAIN_TYPE.COSMOS,
+          triggerLabel: WALLET_KEY_TO_PRETTY_NAME[walletKey as unknown as CosmosWalletKey],
+          name: wallet.walletName,
+          walletKey: walletKey as CosmosWalletKey,
+          address: address,
+          isConnected: wallet.isConnected,
+          isLoading: false,
+          downloadUrl: wallet.chain.walletInfo.downloads![0]!.link as string,
+          logoSrc: wallet.chain.walletInfo.logo as string,
+          onConnect: handleConnect({ wallet, walletKey: walletKey as CosmosWalletKey }),
+          onReconnect: handleConnect({ wallet, walletKey: walletKey as CosmosWalletKey }),
+          onDisconnect: handleDisconnect(wallet)
+        } satisfies ConnectDropdownWallet)
+    );
+
+    const evmWallets = Object.entries(evmWalletMap).map(
+      ([walletKey, wallet]) =>
+        ({
+          type: CHAIN_TYPE.COSMOS,
+          walletKey: walletKey as EvmWalletKey,
+          triggerLabel: WALLET_KEY_TO_PRETTY_NAME[walletKey as unknown as EvmWalletKey],
+          name: wallet.walletName,
+          isConnected: wallet.isConnected,
+          isLoading: false,
+          downloadUrl: WALLET_KEY_TO_DOWNLOAD_URL[walletKey as unknown as EvmWalletKey],
+          logoSrc: WALLET_KEY_TO_LOGO_URL[walletKey as unknown as EvmWalletKey],
+          address: address,
+          onConnect: handleConnect({ wallet, walletKey: walletKey as EvmWalletKey }),
+          onReconnect: handleConnect({ wallet, walletKey: walletKey as EvmWalletKey }),
+          onDisconnect: handleDisconnect(wallet)
+        } satisfies ConnectDropdownWallet)
+    );
+
+    return chain?.chainType === CHAIN_TYPE.COSMOS ? cosmosWallets : evmWallets;
+  }, [
+    address,
+    cosmosWalletMap,
+    evmWalletMap,
+    chain,
+    direction,
+    setSelectedCosmosWalletKey,
+    setSelectedEvmWalletKey,
+    viewStatus
+  ]);
+
   const connectedWallet = chain
-    ? displayedWallets.find(
+    ? displayWallets.find(
         ({ walletKey }) =>
           walletKey === (isCosmosChain(chain) ? selectedCosmosWalletKey : selectedEvmWalletKey)
       )
     : null;
 
-  const setWalletKey = (wallet: WalletState) => {
-    wallet.type === 'cosmos'
-      ? setSelectedCosmosWalletKey(wallet.walletKey as CosmosWalletKey)
-      : setSelectedEvmWalletKey(wallet.walletKey as EvmWalletKey);
-  };
-
-  const handleConnect = (wallet: WalletState) => () => {
-    if (wallet.isConnected) {
-      setWalletKey(wallet);
+  // Transition wallet connection state to ConnectDropdown
+  // when chain or wallet connection status changes
+  useEffect(() => {
+    if (!chain || !connectedWallet) {
+      setViewStatus('wallets');
+      setConnectionStatus('requesting');
+      setSelectedWalletKey(null);
       return;
     }
-    wallet.connectAsync().then((isSuccessful) => {
-      if (!isSuccessful) return;
-      setWalletKey(wallet);
-    });
-  };
 
-  const handleDisconnect = (wallet: WalletState) => () => {
-    if (direction === 'source') wallet.disconnect();
-    wallet.type === 'cosmos' ? setSelectedCosmosWalletKey(null) : setSelectedEvmWalletKey(null);
-  };
+    if (connectedWallet.isConnected) {
+      setViewStatus('request');
+      setConnectionStatus('connected');
+      setSelectedWalletKey(connectedWallet.walletKey as CosmosWalletKey | EvmWalletKey);
+    } else {
+      setViewStatus('wallets');
+      setConnectionStatus('requesting');
+      setSelectedWalletKey(null);
+    }
+  }, [chain, direction, connectedWallet]);
+
+  const handleBack = useCallback(() => {
+    if (connectedWallet?.type === CHAIN_TYPE.COSMOS) {
+      setSelectedCosmosWalletKey(null);
+    } else {
+      setSelectedEvmWalletKey(null);
+    }
+
+    setViewStatus('wallets');
+    setConnectionStatus('requesting');
+    setSelectedWalletKey(null);
+  }, [connectedWallet, setSelectedCosmosWalletKey, setSelectedEvmWalletKey]);
+
+  const refreshWalletState = useCallback(() => {
+    if (connectedWallet && connectedWallet.isConnected) {
+      setViewStatus('request');
+      setConnectionStatus('connected');
+    } else {
+      setViewStatus('wallets');
+      setConnectionStatus('requesting');
+    }
+  }, [connectedWallet]);
 
   return (
-    <Popover
-      placement="bottom"
-      // @ts-ignore
-      arrowRef={null}
-      triggerType="click"
-      offset={{ mainAxis: 10 }}
+    <ConnectDropdown
+      viewStatus={viewStatus}
+      connectionStatus={connectionStatus}
+      triggerLabel={label}
+      selectedWalletKey={selectedWalletKey}
+      wallets={displayWallets}
+      onBack={handleBack}
       isOpen={isOpen}
-      setIsOpen={onToggle}
-    >
-      <PopoverTrigger>
-        <Box display="flex" alignItems="center" gap="4px" cursor="pointer">
-          <Text
-            color={useColorModeValue(colors.gray500, colors.blue700)}
-            fontSize="14px"
-            fontWeight="600"
-          >
-            {label}
-          </Text>
-          <Icon
-            name="arrowDropDown"
-            size="$lg"
-            color={useColorModeValue(colors.gray500, colors.blue700)}
-          />
-        </Box>
-      </PopoverTrigger>
-      <PopoverContent showArrow={false}>
-        <Box
-          borderWidth="1px"
-          borderStyle="solid"
-          borderColor="$inputBorder"
-          display="flex"
-          flexDirection="column"
-          gap="6px"
-          bg="$white"
-          p="12px 16px"
-        >
-          <Text textAlign="center" attributes={{ mb: '6px' }}>
-            {connectedWallet?.isConnected ? 'Connected' : 'Connect'}
-          </Text>
-          {connectedWallet?.isConnected ? (
-            <Button
-              key={connectedWallet.walletKey}
-              size="sm"
-              onClick={handleDisconnect(connectedWallet)}
-              isLoading={connectedWallet.isConnecting}
-              rightIcon={direction === 'source' ? 'close' : 'pencilLine'}
-              iconSize="$lg"
-            >
-              {WALLET_KEY_TO_PRETTY_NAME[connectedWallet.walletKey]}
-            </Button>
-          ) : (
-            displayedWallets.map((wallet) => (
-              <Button
-                key={wallet.walletKey}
-                size="sm"
-                onClick={handleConnect(wallet)}
-                isLoading={wallet.isConnecting}
-              >
-                {WALLET_KEY_TO_PRETTY_NAME[wallet.walletKey]}
-              </Button>
-            ))
-          )}
-        </Box>
-      </PopoverContent>
-    </Popover>
+      setIsOpen={(_isOpen) => {
+        if (!_isOpen) {
+          refreshWalletState();
+        }
+        onToggle();
+      }}
+    />
   );
 };

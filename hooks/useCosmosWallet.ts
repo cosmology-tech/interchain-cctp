@@ -1,13 +1,31 @@
 import { useMemo } from 'react';
 import { useWallet } from '@cosmos-kit/react';
 import {
+  ChainType,
   COSMOS_CHAINS,
   COSMOS_WALLET_KEY_TO_NAME,
   CosmosWalletKey,
   NOBLE_CHAIN_ID
 } from '@/config';
 
-export const useCosmosWallet = (walletKey: CosmosWalletKey, chainId: string) => {
+type ChainWallet = ReturnType<typeof useWallet>['chainWallets'][number];
+
+export type UseCosmosWalletReturnType = {
+  type: ChainType;
+  walletName: string;
+  isConnected: boolean;
+  isDisconnected: boolean;
+  isConnecting: boolean;
+  isInstalled: boolean;
+  connect: () => void;
+  connectAsync: () => Promise<boolean>;
+  disconnect: () => void;
+  username?: string;
+  chain: ChainWallet;
+  address: ChainWallet['address'];
+};
+
+export const useCosmosWallet = (walletKey: CosmosWalletKey, chainId?: string) => {
   const { chainWallets } = useWallet(COSMOS_WALLET_KEY_TO_NAME[walletKey]);
 
   const chain = useMemo(() => {
@@ -21,7 +39,7 @@ export const useCosmosWallet = (walletKey: CosmosWalletKey, chainId: string) => 
     }
 
     return chain;
-  }, [chainWallets]);
+  }, [chainId, chainWallets]);
 
   const {
     username,
@@ -44,6 +62,8 @@ export const useCosmosWallet = (walletKey: CosmosWalletKey, chainId: string) => 
   };
 
   return {
+    type: 'cosmos',
+    walletName: chain.walletPrettyName,
     isConnected: isWalletConnected,
     isDisconnected: isWalletDisconnected,
     connect,
@@ -54,5 +74,5 @@ export const useCosmosWallet = (walletKey: CosmosWalletKey, chainId: string) => 
     chain,
     address,
     isConnecting: isWalletConnecting
-  };
+  } satisfies UseCosmosWalletReturnType;
 };

@@ -28,6 +28,7 @@ export const AppProvider = ({ children }: { children?: React.ReactNode }) => {
           return CapsuleModule.wallets;
         })
         .then((leapSocialLogin) => {
+          // @ts-expect-error - leapSocialLogin is an array of Wallets
           setWallets((prev) => [...prev, ...leapSocialLogin]);
           setIsLoading(false);
         });

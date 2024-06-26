@@ -1,6 +1,6 @@
 export * from './BaseButton';
 export * from './Button';
-export * from './ConnectModal';
+export * from './ConnectView';
 export * from './FaqList';
 export * from './HistoryLink';
 export * from './ImageWithFallback';

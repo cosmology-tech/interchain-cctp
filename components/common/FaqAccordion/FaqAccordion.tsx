@@ -46,7 +46,7 @@ function Trigger({
           {children}
         </Text>
 
-        <Text as="span" color="$text">
+        <Text as="span" color="$text" fontSize="$2xl">
           <ChevronDown color="currentColor" />
         </Text>
       </Box>

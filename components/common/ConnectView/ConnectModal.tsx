@@ -13,7 +13,7 @@ import { XMarkIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 import { BaseButton } from '@/components/common/BaseButton';
 import { Box, NobleProvider, useTheme } from '@interchain-ui/react';
 import { useEffect, useState } from 'react';
-import * as styles from './ConnectModal.css';
+import * as styles from './ConnectView.css';
 
 // Wrap React Aria modal components so they support framer-motion values.
 const MotionModal = motion(Modal);

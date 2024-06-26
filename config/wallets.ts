@@ -35,6 +35,14 @@ export const WALLET_KEY_TO_LOGO_URL: Record<WalletKey, string> = {
   capsule: '/logos/capsule.svg'
 };
 
+export const WALLET_KEY_TO_DOWNLOAD_URL: Record<WalletKey, string> = {
+  metamask: 'https://metamask.io/download/',
+  leap: '',
+  keplr: '',
+  cosmostation: '',
+  capsule: ''
+};
+
 export const getChainTypeFromWalletKey = (walletKey: WalletKey): ChainType => {
   return walletKey in EVM_WALLET_KEY_TO_ID ? 'evm' : 'cosmos';
 };

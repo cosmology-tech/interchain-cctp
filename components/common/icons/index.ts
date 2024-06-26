@@ -10,3 +10,4 @@ export * from './SunIcon';
 export * from './RefreshIcon';
 export * from './CheckCircleIcon';
 export * from './EyeIcon';
+export * from './ExchangeIcon';

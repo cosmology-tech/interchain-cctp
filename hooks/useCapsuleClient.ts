@@ -15,7 +15,15 @@ export const useCapsuleClient = () => {
 
     const capsuleProvider = new CapsuleProviderClass({
       apiKey: envConfig.capsuleApiKey,
-      env: envConfig.capsuleEnv
+      env: envConfig.capsuleEnv,
+      opts: {
+        emailPrimaryColor: '#ff5733',
+        portalTheme: {
+          backgroundColor: '#ffffff',
+          foregroundColor: '#ff5733',
+          borderRadius: 'lg'
+        }
+      }
     });
 
     return capsuleProvider.getClient();

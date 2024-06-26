@@ -6,6 +6,7 @@ import {
   useTheme,
   useColorModeValue,
   NobleSelectNetworkButton,
+  NobleSelectTokenButton,
   NobleChainCombobox
 } from '@interchain-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -39,7 +40,7 @@ export const SelectDestination = ({
     return chains.filter((chain) => chain.chainID !== sourceChainId);
   }, [chains, sourceChainId]);
 
-  const handleSelectChain = (chainId: Key) => {
+  const handleSelectChain = (chainId: Key | null) => {
     const selectedChain = destChains.find((c) => c.chainID === chainId);
 
     if (selectedChain) {
@@ -143,14 +144,37 @@ export const SelectDestination = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <NobleSelectNetworkButton
-              logoUrl={destChain.logoURI!}
-              title={destChain.prettyName}
-              subTitle={destWallet.address ?? ''}
-              actionLabel="Change"
-              size="lg"
-              onClick={handleChangeChain}
-            />
+            <Box position="relative">
+              <NobleSelectTokenButton
+                size="xl"
+                token={{
+                  mainLogoUrl: '/logos/usdc.svg',
+                  mainLogoAlt: 'USDC',
+                  subLogoUrl: destChain.logoURI!,
+                  subLogoAlt: destChain.prettyName,
+                  symbol: 'USDC',
+                  network: destChain.prettyName,
+                  tokenAmount: '',
+                  notionalValue: ''
+                }}
+                onClick={handleChangeChain}
+              />
+
+              <div
+                style={{
+                  zIndex: 0,
+                  position: 'absolute',
+                  top: '50%',
+                  right: '0',
+                  transform: 'translate(-50%, -50%)',
+                  pointerEvents: 'none'
+                }}
+              >
+                <Text fontSize="$xs" color="$textSecondary" fontWeight="$normal">
+                  Change
+                </Text>
+              </div>
+            </Box>
           </motion.div>
         ) : null}
       </AnimatePresence>

@@ -1,11 +1,12 @@
-import { Box, Text, Divider, NobleButton, Avatar } from '@interchain-ui/react';
+import { Box, Text, NobleButton, Avatar } from '@interchain-ui/react';
 
-export interface ConnectModalInstallWalletProps {
+export interface ConnectViewInstallWalletProps {
   walletName: string;
   walletLogoSrc?: string;
   walletQRCode: string;
 }
-export function ConnectModalInstallWallet(props: ConnectModalInstallWalletProps) {
+
+export function ConnectViewInstallWallet(props: ConnectViewInstallWalletProps) {
   return (
     <Box
       display="flex"
@@ -13,13 +14,15 @@ export function ConnectModalInstallWallet(props: ConnectModalInstallWalletProps)
       justifyContent="center"
       alignItems="center"
       gap="$8"
-      width="300px"
-      py="$10"
+      px="$7"
     >
-      <Avatar name={props.walletName} size="lg" src={props.walletLogoSrc} />
+      <Text as="p" color="$text" fontSize="$xs" fontWeight="$semibold">
+        {props.walletName}
+      </Text>
 
       <Text
         color="$textSecondary"
+        fontSize="$xs"
         fontWeight="$semibold"
         textAlign="center"
         attributes={{

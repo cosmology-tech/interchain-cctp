@@ -3,10 +3,10 @@ import { wallets as cosmosKitWallets } from 'cosmos-kit';
 import { AnimatePresence, motion, Transition } from 'framer-motion';
 import {
   ConnectModal,
-  ConnectModalRequestingConnection,
-  ConnectModalInstallWallet,
+  ConnectViewRequestingConnection,
+  ConnectViewInstallWallet,
   WalletButton
-} from '@/components/common/ConnectModal';
+} from '@/components/common/ConnectView';
 import { useCosmosWallet } from '@/hooks';
 import { Stack } from '@interchain-ui/react';
 import { CosmosWalletKey, COSMOS_WALLET_KEY_TO_NAME } from '@/config';
@@ -254,7 +254,7 @@ export const SelectWalletModal = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <ConnectModalRequestingConnection
+            <ConnectViewRequestingConnection
               status={status}
               walletName={selectedCosmosKitWallet.walletPrettyName ?? ''}
               walletLogoSrc={selectedCosmosKitWallet.walletInfo.logo as string}
@@ -276,7 +276,7 @@ export const SelectWalletModal = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <ConnectModalInstallWallet
+            <ConnectViewInstallWallet
               walletName={selectedCosmosKitWallet.walletPrettyName ?? ''}
               walletLogoSrc={selectedCosmosKitWallet.walletInfo.logo as string}
               walletQRCode={selectedCosmosKitWallet.walletInfo.downloads![0]!.link as string}

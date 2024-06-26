@@ -1,9 +1,10 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Box, NobleButton, Text, useColorModeValue } from '@interchain-ui/react';
 import type { RouteResponse } from '@skip-router/core';
 import BigNumber from 'bignumber.js';
 
-import { ArrowDownIcon, FaqList, FadeIn } from '@/components';
+import { ArrowDownIcon, ExchangeIcon, FaqList, FadeIn, BaseButton } from '@/components';
 import { sizes, colors } from '@/config';
 import {
   BroadcastedTx,
@@ -41,10 +42,9 @@ export const SelectAmountDest = ({
   const [balance, setBalance] = useState('0');
   const [selectedToken, setSelectedToken] = useState<SelectedToken>();
   const [destChain, setDestChain] = useState<SkipChain>();
+  const destAsset = assets && destChain ? assets[destChain.chainID] : undefined;
 
   const { srcWallet, destWallet } = useCurrentWallets();
-
-  const destAsset = assets && destChain ? assets[destChain.chainID] : undefined;
 
   const {
     data: route,
@@ -73,8 +73,26 @@ export const SelectAmountDest = ({
   const { onOpen: openSrcWalletPopover } = useDisclosure('source_wallet_popover');
   const { onOpen: openDestWalletPopover } = useDisclosure('dest_wallet_popover');
 
+  const [isSwitchHovered, setIsSwitchHovered] = useState(false);
+
   const isSrcWalletDisconnected = !!srcWallet.chainId && !srcWallet.address;
   const isDestWalletDisconnected = !!destWallet.chainId && !destWallet.address;
+  const isSrcAndDestUnset = !selectedToken && !destChain;
+
+  const onSwitchDirection = () => {
+    // Both unset, do nothing
+    if (isSrcAndDestUnset) return;
+
+    setDestChain(selectedToken?.chain);
+    setSelectedToken(
+      destChain && destAsset
+        ? {
+            chain: destChain,
+            asset: destAsset
+          }
+        : null
+    );
+  };
 
   const onButtonClick = () => {
     if (isSrcWalletDisconnected) {
@@ -157,7 +175,59 @@ export const SelectAmountDest = ({
         />
 
         <Box my="12px" display="flex" alignItems="center" justifyContent="center">
-          <ArrowDownIcon />
+          <BaseButton onPress={onSwitchDirection}>
+            <div
+              onMouseEnter={() => {
+                if (isSrcAndDestUnset) return;
+                setIsSwitchHovered(true);
+              }}
+              onMouseLeave={() => setIsSwitchHovered(false)}
+              style={{
+                position: 'relative',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  animate={{ opacity: isSwitchHovered ? 0 : 1 }}
+                  transition={{ duration: 0.2 }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    height: '100%',
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  <ArrowDownIcon />
+                </motion.div>
+                <motion.div
+                  animate={{ opacity: isSwitchHovered ? 1 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    height: '100%',
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  <ExchangeIcon />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </BaseButton>
         </Box>
 
         <SelectDestination
