@@ -1,4 +1,5 @@
 import { AnimatePresence, Transition, motion } from 'framer-motion';
+import { useId } from 'react-aria';
 
 export interface FadeInProps {
   transition?: Transition;
@@ -12,9 +13,12 @@ const defaultTransition: Transition = {
 };
 
 export const FadeIn = ({ children, transition = defaultTransition }: FadeInProps) => {
+  let animationKey = useId();
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
+        key={animationKey}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}

@@ -194,6 +194,7 @@ export const SelectAmountDest = ({
             >
               <AnimatePresence mode="wait">
                 <motion.div
+                  key="arrow-down-icon"
                   animate={{ opacity: isSwitchHovered ? 0 : 1 }}
                   transition={{ duration: 0.2 }}
                   style={{
@@ -210,6 +211,7 @@ export const SelectAmountDest = ({
                   <ArrowDownIcon />
                 </motion.div>
                 <motion.div
+                  key="exchange-icon"
                   animate={{ opacity: isSwitchHovered ? 1 : 0 }}
                   transition={{ duration: 0.2 }}
                   style={{
