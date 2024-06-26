@@ -74,7 +74,6 @@ export const useUsdcTransfer = ({
       await skipClient?.executeRoute({
         route,
         userAddresses,
-        validateGasBalance: true,
         getCosmosSigner: async (chainID: string) => {
           const cosmosSigner =
             cosmosWalletClient?.getOfflineSignerDirect &&
