@@ -211,7 +211,12 @@ export const SelectAmount = ({
         isLoadingSubLogo={isFetchingChains || isFetchingAssets || !selectedToken}
       />
 
-      <Combobox value={selectedToken} onChange={setSelectedToken} onClose={() => setQuery('')}>
+      <Combobox
+        immediate
+        value={selectedToken}
+        onChange={setSelectedToken}
+        onClose={() => setQuery('')}
+      >
         {({ open }) => (
           <>
             <Box display="flex" justifyContent="center" alignItems="center" gap="$4">
