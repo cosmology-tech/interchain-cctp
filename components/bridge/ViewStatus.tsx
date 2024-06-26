@@ -27,12 +27,14 @@ interface ViewStatusProps {
   route: RouteResponse;
   transferInfo: TransferInfo;
   broadcastedTxs: BroadcastedTx[];
+  setBroadcastedTxs: (txs: BroadcastedTx[]) => void;
   setBridgeStep: (step: BridgeStep) => void;
 }
 
 export const ViewStatus = ({
   route,
   broadcastedTxs,
+  setBroadcastedTxs,
   transferInfo,
   setBridgeStep
 }: ViewStatusProps) => {
@@ -173,7 +175,10 @@ export const ViewStatus = ({
               <Box display="flex" flexDirection="column" alignItems="center">
                 <NobleButton
                   attributes={{ mb: '18px' }}
-                  onClick={() => setBridgeStep('select-amount-dest')}
+                  onClick={() => {
+                    setBridgeStep('select-amount-dest');
+                    setBroadcastedTxs([]);
+                  }}
                 >
                   Start another transaction
                 </NobleButton>

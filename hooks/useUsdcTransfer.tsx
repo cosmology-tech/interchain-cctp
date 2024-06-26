@@ -74,7 +74,7 @@ export const useUsdcTransfer = ({
       await skipClient?.executeRoute({
         route,
         userAddresses,
-        validateGasBalance: route.txsRequired === 1,
+        validateGasBalance: true,
         getCosmosSigner: async (chainID: string) => {
           const cosmosSigner =
             cosmosWalletClient?.getOfflineSignerDirect &&
@@ -107,28 +107,30 @@ export const useUsdcTransfer = ({
       });
     } catch (err: any) {
       console.error(err);
-      if (isUserRejectedRequestError(err)) {
-        setShowSignTxView(false);
-        return;
-      }
-      toast.error(
-        <Text
-          as="p"
-          color="inherit"
-          attributes={{
-            maxHeight: '250px',
-            overflow: 'auto'
-          }}
-        >
-          {`Failed to execute transaction: ${err.message}`}
-        </Text>,
-        {
-          duration: 6000
-        }
-      );
+      !isUserRejectedRequestError(err) && toastTxError(err.message);
+      txHistory.removeItem(historyId);
+      setBroadcastedTxs([]);
       setShowSignTxView(false);
     }
   };
 
   return { showSignTxView, onTransfer };
 };
+
+function toastTxError(msg: string) {
+  toast.error(
+    <Text
+      as="p"
+      color="inherit"
+      attributes={{
+        maxHeight: '250px',
+        overflow: 'auto'
+      }}
+    >
+      {`Failed to execute transaction: ${msg}`}
+    </Text>,
+    {
+      duration: 6000
+    }
+  );
+}

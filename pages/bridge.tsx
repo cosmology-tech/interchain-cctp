@@ -56,6 +56,7 @@ const Bridge = () => {
         <ViewStatus
           route={route}
           broadcastedTxs={broadcastedTxs}
+          setBroadcastedTxs={setBroadcastedTxs}
           transferInfo={transferInfo}
           setBridgeStep={setBridgeStep}
         />
