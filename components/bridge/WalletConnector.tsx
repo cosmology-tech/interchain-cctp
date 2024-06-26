@@ -98,21 +98,26 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
       await switchChainAsync({ chainId: Number(chain.chainID) });
     } catch (error) {
       console.error(error);
-      evmWalletMap[selectedEvmWalletKey].disconnect();
+      const wallet = evmWalletMap[selectedEvmWalletKey];
+      wallet.disconnect();
+      setSelectedEvmWalletKey(null);
+      setViewStatus('wallets');
+      setConnectionStatus('requesting');
+      setSelectedWalletKey(null);
     }
   }, [chain]);
 
   useEffect(() => {
+    const isEvmChain = chain && !isCosmosChain(chain);
+    const isEvmWalletConnected =
+      selectedEvmWalletKey && evmWalletMap[selectedEvmWalletKey].isConnected;
+    const isChainNotSwitched = connectedChainId !== Number(chain?.chainID);
+
     const shouldSwitchChain =
-      chain &&
-      !isCosmosChain &&
-      selectedEvmWalletKey &&
-      evmWalletMap[selectedEvmWalletKey].isConnected &&
-      connectedChainId !== Number(chain.chainID) &&
-      direction === 'source';
+      isEvmChain && isEvmWalletConnected && isChainNotSwitched && direction === 'source';
 
     if (shouldSwitchChain) switchEvmChain();
-  }, [chain, evmWalletMap[selectedEvmWalletKey ?? 'metamask'].isConnected]);
+  }, [chain, selectedEvmWalletKey, evmWalletMap[selectedEvmWalletKey ?? 'metamask'].isConnected]);
 
   useEffect(() => {
     if (!chain) {
@@ -184,15 +189,21 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
           }
         }
 
-        wallet.connectAsync().then((isSuccessful) => {
-          if (!isSuccessful) {
-            setConnectionStatus('error');
-            return;
-          }
+        wallet
+          .connectAsync()
+          .then((isSuccessful) => {
+            if (!isSuccessful) {
+              setConnectionStatus('error');
+              return;
+            }
 
-          setWalletKey(wallet.type, walletKey);
-          setConnectionStatus('connected');
-        });
+            setWalletKey(wallet.type, walletKey);
+            setConnectionStatus('connected');
+          })
+          .catch((err) => {
+            console.error(err);
+            setConnectionStatus('error');
+          });
       };
 
     const handleDisconnect = (wallet: UseEvmWalletReturnType | UseCosmosWalletReturnType) => () => {
