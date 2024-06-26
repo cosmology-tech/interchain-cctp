@@ -323,7 +323,7 @@ export const SelectAmount = ({
       <NobleInput
         id="token-amount"
         size="md"
-        placeholder="Enter amount"
+        placeholder="0"
         value={amount}
         type="number"
         readonly={!selectedToken}
