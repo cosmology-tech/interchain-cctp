@@ -39,7 +39,6 @@ const Bridge = () => {
   const { connectAsync: connectCapsuleAsync, isConnected: isCapsuleConnected } =
     useCosmosWallet('capsule');
 
-  console.log('isCapsuleConnected', isCapsuleConnected);
   const { capsuleClient } = useCapsuleClient();
   const [showCapsuleModal, setShowCapsuleModal] = useState(false);
 

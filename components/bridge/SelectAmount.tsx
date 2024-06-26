@@ -326,7 +326,7 @@ export const SelectAmount = ({
         placeholder="Enter amount"
         value={amount}
         type="number"
-        disabled={!selectedToken}
+        readonly={!selectedToken}
         onChange={(e) => {
           if (BigNumber(e.target.value).isNegative()) return;
           setAmount(e.target.value);
@@ -334,7 +334,6 @@ export const SelectAmount = ({
         }}
         inputTextAlign="right"
         startAddon={assetCombobox}
-        endAddon={selectedToken ? null : <Skeleton width="60px" height="18px" borderRadius="$sm" />}
         labelContainerProps={{
           display: 'flex',
           justifyContent: 'space-between',
