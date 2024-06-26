@@ -75,5 +75,8 @@ export const txHistory = {
       const { [id]: _, ...newState } = state;
       return newState;
     }, true);
+  },
+  clearAll: () => {
+    useTxHistory.setState(() => defaultState, true);
   }
 };
