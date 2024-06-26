@@ -2641,10 +2641,10 @@
     snakecase-keys "^5.1.2"
     store2 "^2.12.0"
 
-"@interchain-ui/react@^1.23.23":
-  version "1.23.23"
-  resolved "https://registry.yarnpkg.com/@interchain-ui/react/-/react-1.23.23.tgz#ede9019a5191bd2254d42a71e9f856a0d7f0d564"
-  integrity sha512-aoqmZYRINgKqYtCLW6377H8SGvz+ni04rjBbsk7DGcxNwV9jG0jBNPGZpNL8t6CVtApIPBUwm1/43rPERzggeA==
+"@interchain-ui/react@^1.23.24":
+  version "1.23.24"
+  resolved "https://registry.yarnpkg.com/@interchain-ui/react/-/react-1.23.24.tgz#c7f518aafcad3c9dd47b1e04ee0b50bffd6117b9"
+  integrity sha512-QQpeUyHkmJZEm+p4d8G07p/KByyithXHYij/U1UvV4wbTMX1nNBj4XZ88UMt6KlzAlfDcjUCgJ9XmEz0xw/Bnw==
   dependencies:
     "@floating-ui/core" "^1.6.2"
     "@floating-ui/dom" "^1.6.5"
