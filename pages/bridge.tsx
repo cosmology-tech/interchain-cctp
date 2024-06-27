@@ -4,7 +4,7 @@ import type { RouteResponse } from '@skip-router/core';
 import '@leapwallet/cosmos-social-login-capsule-provider-ui/styles.css';
 import '@leapwallet/react-ui/styles.css';
 
-import { useTheme, useColorModeValue, toast } from '@interchain-ui/react';
+import { Box, useTheme, useColorModeValue, toast } from '@interchain-ui/react';
 import { Layout, SelectAmountDest, ViewStatus } from '@/components';
 import { envConfig } from '@/config';
 
@@ -27,6 +27,14 @@ const CustomCapsuleModalView = dynamic(
   () =>
     import('@leapwallet/cosmos-social-login-capsule-provider-ui').then(
       (m) => m.CustomCapsuleModalView
+    ),
+  { ssr: false }
+);
+
+const TransactionSigningModal = dynamic(
+  () =>
+    import('@leapwallet/cosmos-social-login-capsule-provider-ui').then(
+      (m) => m.TransactionSigningModal
     ),
   { ssr: false }
 );
@@ -87,32 +95,36 @@ const Bridge = () => {
       >
         {currentStep}
 
-        <CustomCapsuleModalView
-          capsule={capsuleClient}
-          showCapsuleModal={showCapsuleModal}
-          setShowCapsuleModal={setShowCapsuleModal}
-          theme={theme}
-          logoUrl={useColorModeValue(
-            '/logos/interweb-logo-light.svg',
-            '/logos/interweb-logo-dark.svg'
-          )}
-          appName={envConfig.appName}
-          oAuthMethods={oAuthMethods}
-          onAfterLoginSuccessful={() => {
-            const toastId = toast.success('Login successful. Hang tight...');
-            window.successFromCapsuleModal?.();
+        <Box className={`leap-ui ${theme === 'dark' ? 'dark' : ''}`}>
+          <CustomCapsuleModalView
+            capsule={capsuleClient}
+            showCapsuleModal={showCapsuleModal}
+            setShowCapsuleModal={setShowCapsuleModal}
+            theme={theme}
+            logoUrl={useColorModeValue(
+              '/logos/interweb-logo-light.svg',
+              '/logos/interweb-logo-dark.svg'
+            )}
+            appName={envConfig.appName}
+            oAuthMethods={oAuthMethods}
+            onAfterLoginSuccessful={() => {
+              const toastId = toast.success('Login successful. Hang tight...');
+              window.successFromCapsuleModal?.();
 
-            connectCapsuleAsync().then((isSuccess) => {
-              if (isSuccess) {
-                toast.dismiss(toastId);
-              }
-            });
-          }}
-          onLoginFailure={() => {
-            window.failureFromCapsuleModal?.();
-            toast.error('Login failed. Please try again.');
-          }}
-        />
+              connectCapsuleAsync().then((isSuccess) => {
+                if (isSuccess) {
+                  toast.dismiss(toastId);
+                }
+              });
+            }}
+            onLoginFailure={() => {
+              window.failureFromCapsuleModal?.();
+              toast.error('Login failed. Please try again.');
+            }}
+          />
+
+          <TransactionSigningModal dAppInfo={{ name: 'Noble Express' }} />
+        </Box>
       </CapsuleContext.Provider>
     </Layout>
   );
