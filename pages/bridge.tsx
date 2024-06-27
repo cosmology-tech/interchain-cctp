@@ -4,8 +4,9 @@ import type { RouteResponse } from '@skip-router/core';
 import '@leapwallet/cosmos-social-login-capsule-provider-ui/styles.css';
 import '@leapwallet/react-ui/styles.css';
 
-import { useTheme, toast } from '@interchain-ui/react';
+import { useTheme, useColorModeValue, toast } from '@interchain-ui/react';
 import { Layout, SelectAmountDest, ViewStatus } from '@/components';
+import { envConfig } from '@/config';
 
 import { useCapsuleClient, useCosmosWallet, BroadcastedTx } from '@/hooks';
 import { CapsuleContext } from '@/contexts/capsule.context';
@@ -91,8 +92,11 @@ const Bridge = () => {
           showCapsuleModal={showCapsuleModal}
           setShowCapsuleModal={setShowCapsuleModal}
           theme={theme}
-          logoUrl="https://raw.githubusercontent.com/cosmology-tech/cosmos-kit/main/packages/docs/public/favicon-96x96.png"
-          appName="NobleExpress"
+          logoUrl={useColorModeValue(
+            '/logos/interweb-logo-light.svg',
+            '/logos/interweb-logo-dark.svg'
+          )}
+          appName={envConfig.appName}
           oAuthMethods={oAuthMethods}
           onAfterLoginSuccessful={() => {
             const toastId = toast.success('Login successful. Hang tight...');

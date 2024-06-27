@@ -59,10 +59,10 @@ export function Footer() {
         borderTopColor={useColorModeValue(colors.divider.light, colors.divider.dark)}
       >
         <Image
-          width={149}
-          height={39}
-          alt="Noble"
-          src={useColorModeValue('/logos/noble-light.svg', '/logos/noble-dark.svg')}
+          width={162.1}
+          height={36}
+          alt="Interweb"
+          src={useColorModeValue('/logos/interweb-logo-light.svg', '/logos/interweb-logo-dark.svg')}
           style={{
             flexShrink: '0'
           }}
@@ -89,7 +89,7 @@ export function Footer() {
           </Text>
 
           <Link
-            href="https://nobleassets.xyz"
+            href="https://cosmology.zone"
             target="_blank"
             attributes={{
               display: 'inline-block',

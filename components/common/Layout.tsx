@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { envConfig } from '@/config/env';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { Container } from './Container';
@@ -28,8 +29,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Head>
-        <title>Noble Express</title>
-        <meta name="description" content="Noble: The new standard for digital asset issurance" />
+        <title>{envConfig.appName}</title>
+        <meta name="description" content="Interchain CCTP app" />
         <link rel="icon" href="/favicon.png" />
       </Head>
 

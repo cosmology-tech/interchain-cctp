@@ -30,12 +30,12 @@ export function Header(props: HeaderProps) {
       <Box paddingRight={isHomePage ? '$0' : '$27'} flexShrink={0}>
         <Link href="/">
           <Image
-            width={206}
+            width={162.1}
             height={36}
-            alt="Noble Express"
+            alt="Interweb"
             src={useColorModeValue(
-              '/logos/noble-express-light.svg',
-              '/logos/noble-express-dark.svg'
+              '/logos/interweb-logo-light.svg',
+              '/logos/interweb-logo-dark.svg'
             )}
           />
         </Link>

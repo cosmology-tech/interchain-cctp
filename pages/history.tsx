@@ -20,19 +20,18 @@ const TxHistoryPage = () => {
         <Box position="relative">
           <NoblePageTitleBar title="History" onBackButtonClick={() => router.back()} mb="$14" />
 
-          {entries.length > 0 ? (
-            <Box position="absolute" right={0} top="50%" transform="translateY(-50%)">
-              <NobleButton
-                size="xs"
-                variant="text"
-                onClick={() => {
-                  txHistory.clearAll();
-                }}
-              >
-                Clear history
-              </NobleButton>
-            </Box>
-          ) : (
+          {entries.length > 0 ? null : (
+            // <Box position="absolute" right={0} top="50%" transform="translateY(-50%)">
+            //   <NobleButton
+            //     size="xs"
+            //     variant="text"
+            //     onClick={() => {
+            //       txHistory.clearAll();
+            //     }}
+            //   >
+            //     Clear history
+            //   </NobleButton>
+            // </Box>
             <Box textAlign="center" py="$10" color="$textSecondary">
               <Text>No transactions</Text>
             </Box>

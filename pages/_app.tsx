@@ -5,6 +5,7 @@ import '@interchain-ui/react/globalStyles';
 import type { AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
+import { envConfig } from '@/config/env';
 import { Box, Toaster, useColorModeValue } from '@interchain-ui/react';
 import { InitialLoadFallback } from '@/components/common/InitialLoadFallback';
 
@@ -18,13 +19,13 @@ const DynamicAppProvider = dynamic(
 const CustomHead = () => {
   return (
     <Head>
-      <title>Noble Express</title>
+      <title>{envConfig.appName}</title>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
     </Head>
   );
 };
 
-function NobleExpressApp({ Component, pageProps }: AppProps) {
+function InterchainCCTPApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <CustomHead />
@@ -44,4 +45,4 @@ function NobleExpressApp({ Component, pageProps }: AppProps) {
   );
 }
 
-export default NobleExpressApp;
+export default InterchainCCTPApp;
