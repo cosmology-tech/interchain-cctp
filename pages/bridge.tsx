@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import type { RouteResponse } from '@skip-router/core';
+import '@leapwallet/cosmos-social-login-capsule-provider-ui/styles.css';
+import '@leapwallet/react-ui/styles.css';
 
 import { useTheme, toast } from '@interchain-ui/react';
-import { BroadcastedTx } from '@/hooks';
 import { Layout, SelectAmountDest, ViewStatus } from '@/components';
 
-import { useCapsuleClient, useCosmosWallet } from '@/hooks';
+import { useCapsuleClient, useCosmosWallet, BroadcastedTx } from '@/hooks';
+import { CapsuleContext } from '@/contexts/capsule.context';
 
 export type BridgeStep = 'select-amount-dest' | 'view-status';
 
@@ -65,26 +67,49 @@ const Bridge = () => {
     return bridgeStepsMap[bridgeStep];
   }, [bridgeStep]);
 
+  const [oAuthMethods, setOAuthMethods] = useState<Array<any>>([]);
+
+  useEffect(() => {
+    import('@leapwallet/cosmos-social-login-capsule-provider').then((capsuleProvider) => {
+      setOAuthMethods([
+        capsuleProvider.OAuthMethod.GOOGLE,
+        capsuleProvider.OAuthMethod.FACEBOOK,
+        capsuleProvider.OAuthMethod.TWITTER
+      ]);
+    });
+  }, []);
+
   return (
     <Layout>
-      <CustomCapsuleModalView
-        capsule={capsuleClient}
-        showCapsuleModal={showCapsuleModal}
-        setShowCapsuleModal={setShowCapsuleModal}
-        theme={theme}
-        onAfterLoginSuccessful={() => {
-          const toastId = toast.success('Login successful. Hang tight...');
-          connectCapsuleAsync().then((isSuccess) => {
-            if (isSuccess) {
-              toast.dismiss(toastId);
-            }
-          });
-        }}
-        onLoginFailure={() => {
-          toast.error('Login failed. Please try again.');
-        }}
-      />
-      {currentStep}
+      <CapsuleContext.Provider
+        value={{ isCapsuleModalOpen: showCapsuleModal, setCapsuleModalOpen: setShowCapsuleModal }}
+      >
+        {currentStep}
+
+        <CustomCapsuleModalView
+          capsule={capsuleClient}
+          showCapsuleModal={showCapsuleModal}
+          setShowCapsuleModal={setShowCapsuleModal}
+          theme={theme}
+          logoUrl="https://raw.githubusercontent.com/cosmology-tech/cosmos-kit/main/packages/docs/public/favicon-96x96.png"
+          appName="NobleExpress"
+          oAuthMethods={oAuthMethods}
+          onAfterLoginSuccessful={() => {
+            const toastId = toast.success('Login successful. Hang tight...');
+            window.successFromCapsuleModal?.();
+
+            connectCapsuleAsync().then((isSuccess) => {
+              if (isSuccess) {
+                toast.dismiss(toastId);
+              }
+            });
+          }}
+          onLoginFailure={() => {
+            window.failureFromCapsuleModal?.();
+            toast.error('Login failed. Please try again.');
+          }}
+        />
+      </CapsuleContext.Provider>
     </Layout>
   );
 };

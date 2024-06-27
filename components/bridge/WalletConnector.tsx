@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback, useState, use } from 'react';
+import { useEffect, useMemo, useCallback, useState, useContext } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
 
 import {
@@ -27,7 +27,7 @@ import {
   WALLET_KEY_TO_DOWNLOAD_URL
 } from '@/config';
 import { isCosmosChain } from '@/utils';
-import { useCurrentWallets } from '@/contexts';
+import { useCurrentWallets, CapsuleContext } from '@/contexts';
 
 function useWalletConnectionMap(chainId: SkipChain['chainID']) {
   const metamaskConn = useEvmWallet('metamask');
@@ -59,6 +59,8 @@ type WalletConnectorProps = {
 
 export const WalletConnector = ({ label, chain, direction }: WalletConnectorProps) => {
   const [address, setAddress] = useState<string>();
+
+  const capsuleContext = useContext(CapsuleContext);
 
   const {
     selectedEvmWalletKey,
@@ -187,6 +189,10 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
           } else {
             return setViewStatus('install');
           }
+        }
+
+        if (walletKey === 'capsule') {
+          capsuleContext.setCapsuleModalOpen(true);
         }
 
         wallet
