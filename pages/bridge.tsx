@@ -102,8 +102,8 @@ const Bridge = () => {
             setShowCapsuleModal={setShowCapsuleModal}
             theme={theme}
             logoUrl={useColorModeValue(
-              '/logos/interweb-logo-light.svg',
-              '/logos/interweb-logo-dark.svg'
+              '/logos/interweb-logo-simple-light.svg',
+              '/logos/interweb-logo-simple-dark.svg'
             )}
             appName={envConfig.appName}
             oAuthMethods={oAuthMethods}
