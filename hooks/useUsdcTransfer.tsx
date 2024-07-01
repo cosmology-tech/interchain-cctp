@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import { useWalletClient } from '@cosmos-kit/react';
+import { useWalletClient, useChain } from '@cosmos-kit/react';
 import { Text, toast } from '@interchain-ui/react';
 import { RouteResponse } from '@skip-router/core';
 
@@ -76,8 +76,8 @@ export const useUsdcTransfer = ({
         userAddresses,
         getCosmosSigner: async (chainID: string) => {
           const cosmosSigner =
-            cosmosWalletClient?.getOfflineSignerDirect &&
-            cosmosWalletClient.getOfflineSignerDirect(chainID);
+            cosmosWalletClient?.getOfflineSigner &&
+            cosmosWalletClient.getOfflineSigner(chainID, 'amino');
 
           if (!cosmosSigner) {
             throw new Error(

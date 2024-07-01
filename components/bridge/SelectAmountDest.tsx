@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, NobleButton, Text, useColorModeValue } from '@interchain-ui/react';
+import { Box, NobleButton, Text, Callout, useColorModeValue } from '@interchain-ui/react';
 import type { RouteResponse } from '@skip-router/core';
 import BigNumber from 'bignumber.js';
 
@@ -48,6 +48,7 @@ export const SelectAmountDest = ({
 
   const {
     data: route,
+    error: routeError,
     isError: routeIsError,
     isFetching: routeIsFetching
   } = useRoute({
@@ -115,15 +116,8 @@ export const SelectAmountDest = ({
     if (isSrcWalletDisconnected) return 'Connect Wallet';
     if (isDestWalletDisconnected) return 'Set Destination Address';
     if (routeIsFetching) return 'Finding best route...';
-    if (routeIsError || isInvalidRoute) return 'No route found';
     return 'Bridge';
-  }, [
-    routeIsFetching,
-    routeIsError,
-    isInvalidRoute,
-    isSrcWalletDisconnected,
-    isDestWalletDisconnected
-  ]);
+  }, [routeIsFetching, isSrcWalletDisconnected, isDestWalletDisconnected]);
 
   const isButtonEnabled = useMemo(() => {
     const isWalletDisconnected = isSrcWalletDisconnected || isDestWalletDisconnected;
@@ -251,6 +245,19 @@ export const SelectAmountDest = ({
         >
           {buttonText}
         </NobleButton>
+
+        {routeError && (
+          <Callout
+            title="Error getting routes:"
+            intent="error"
+            attributes={{
+              my: '$6',
+              width: '100%'
+            }}
+          >
+            {routeError?.message ?? ''}
+          </Callout>
+        )}
 
         {showTransferInfo && selectedToken && (
           <TransferExtraInfo
