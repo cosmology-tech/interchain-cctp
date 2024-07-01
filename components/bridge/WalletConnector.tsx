@@ -213,9 +213,7 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
       };
 
     const handleDisconnect = (wallet: UseEvmWalletReturnType | UseCosmosWalletReturnType) => () => {
-      if (direction === 'source') {
-        wallet.disconnect();
-      }
+      wallet.disconnect();
 
       if (wallet.type === 'cosmos') {
         setSelectedCosmosWalletKey(null);
@@ -266,14 +264,14 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
 
     return chain?.chainType === CHAIN_TYPE.COSMOS ? cosmosWallets : evmWallets;
   }, [
-    address,
     cosmosWalletMap,
     evmWalletMap,
     chain,
-    direction,
     setSelectedCosmosWalletKey,
     setSelectedEvmWalletKey,
-    viewStatus
+    viewStatus,
+    capsuleContext,
+    address
   ]);
 
   const connectedWallet = chain
@@ -285,6 +283,7 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
 
   // Transition wallet connection state to ConnectDropdown
   // when chain or wallet connection status changes
+  // or when trigger from outside programmatically with usDisclosure
   useEffect(() => {
     if (!chain || !connectedWallet) {
       setViewStatus('wallets');
@@ -293,16 +292,30 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
       return;
     }
 
-    if (connectedWallet.isConnected) {
-      setViewStatus('request');
-      setConnectionStatus('connected');
-      setSelectedWalletKey(connectedWallet.walletKey as CosmosWalletKey | EvmWalletKey);
-    } else {
-      setViewStatus('wallets');
-      setConnectionStatus('requesting');
-      setSelectedWalletKey(null);
+    let queued = false;
+
+    const transition = () => {
+      if (connectedWallet.isConnected) {
+        queued = true;
+        setViewStatus('request');
+        setConnectionStatus('connected');
+        setSelectedWalletKey(connectedWallet.walletKey as CosmosWalletKey | EvmWalletKey);
+      } else {
+        setViewStatus('wallets');
+        setConnectionStatus('requesting');
+        setSelectedWalletKey(null);
+      }
+    };
+
+    transition();
+
+    // When triggered using usDisclosure
+    if (isOpen) {
+      if (!queued) {
+        transition();
+      }
     }
-  }, [chain, direction, connectedWallet]);
+  }, [chain, direction, connectedWallet, isOpen]);
 
   const handleBack = useCallback(() => {
     if (connectedWallet?.type === CHAIN_TYPE.COSMOS) {

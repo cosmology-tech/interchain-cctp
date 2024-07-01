@@ -31,6 +31,8 @@ interface ViewStatusProps {
   setBridgeStep: (step: BridgeStep) => void;
 }
 
+const getRangeUsdcExplorerUrl = (txHash: string) => `https://usdc.range.org/usdc?txhash=${txHash}`;
+
 export const ViewStatus = ({
   route,
   broadcastedTxs,
@@ -60,6 +62,26 @@ export const ViewStatus = ({
     [estimatedFinalityTime, progressPercentage]
   );
 
+  const cctpTxs = useMemo(() => {
+    if (!txStatus) return null;
+
+    const found = txStatus.transferSequence.find((seq) => seq.bridgeID === 'CCTP');
+
+    if (!found) return null;
+
+    return found.txs;
+  }, [txStatus]);
+
+  const ibcTxs = useMemo(() => {
+    if (!txStatus) return null;
+
+    const found = txStatus.transferSequence.find((seq) => seq.bridgeID === 'IBC');
+
+    if (!found) return null;
+
+    return found.txs;
+  }, [txStatus]);
+
   const getStepStatus = (step: Action): NobleTxStepItemProps['status'] => {
     const state = makeStepState({ action: step, statusData: txStatus }).state;
     switch (state) {
@@ -84,14 +106,62 @@ export const ViewStatus = ({
 
   const txSettled = (
     <>
-      <Box mt="$7" mb="$16">
+      <Box
+        mt="$7"
+        mb="$16"
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        flexDirection="column"
+        gap="$10"
+      >
+        <Text variant="heading" fontSize="$lg" color="$textSuccess" fontWeight="$semibold">
+          Transaction completed!
+        </Text>
         {txStatus.isSuccess ? <TxStatusIcon.Success /> : <TxStatusIcon.Failed />}
       </Box>
-      <Link href="https://usdc.range.org/" target="_blank" style={{ textDecoration: 'none' }}>
-        <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
-          View transaction on Range
-        </NobleButton>
-      </Link>
+
+      {cctpTxs && (
+        <Link
+          href={getRangeUsdcExplorerUrl(cctpTxs.receiveTx?.txHash ?? '')}
+          target="_blank"
+          style={{ textDecoration: 'none' }}
+        >
+          <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
+            View transaction on Range
+          </NobleButton>
+        </Link>
+      )}
+
+      {ibcTxs && (
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          gap="$8"
+        >
+          <Link
+            href={`${ibcTxs!.sendTx?.explorerLink}`}
+            target="_blank"
+            style={{ textDecoration: 'none' }}
+          >
+            <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
+              View origin transaction
+            </NobleButton>
+          </Link>
+
+          <Link
+            href={`${ibcTxs!.receiveTx?.explorerLink}`}
+            target="_blank"
+            style={{ textDecoration: 'none' }}
+          >
+            <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
+              View destination transaction
+            </NobleButton>
+          </Link>
+        </Box>
+      )}
     </>
   );
 
