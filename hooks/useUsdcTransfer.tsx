@@ -75,17 +75,26 @@ export const useUsdcTransfer = ({
         route,
         userAddresses,
         getCosmosSigner: async (chainID: string) => {
-          const cosmosSigner =
+          const isCosmosToCosmos =
+            srcChain.chainType === 'cosmos' && destChain.chainType === 'cosmos';
+
+          const aminoSigner =
             cosmosWalletClient?.getOfflineSigner &&
             cosmosWalletClient.getOfflineSigner(chainID, 'amino');
 
-          if (!cosmosSigner) {
+          const directSigner =
+            cosmosWalletClient?.getOfflineSignerDirect &&
+            cosmosWalletClient.getOfflineSignerDirect(chainID);
+
+          let signer = isCosmosToCosmos ? aminoSigner : directSigner;
+
+          if (!signer) {
             throw new Error(
               `getCosmosSigner error: no offline signer available for chain ${chainID}`
             );
           }
 
-          return cosmosSigner;
+          return signer;
         },
         onTransactionTracked: async (tx) => {
           txHistory.addItem({
