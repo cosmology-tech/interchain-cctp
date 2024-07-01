@@ -76,8 +76,8 @@ export const useUsdcTransfer = ({
         userAddresses,
         getCosmosSigner: async (chainID: string) => {
           const cosmosSigner =
-            cosmosWalletClient?.getOfflineSignerDirect &&
-            cosmosWalletClient.getOfflineSignerDirect(chainID);
+            cosmosWalletClient?.getOfflineSigner &&
+            cosmosWalletClient.getOfflineSigner(chainID, 'amino');
 
           if (!cosmosSigner) {
             throw new Error(
