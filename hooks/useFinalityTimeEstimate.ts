@@ -22,7 +22,7 @@ export const useFinalityTimeEstimate = (route: RouteResponse): FinalityTime => {
         return DEFAULT_FINALITY_TIME;
       }
       if ('transfer' in operation) {
-        finalityTime = '20 seconds';
+        finalityTime = '5 seconds';
       }
     }
 
