@@ -22,6 +22,7 @@ import { calcEstimatedRemainingTime } from '@/utils';
 import { useRouter } from 'next/router';
 import { TxStatusIcon } from './TxStatusIcon';
 import Link from 'next/link';
+import { makeExplorerLinks } from './utils/make-explorer-links';
 
 interface ViewStatusProps {
   route: RouteResponse;
@@ -30,8 +31,6 @@ interface ViewStatusProps {
   setBroadcastedTxs: (txs: BroadcastedTx[]) => void;
   setBridgeStep: (step: BridgeStep) => void;
 }
-
-const getRangeUsdcExplorerUrl = (txHash: string) => `https://usdc.range.org/usdc?txhash=${txHash}`;
 
 export const ViewStatus = ({
   route,
@@ -62,25 +61,7 @@ export const ViewStatus = ({
     [estimatedFinalityTime, progressPercentage]
   );
 
-  const cctpTxs = useMemo(() => {
-    if (!txStatus) return null;
-
-    const found = txStatus.transferSequence.find((seq) => seq.bridgeID === 'CCTP');
-
-    if (!found) return null;
-
-    return found.txs;
-  }, [txStatus]);
-
-  const ibcTxs = useMemo(() => {
-    if (!txStatus) return null;
-
-    const found = txStatus.transferSequence.find((seq) => seq.bridgeID === 'IBC');
-
-    if (!found) return null;
-
-    return found.txs;
-  }, [txStatus]);
+  const { rangeLink, originLink, destinationLink } = makeExplorerLinks(txStatus);
 
   const getStepStatus = (step: Action): NobleTxStepItemProps['status'] => {
     const state = makeStepState({ action: step, statusData: txStatus }).state;
@@ -121,47 +102,19 @@ export const ViewStatus = ({
         {txStatus.isSuccess ? <TxStatusIcon.Success /> : <TxStatusIcon.Failed />}
       </Box>
 
-      {cctpTxs && (
-        <Link
-          href={getRangeUsdcExplorerUrl(cctpTxs.receiveTx?.txHash ?? '')}
-          target="_blank"
-          style={{ textDecoration: 'none' }}
-        >
-          <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
-            View transaction on Range
-          </NobleButton>
-        </Link>
-      )}
-
-      {ibcTxs && (
-        <Box
-          display="flex"
-          flexDirection="column"
-          justifyContent="center"
-          alignItems="center"
-          gap="$8"
-        >
-          <Link
-            href={`${ibcTxs!.sendTx?.explorerLink}`}
-            target="_blank"
-            style={{ textDecoration: 'none' }}
-          >
-            <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
-              View origin transaction
-            </NobleButton>
-          </Link>
-
-          <Link
-            href={`${ibcTxs!.receiveTx?.explorerLink}`}
-            target="_blank"
-            style={{ textDecoration: 'none' }}
-          >
-            <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
-              View destination transaction
-            </NobleButton>
-          </Link>
-        </Box>
-      )}
+      <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        gap="$8"
+      >
+        {rangeLink && <ExplorerLink href={rangeLink} label="View transaction on Range" />}
+        {originLink && <ExplorerLink href={originLink} label="View origin transaction" />}
+        {destinationLink && (
+          <ExplorerLink href={destinationLink} label="View destination transaction" />
+        )}
+      </Box>
     </>
   );
 
@@ -263,5 +216,15 @@ export const ViewStatus = ({
 
       <FaqList />
     </FadeIn>
+  );
+};
+
+const ExplorerLink = ({ href, label }: { href: string; label: string }) => {
+  return (
+    <Link href={href} target="_blank" style={{ textDecoration: 'none' }}>
+      <NobleButton variant="text" fontWeight="$semibold" rightIcon="arrowRightLine">
+        {label}
+      </NobleButton>
+    </Link>
   );
 };
