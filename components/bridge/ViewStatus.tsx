@@ -1,4 +1,4 @@
-import { CHAIN_ID_TO_PRETTY_NAME, DEFAULT_USDC_LOGO, sizes } from '@/config';
+import { DEFAULT_USDC_LOGO, sizes } from '@/config';
 import {
   Box,
   Text,
@@ -12,13 +12,19 @@ import {
   Skeleton
 } from '@interchain-ui/react';
 import { FaqList, FadeIn } from '@/components/common';
-import { BroadcastedTx, useFinalityTimeEstimate, useTxsStatus } from '@/hooks';
+import {
+  BroadcastedTx,
+  useFinalityTimeEstimate,
+  useSkipChains,
+  useUsdcAssets,
+  useTxsStatus
+} from '@/hooks';
 import type { RouteResponse } from '@skip-router/core';
 import { Action, makeActions } from './utils/make-actions';
 import { makeStepState } from './utils/make-step-state';
 import { BridgeStep, TransferInfo } from '@/pages/bridge';
 import { useMemo } from 'react';
-import { calcEstimatedRemainingTime } from '@/utils';
+import { calcEstimatedRemainingTime, getSkipChainPrettyName } from '@/utils';
 import { useRouter } from 'next/router';
 import { TxStatusIcon } from './TxStatusIcon';
 import Link from 'next/link';
@@ -43,10 +49,24 @@ export const ViewStatus = ({
     txs: broadcastedTxs,
     txsRequired: route?.txsRequired
   });
+  const { data: skipChains = [] } = useSkipChains();
+  const { data: usdcAssets = {} } = useUsdcAssets();
+
+  // Filter out the source chain from the destination chains
+  // and chains that supports USDC
+  const chainsWithUSDC = useMemo(() => {
+    const usdcAssetChainIds = Object.keys(usdcAssets);
+
+    return skipChains.filter((chain) => usdcAssetChainIds.includes(chain.chainID));
+  }, [skipChains, usdcAssets]);
+
   const estimatedFinalityTime = useFinalityTimeEstimate(route);
   const router = useRouter();
 
-  const steps = useMemo(() => makeActions({ route }), [route]);
+  const steps = useMemo(
+    () => makeActions({ route, chains: chainsWithUSDC }),
+    [chainsWithUSDC, route]
+  );
 
   const progressPercentage = useMemo(() => {
     const successfulStates = steps
@@ -169,13 +189,13 @@ export const ViewStatus = ({
                 <Stack space="$18" attributes={{ mx: '$auto', mb: '$13' }}>
                   <NobleTxDirectionCard
                     direction="From"
-                    chainName={CHAIN_ID_TO_PRETTY_NAME[transferInfo.fromChainID]}
+                    chainName={getSkipChainPrettyName(transferInfo.fromChainID, skipChains)}
                     address={transferInfo.fromChainAddress}
                     logoUrl={transferInfo.fromChainLogo}
                   />
                   <NobleTxDirectionCard
                     direction="To"
-                    chainName={CHAIN_ID_TO_PRETTY_NAME[transferInfo.toChainID]}
+                    chainName={getSkipChainPrettyName(transferInfo.toChainID, skipChains)}
                     address={transferInfo.toChainAddress}
                     logoUrl={transferInfo.toChainLogo}
                   />

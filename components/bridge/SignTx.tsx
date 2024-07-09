@@ -2,7 +2,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Box, Text, useColorModeValue } from '@interchain-ui/react';
 
-import { WALLET_KEY_TO_LOGO_URL, WALLET_KEY_TO_PRETTY_NAME, colors, envConfig } from '@/config';
+import { WALLET_KEY_TO_LOGO_URL, WALLET_KEY_TO_PRETTY_NAME, colors } from '@/config';
 import { FaqList, FadeIn } from '@/components/common';
 import { PulsingBox } from '@/components/common/PulsingBox';
 import { AbstractWallet } from '@/components/common/icons/AbstractWallet';
@@ -27,10 +27,7 @@ export const SignTx = () => {
 
   return (
     <>
-      {walletKey === 'capsule' && (
-        <TransactionSigningModal dAppInfo={{ name: envConfig.appName ?? 'Interchain CCTP' }} />
-      )}
-
+      {walletKey === 'capsule' && <TransactionSigningModal dAppInfo={{ name: 'Noble Express' }} />}
       <FadeIn>
         <Box mx="auto" mt="60px" width="300px">
           <Box minHeight="50rem" textAlign="center">

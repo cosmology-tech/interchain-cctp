@@ -12,9 +12,11 @@ import {
   avalancheFuji
 } from 'wagmi/chains';
 import { EVM_CHAINS } from './chains';
+import { isTestnetMode } from '@/config/chains';
+import { SkipChain } from '@/hooks/useSkipChains';
 
 export const config = createConfig({
-  // @ts-ignore
+  // @ts-expect-error
   chains: EVM_CHAINS,
   transports: {
     [base.id]: http(),
@@ -29,3 +31,21 @@ export const config = createConfig({
     [avalancheFuji.id]: http()
   }
 });
+
+export const wagmiConfigFactory = (skipChains: Array<SkipChain> = []) => {
+  const defaultConfig = config;
+
+  if (!skipChains.length || isTestnetMode) {
+    return defaultConfig;
+  }
+
+  return createConfig({
+    // @ts-expect-error
+    chains: skipChains,
+    transports: skipChains.reduce((acc, chain) => {
+      // @ts-expect-error
+      acc[chain.chainID] = http();
+      return acc;
+    }, {})
+  });
+};

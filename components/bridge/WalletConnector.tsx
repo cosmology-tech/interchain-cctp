@@ -96,6 +96,7 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
 
   const switchEvmChain = useCallback(async () => {
     if (!chain || isCosmosChain(chain) || !selectedEvmWalletKey) return;
+
     try {
       await switchChainAsync({ chainId: Number(chain.chainID) });
     } catch (error) {
@@ -151,7 +152,15 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
     direction === 'source'
       ? setSrcWallet({ chainId, walletKey, address })
       : setDestWallet({ chainId, walletKey, address });
-  }, [address, chain, selectedEvmWalletKey, selectedCosmosWalletKey]);
+  }, [
+    address,
+    chain,
+    selectedEvmWalletKey,
+    selectedCosmosWalletKey,
+    direction,
+    setSrcWallet,
+    setDestWallet
+  ]);
 
   const [selectedWalletKey, setSelectedWalletKey] = useState<CosmosWalletKey | EvmWalletKey | null>(
     null
@@ -231,7 +240,7 @@ export const WalletConnector = ({ label, chain, direction }: WalletConnectorProp
         ({
           type: CHAIN_TYPE.COSMOS,
           triggerLabel: WALLET_KEY_TO_PRETTY_NAME[walletKey as unknown as CosmosWalletKey],
-          name: wallet.walletName,
+          name: walletKey === 'capsule' ? 'Capsule' : wallet.walletName,
           walletKey: walletKey as CosmosWalletKey,
           address: address,
           isConnected: wallet.isConnected,

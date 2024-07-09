@@ -6,10 +6,12 @@ import {
   optimism,
   polygon,
   base,
+  bsc,
   // testnets
   sepolia,
   avalancheFuji,
   optimismSepolia,
+  bscTestnet,
   // types
   Chain as EVMChain
 } from 'wagmi/chains';
@@ -42,6 +44,11 @@ const COSMOS_TESTNETS: CosmosChain[] = [nobletestnet, osmosistestnet];
 const getEvmChainId = (chain: EVMChain) => chain.id.toString();
 const getCosmosChainId = (chain: CosmosChain) => chain.chain_id;
 
+export const EVM_CHAIN_PRETTY_NAME: Record<string, string> = [
+  ...EVM_MAINNETS,
+  ...EVM_TESTNETS
+].reduce((res, cur) => ({ ...res, [cur.id]: cur.name }), {});
+
 export const isTestnetMode = envConfig.isTestnet === 'true';
 
 export const SUPPORTED_CHAIN_IDS = isTestnetMode
@@ -50,29 +57,6 @@ export const SUPPORTED_CHAIN_IDS = isTestnetMode
 
 export const EVM_CHAINS = isTestnetMode ? EVM_TESTNETS : EVM_MAINNETS;
 export const COSMOS_CHAINS = isTestnetMode ? COSMOS_TESTNETS : COSMOS_MAINNETS;
-
-// =======================
-// Chain ID to pretty name
-// =======================
-const evmChainIdToPrettyName = [...EVM_MAINNETS, ...EVM_TESTNETS].reduce(
-  (res, cur) => ({ ...res, [cur.id]: cur.name }),
-  {}
-);
-
-const cosmosChainIdToPrettyName = [...COSMOS_MAINNETS, ...COSMOS_TESTNETS].reduce(
-  (res, cur) => ({ ...res, [cur.chain_id]: cur.pretty_name }),
-  {}
-);
-
-export const CHAIN_ID_TO_PRETTY_NAME: Record<string, string> = {
-  ...evmChainIdToPrettyName,
-  ...cosmosChainIdToPrettyName
-};
-
-// =======================
-// Other chain info
-// =======================
-export const COSMOS_CHAIN_NAMES = COSMOS_CHAINS.map((chain) => chain.chain_name);
 
 export const CHAIN_TYPE = {
   EVM: 'evm',
@@ -85,3 +69,5 @@ export const DEFAULT_USDC_LOGO = '/coins/usdc.svg';
 
 export const NOBLE_CHAIN_ID = isTestnetMode ? nobletestnet.chain_id : noble.chain_id;
 export const NOBLE_CHAIN_NAME = isTestnetMode ? nobletestnet.chain_name : noble.chain_name;
+
+export const FILTER_CHAIN_IDS = [bsc.id, bscTestnet.id] as number[];

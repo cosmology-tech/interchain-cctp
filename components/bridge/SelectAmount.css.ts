@@ -3,6 +3,11 @@ import { inputReset } from '@/styles/Shared.css';
 import { colors } from '@/config/theme';
 
 const baseDropdown = style({
+  // 5 items * 96px + input height
+  maxHeight: `calc(5 * 96px + 56px) !important`,
+  width: '466px',
+  // @ts-ignore
+  overflowX: 'hidden !important',
   selectors: {
     '&[data-open]': {
       borderRadius: '8px',

@@ -1,5 +1,6 @@
-import { CHAIN_ID_TO_PRETTY_NAME } from '@/config';
 import type { BridgeType, RouteResponse } from '@skip-router/core';
+import { SkipChain } from '@/hooks';
+import { EVM_CHAIN_PRETTY_NAME } from '@/config/chains';
 
 export interface Action {
   text: string;
@@ -8,7 +9,18 @@ export interface Action {
   cctpChainDirection?: 'src' | 'dest';
 }
 
-export const makeActions = ({ route }: { route: RouteResponse }): Action[] => {
+function getChainPrettyName(chainId: string, chains: Array<SkipChain>) {
+  const chain = chains.find(({ chainID }) => chainID === chainId);
+  return chain?.chainType === 'cosmos' ? chain?.prettyName : EVM_CHAIN_PRETTY_NAME[chainId];
+}
+
+export const makeActions = ({
+  route,
+  chains
+}: {
+  route: RouteResponse;
+  chains: Array<SkipChain>;
+}): Action[] => {
   const _actions: Action[] = [];
 
   route.operations.forEach((operation, i) => {
@@ -17,14 +29,14 @@ export const makeActions = ({ route }: { route: RouteResponse }): Action[] => {
       const destChainID = operation.cctpTransfer.toChainID;
 
       _actions.push({
-        text: `Burn on ${CHAIN_ID_TO_PRETTY_NAME[srcChainID]}`,
+        text: `Burn on ${getChainPrettyName(srcChainID, chains)}`,
         bridgeID: 'CCTP',
         operationIndex: i,
         cctpChainDirection: 'src'
       });
 
       _actions.push({
-        text: `Mint on ${CHAIN_ID_TO_PRETTY_NAME[destChainID]}`,
+        text: `Mint on ${getChainPrettyName(destChainID, chains)}`,
         bridgeID: 'CCTP',
         operationIndex: i,
         cctpChainDirection: 'dest'
@@ -37,7 +49,7 @@ export const makeActions = ({ route }: { route: RouteResponse }): Action[] => {
       const destChainID = operation.transfer.toChainID;
 
       _actions.push({
-        text: `Transfer to ${CHAIN_ID_TO_PRETTY_NAME[destChainID]}`,
+        text: `Transfer to ${getChainPrettyName(destChainID, chains)}`,
         bridgeID: 'IBC',
         operationIndex: i
       });

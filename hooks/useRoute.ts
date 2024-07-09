@@ -36,7 +36,8 @@ export const useRoute = ({
       sourceAssetDenom,
       sourceAssetChainID,
       destAssetDenom,
-      destAssetChainID
+      destAssetChainID,
+      skipClient ? 'skip-ready' : 'skip-pending'
     ],
     queryFn: async () => {
       if (!isEnabled || !skipClient) return;

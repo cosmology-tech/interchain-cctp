@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { readContract } from '@wagmi/core';
 
 import { SkipChain } from './useSkipChains';
-import { getCosmosChainNameById, shiftDecimals } from '@/utils';
+import { shiftDecimals } from '@/utils';
 import {
   CHAIN_TYPE,
   NOBLE_CHAIN_ID,
@@ -12,6 +12,7 @@ import {
   config as wagmiConfig
 } from '@/config';
 import { useStargateClient } from './useStargateClient';
+import { useVerifyCosmosChain } from './useVerifyCosmosChain';
 
 export type EVMAddress = `0x${string}`;
 
@@ -25,6 +26,8 @@ export const useUsdcBalance = ({
   address: string | undefined;
 }) => {
   const isCosmosChain = chain?.chainType === CHAIN_TYPE.COSMOS;
+
+  const { getCosmosChainNameById } = useVerifyCosmosChain();
 
   const { data: stargateClient } = useStargateClient(
     isCosmosChain ? getCosmosChainNameById(chain?.chainID || NOBLE_CHAIN_ID) : NOBLE_CHAIN_NAME

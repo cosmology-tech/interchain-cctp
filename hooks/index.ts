@@ -15,3 +15,4 @@ export * from './useEvmWallet';
 export * from './useSelectedWalletKeys';
 export * from './useDisclosure';
 export * from './useUsdcTransfer';
+export * from './useVerifyCosmosChain';

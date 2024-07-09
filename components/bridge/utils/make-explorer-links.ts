@@ -3,7 +3,7 @@ import { TxsStatusData } from '@/hooks';
 type ExplorerLink = string | null;
 
 const getRangeUsdcExplorerUrl = (txHash: string) =>
-  `https://usdc.range.org/usdc?showPending=true&txhash=${txHash}`;
+  `https://usdc.range.org/usdc?showPending=true&txHash=${txHash}`;
 
 export const makeExplorerLinks = (txStatus: TxsStatusData | undefined) => {
   let rangeLink: ExplorerLink = null;

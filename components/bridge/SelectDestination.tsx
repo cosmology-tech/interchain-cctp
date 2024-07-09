@@ -15,7 +15,7 @@ import type { RouteResponse } from '@skip-router/core';
 import { colors } from '@/config';
 import { scrollBar } from '@/styles/Shared.css';
 import { Tooltip, BaseButton } from '@/components';
-import { SkipChain, useSkipChains } from '@/hooks';
+import { SkipChain, useSkipChains, useUsdcAssets } from '@/hooks';
 import { checkIsInvalidRoute, getOutAmount } from '@/utils';
 import { WalletConnector } from './WalletConnector';
 import { useCurrentWallets } from '@/contexts';
@@ -34,11 +34,18 @@ export const SelectDestination = ({
   sourceChainId
 }: SelectDestinationProps) => {
   const { data: chains = [] } = useSkipChains();
+  const { data: usdcAssets = {} } = useUsdcAssets();
   const { destWallet } = useCurrentWallets();
 
+  // Filter out the source chain from the destination chains
+  // and chains that supports USDC
   const destChains = useMemo(() => {
-    return chains.filter((chain) => chain.chainID !== sourceChainId);
-  }, [chains, sourceChainId]);
+    const usdcAssetChainIds = Object.keys(usdcAssets);
+
+    return chains.filter(
+      (chain) => chain.chainID !== sourceChainId && usdcAssetChainIds.includes(chain.chainID)
+    );
+  }, [chains, sourceChainId, usdcAssets]);
 
   const handleSelectChain = (chainId: Key | null) => {
     const selectedChain = destChains.find((c) => c.chainID === chainId);
@@ -88,7 +95,8 @@ export const SelectDestination = ({
                   className={scrollBar[theme]}
                 >
                   <Text color={theme === 'light' ? '$textInverse' : '$text'}>
-                    Bad Price Warning: {route.warning.message}
+                    Warning: Large difference in USD value of route input and output.
+                    {route.warning.message}
                   </Text>
                 </Box>
               </Tooltip>

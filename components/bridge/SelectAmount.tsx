@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useTransition } from 'react';
 import clsx from 'clsx';
 import type { Asset } from '@skip-router/core';
 import { matchSorter } from 'match-sorter';
@@ -10,7 +10,7 @@ import {
   ComboboxOptions,
   Transition
 } from '@headlessui/react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Box,
   Stack,
@@ -94,6 +94,13 @@ export const SelectAmount = ({
   const { srcWallet } = useCurrentWallets();
 
   const [query, setQuery] = useState<string>('');
+  const [isPending, startTransition] = useTransition();
+
+  const updateQuery = (value: string) => {
+    startTransition(() => {
+      setQuery(value);
+    });
+  };
 
   const { data: balance, isPending: isFetchingBalance } = useUsdcBalance({
     chain: selectedToken?.chain,
@@ -138,13 +145,6 @@ export const SelectAmount = ({
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
 
   const isListboxOpen = !!scrollElement;
-
-  const rowVirtualizer = useVirtualizer({
-    count: options.length,
-    getScrollElement: () => scrollElement,
-    estimateSize: () => 96,
-    overscan: 5
-  });
 
   useEffect(() => {
     // Reset query when closed
@@ -199,7 +199,6 @@ export const SelectAmount = ({
 
   const parsedAmount = amount ? (isNaN(+amount) ? '0' : amount) : '0';
   const amountInUsdcValue = usdcPrice ? calcDollarValue(parsedAmount, usdcPrice) : '$0';
-  const listboxBg = useColorModeValue('$body', '$blue300');
 
   const assetCombobox = (
     <Box display="flex" gap="$8" top="0" left="0">
@@ -211,7 +210,7 @@ export const SelectAmount = ({
         isLoadingSubLogo={isFetchingChains || isFetchingAssets || !selectedToken}
       />
 
-      <Combobox value={selectedToken} onChange={setSelectedToken} onClose={() => setQuery('')}>
+      <Combobox value={selectedToken} onChange={setSelectedToken} onClose={() => updateQuery('')}>
         {({ open }) => (
           <>
             <Box display="flex" justifyContent="center" alignItems="center" gap="$4">
@@ -220,7 +219,7 @@ export const SelectAmount = ({
                   aria-label="Asset name"
                   placeholder="Choose an asset"
                   displayValue={(asset: TokenOption) => asset?.asset?.symbol ?? ''}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={(event) => updateQuery(event.target.value)}
                   data-is-selected={!!selectedToken}
                   className={clsx(styles.selectAmountTokenInput[theme])}
                 />
@@ -238,80 +237,53 @@ export const SelectAmount = ({
               </ComboboxButton>
             </Box>
 
-            <Transition show={open}>
-              <ComboboxOptions
-                anchor={{
-                  to: 'bottom start',
-                  gap: '52px',
-                  offset: '-89px'
-                }}
-                className={clsx(styles.comboboxDropdown[theme], scrollBar[theme])}
-              >
-                <ThemeProvider>
-                  <NobleProvider>
-                    <Box
-                      boxRef={setScrollElement}
-                      position="relative"
-                      boxShadow="0px 4px 8px rgba(0, 0, 0, 0.1)"
-                      backgroundColor={listboxBg}
-                      // 5 items * 96px + input height
-                      maxHeight={`calc(5 * 96px + 56px)`}
-                      zIndex="$100"
-                      width={OPTION_ITEM_WIDTH_PX}
-                      overflowX="hidden"
-                      overflowY="auto"
-                    >
-                      <div
-                        className="virtual-container"
-                        style={{
-                          height: `${rowVirtualizer.getTotalSize()}px`,
-                          width: OPTION_ITEM_WIDTH_PX,
-                          position: 'relative'
-                        }}
-                      >
-                        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                          const option = options[virtualRow.index];
-
-                          return (
-                            <div
-                              key={virtualRow.index}
-                              style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: `${virtualRow.size}px`,
-                                transform: `translateY(${virtualRow.start}px)`
-                              }}
-                            >
-                              <ComboboxOption
-                                key={`${option.chain.chainName}_${option.asset.symbol}_${virtualRow.index}`}
-                                value={options[virtualRow.index]}
-                                style={{
-                                  width: OPTION_ITEM_WIDTH_PX
+            <AnimatePresence mode="wait">
+              {open && (
+                <ComboboxOptions
+                  static
+                  as={motion.div}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  anchor={{
+                    to: 'bottom start',
+                    gap: '52px',
+                    offset: '-89px'
+                  }}
+                  onAnimationComplete={() => updateQuery('')}
+                  ref={setScrollElement}
+                  className={clsx(styles.comboboxDropdown[theme], scrollBar[theme])}
+                >
+                  <ThemeProvider>
+                    <NobleProvider>
+                      {options.map((option, idx) => {
+                        return (
+                          <ComboboxOption
+                            key={`${option.chain.chainName}_${option.asset.symbol}_${idx}`}
+                            value={option}
+                            style={{
+                              width: OPTION_ITEM_WIDTH_PX
+                            }}
+                          >
+                            {({ focus, selected }) => (
+                              <NobleSelectTokenButton
+                                size="xl"
+                                borderless
+                                isActive={selected || focus}
+                                token={optionToDisplayToken(option)}
+                                attributes={{
+                                  borderRadius: '0px'
                                 }}
-                              >
-                                {({ focus, selected }) => (
-                                  <NobleSelectTokenButton
-                                    size="xl"
-                                    borderless
-                                    isActive={selected || focus}
-                                    token={optionToDisplayToken(options[virtualRow.index])}
-                                    attributes={{
-                                      borderRadius: '0px'
-                                    }}
-                                  />
-                                )}
-                              </ComboboxOption>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </Box>
-                  </NobleProvider>
-                </ThemeProvider>
-              </ComboboxOptions>
-            </Transition>
+                              />
+                            )}
+                          </ComboboxOption>
+                        );
+                      })}
+                    </NobleProvider>
+                  </ThemeProvider>
+                </ComboboxOptions>
+              )}
+            </AnimatePresence>
           </>
         )}
       </Combobox>

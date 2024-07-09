@@ -1,15 +1,16 @@
-import { EVM_MAINNETS } from '@/config';
 import { useSkipClient } from '@/contexts';
 import { useQuery } from '@tanstack/react-query';
 import noble from 'chain-registry/mainnet/noble/chain';
 import { chains as cosmosChains } from 'chain-registry';
 import * as evmChainMap from 'wagmi/chains';
+import { useSkipChains } from './useSkipChains';
 
 export const useUsdcChains = () => {
   const skipClient = useSkipClient();
+  const { data: skipChains = [] } = useSkipChains();
 
   return useQuery({
-    queryKey: ['usdc-chains', skipClient ? 'skip-ready' : 'skip-pending'],
+    queryKey: ['usdc-chains', skipClient ? 'skip-ready' : 'skip-pending', skipChains],
     queryFn: async () => {
       const cosmosAssets = await skipClient?.assetsFromSource({
         sourceAssetDenom: 'uusdc',
@@ -23,7 +24,9 @@ export const useUsdcChains = () => {
 
       const evmChains = Object.values(evmChainMap);
       const cosmosChainIDs = Object.keys(cosmosAssets || {});
-      const evmChainIDs = EVM_MAINNETS.map((c) => c.id.toString());
+      const evmChainIDs = skipChains
+        .filter((chain) => chain.chainType === 'evm')
+        .map((chain) => chain.chainID);
       const usdcChainIDs = [...cosmosChainIDs, ...evmChainIDs];
 
       return (chains || [])

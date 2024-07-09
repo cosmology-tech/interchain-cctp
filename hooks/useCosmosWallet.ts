@@ -1,12 +1,7 @@
 import { useMemo } from 'react';
 import { useWallet } from '@cosmos-kit/react';
-import {
-  ChainType,
-  COSMOS_CHAINS,
-  COSMOS_WALLET_KEY_TO_NAME,
-  CosmosWalletKey,
-  NOBLE_CHAIN_ID
-} from '@/config';
+import { ChainType, COSMOS_WALLET_KEY_TO_NAME, CosmosWalletKey, NOBLE_CHAIN_ID } from '@/config';
+import { useSkipChains } from '@/hooks';
 
 type ChainWallet = ReturnType<typeof useWallet>['chainWallets'][number];
 
@@ -26,10 +21,13 @@ export type UseCosmosWalletReturnType = {
 };
 
 export const useCosmosWallet = (walletKey: CosmosWalletKey, chainId?: string) => {
+  const { data: skipChains = [] } = useSkipChains();
   const { chainWallets } = useWallet(COSMOS_WALLET_KEY_TO_NAME[walletKey]);
 
   const chain = useMemo(() => {
-    const _chainId = COSMOS_CHAINS.some(({ chain_id }) => chain_id === chainId)
+    const cosmosChains = skipChains.filter(({ chainType }) => chainType === 'cosmos');
+
+    const _chainId = cosmosChains.some(({ chainID }) => chainID === chainId)
       ? chainId
       : NOBLE_CHAIN_ID;
     const chain = chainWallets.find((chainWallet) => chainWallet.chainId === _chainId);
@@ -39,7 +37,7 @@ export const useCosmosWallet = (walletKey: CosmosWalletKey, chainId?: string) =>
     }
 
     return chain;
-  }, [chainId, chainWallets]);
+  }, [chainId, chainWallets, skipChains]);
 
   const {
     username,

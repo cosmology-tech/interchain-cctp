@@ -1,7 +1,8 @@
 import type { Chain } from '@skip-router/core';
 import { useQuery } from '@tanstack/react-query';
 import { useSkipClient } from '@/contexts';
-import { SUPPORTED_CHAIN_IDS, CHAIN_ID_TO_PRETTY_NAME, isTestnetMode } from '@/config';
+import { isTestnetMode, FILTER_CHAIN_IDS } from '@/config';
+import { getChainPrettyName, getChainName } from '@/utils';
 
 export type SkipChain = Chain & {
   prettyName: string;
@@ -26,19 +27,14 @@ export const useSkipChains = () => {
       });
 
       return chains
-        .filter(({ chainID }) => SUPPORTED_CHAIN_IDS.includes(chainID))
         .map((chain): SkipChain => {
           return {
             ...chain,
-            prettyName: CHAIN_ID_TO_PRETTY_NAME[chain.chainID] || chain.chainName
+            chainName: getChainName(chain.chainID, chain.chainName),
+            prettyName: getChainPrettyName(chain.chainID, chain.chainName)
           };
         })
-        .sort((chainA, chainB) => {
-          return (
-            SUPPORTED_CHAIN_IDS.indexOf(chainA.chainID) -
-            SUPPORTED_CHAIN_IDS.indexOf(chainB.chainID)
-          );
-        });
+        .filter((chain) => !FILTER_CHAIN_IDS.includes(Number(chain.chainID)));
     },
     refetchOnMount: false,
     refetchOnReconnect: false,

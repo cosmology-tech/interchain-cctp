@@ -1,14 +1,16 @@
 import { useMemo, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import type { RouteResponse } from '@skip-router/core';
+
+import { WagmiProvider } from 'wagmi';
+import { config } from '@/config/wagmi';
 import '@leapwallet/cosmos-social-login-capsule-provider-ui/styles.css';
 import '@leapwallet/react-ui/styles.css';
 
-import { Box, useTheme, useColorModeValue, toast } from '@interchain-ui/react';
+import { Box, useTheme, toast, useColorModeValue } from '@interchain-ui/react';
 import { Layout, SelectAmountDest, ViewStatus } from '@/components';
-import { envConfig } from '@/config';
 
-import { useCapsuleClient, useCosmosWallet, BroadcastedTx } from '@/hooks';
+import { useCapsuleClient, useCosmosWallet, BroadcastedTx, useSkipChains } from '@/hooks';
 import { CapsuleContext } from '@/contexts/capsule.context';
 
 export type BridgeStep = 'select-amount-dest' | 'view-status';
@@ -90,42 +92,41 @@ const Bridge = () => {
 
   return (
     <Layout>
-      <CapsuleContext.Provider
-        value={{ isCapsuleModalOpen: showCapsuleModal, setCapsuleModalOpen: setShowCapsuleModal }}
-      >
-        {currentStep}
+      <WagmiProvider config={config}>
+        <CapsuleContext.Provider
+          value={{ isCapsuleModalOpen: showCapsuleModal, setCapsuleModalOpen: setShowCapsuleModal }}
+        >
+          {currentStep}
 
-        <Box className={`leap-ui ${theme === 'dark' ? 'dark' : ''}`}>
-          <CustomCapsuleModalView
-            capsule={capsuleClient}
-            showCapsuleModal={showCapsuleModal}
-            setShowCapsuleModal={setShowCapsuleModal}
-            theme={theme}
-            logoUrl={useColorModeValue(
-              '/logos/interweb-logo-simple-light.svg',
-              '/logos/interweb-logo-simple-dark.svg'
-            )}
-            appName={envConfig.appName}
-            oAuthMethods={oAuthMethods}
-            onAfterLoginSuccessful={() => {
-              const toastId = toast.success('Login successful. Hang tight...');
-              window.successFromCapsuleModal?.();
+          <Box className={`leap-ui ${theme === 'dark' ? 'dark' : ''}`}>
+            <CustomCapsuleModalView
+              capsule={capsuleClient}
+              showCapsuleModal={showCapsuleModal}
+              setShowCapsuleModal={setShowCapsuleModal}
+              theme={theme}
+              logoUrl={useColorModeValue('/logos/noble-light.svg', '/logos/noble-dark.svg')}
+              appName="Noble Express"
+              oAuthMethods={oAuthMethods}
+              onAfterLoginSuccessful={() => {
+                const toastId = toast.success('Login successful. Hang tight...');
+                window.successFromCapsuleModal?.();
 
-              connectCapsuleAsync().then((isSuccess) => {
-                if (isSuccess) {
-                  toast.dismiss(toastId);
-                }
-              });
-            }}
-            onLoginFailure={() => {
-              window.failureFromCapsuleModal?.();
-              toast.error('Login failed. Please try again.');
-            }}
-          />
+                connectCapsuleAsync().then((isSuccess) => {
+                  if (isSuccess) {
+                    toast.dismiss(toastId);
+                  }
+                });
+              }}
+              onLoginFailure={() => {
+                window.failureFromCapsuleModal?.();
+                toast.error('Login failed. Please try again.');
+              }}
+            />
 
-          <TransactionSigningModal dAppInfo={{ name: 'Noble Express' }} />
-        </Box>
-      </CapsuleContext.Provider>
+            <TransactionSigningModal dAppInfo={{ name: 'Noble Express' }} />
+          </Box>
+        </CapsuleContext.Provider>
+      </WagmiProvider>
     </Layout>
   );
 };

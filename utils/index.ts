@@ -1,10 +1,10 @@
 import { chains } from 'chain-registry';
 import { Asset, Chain } from '@chain-registry/types';
-import { CHAIN_TYPE, COSMOS_CHAINS } from '@/config/chains';
+import { CHAIN_TYPE } from '@/config/chains';
 import BigNumber from 'bignumber.js';
-import { fromBech32 } from '@cosmjs/encoding';
 import { RouteResponse } from '@skip-router/core';
 import { SkipChain } from '@/hooks';
+import { chains as chainList } from 'chain-registry';
 
 export const USDC_TO_UUSDC = 1e6;
 export function uusdcToUsdc(uusdc: string | bigint = '0') {
@@ -13,30 +13,12 @@ export function uusdcToUsdc(uusdc: string | bigint = '0') {
   }).format(parseInt(uusdc.toString()) / USDC_TO_UUSDC);
 }
 
-export function cosmosAddressToChainId(address: string) {
-  const { prefix } = fromBech32(address);
-  return COSMOS_CHAINS.find((chain) => chain.bech32_prefix === prefix)!.chain_id;
-}
-
 export function shortenAddress(address: string, partlen = 8) {
   return `${address.slice(0, partlen)}...${address.slice(-partlen)}`;
 }
 
-export function isValidAddress(address: string) {
-  return isValidEvmAddress(address) || isValidCosmosAddress(address);
-}
-
 export function isValidEvmAddress(address: string) {
   return address.startsWith('0x') && address.length === 42;
-}
-
-export function isValidCosmosAddress(address: string) {
-  try {
-    const { prefix } = fromBech32(address);
-    return COSMOS_CHAINS.map((chain) => chain.bech32_prefix).includes(prefix);
-  } catch (error) {
-    return false;
-  }
 }
 
 export function getLogo(from: Asset | Chain) {
@@ -50,10 +32,6 @@ export function getChainLogo(name: string) {
 
 export const isCosmosChain = (chain: SkipChain) => {
   return chain.chainType === CHAIN_TYPE.COSMOS;
-};
-
-export const getCosmosChainNameById = (chainId: string) => {
-  return COSMOS_CHAINS.find((chain) => chain.chain_id === chainId)!.chain_name;
 };
 
 export const shiftDecimals = (number: string | number | bigint = 0, decimalPlaces: number = -6) => {
@@ -116,4 +94,19 @@ export const getOutAmount = (route: RouteResponse | undefined) => {
 export const checkIsInvalidRoute = (route: RouteResponse | undefined) => {
   if (!route) return false;
   return BigNumber(getOutAmount(route)).lte(0);
+};
+
+export const getChainPrettyName = (chainId: string, fallback?: string) => {
+  const correspondingChain = chainList.find((c) => c.chain_id === chainId);
+  return correspondingChain?.pretty_name ?? fallback ?? '';
+};
+
+export const getChainName = (chainId: string, fallback?: string) => {
+  const correspondingChain = chainList.find((c) => c.chain_id === chainId);
+  return correspondingChain?.chain_name ?? fallback ?? '';
+};
+
+export const getSkipChainPrettyName = (chainId: string, skipChains: SkipChain[]) => {
+  const correspondingChain = skipChains.find((c) => c.chainID === chainId);
+  return correspondingChain?.prettyName ?? '';
 };

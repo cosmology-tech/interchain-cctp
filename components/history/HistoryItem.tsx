@@ -1,7 +1,7 @@
-import { CHAIN_ID_TO_PRETTY_NAME, colors } from '@/config';
+import { colors } from '@/config';
 import { TxHistoryItem, txHistory } from '@/contexts';
 import { useTxsStatus, useFinalityTimeEstimate } from '@/hooks';
-import { calcEstimatedRemainingTime } from '@/utils';
+import { calcEstimatedRemainingTime, getSkipChainPrettyName } from '@/utils';
 import {
   Accordion,
   Box,
@@ -14,6 +14,7 @@ import {
   Stack
 } from '@interchain-ui/react';
 import { useEffect, useMemo } from 'react';
+import { useSkipChains, useUsdcAssets } from '@/hooks';
 import { makeActions, Action } from '../bridge/utils/make-actions';
 import { makeStepState } from '../bridge/utils/make-step-state';
 
@@ -24,6 +25,16 @@ interface HistoryItemProps {
 
 export const HistoryItem = ({ id, data }: HistoryItemProps) => {
   const { route, status, transferInfo, broadcastedTxs } = data;
+  const { data: skipChains = [] } = useSkipChains();
+  const { data: usdcAssets = {} } = useUsdcAssets();
+
+  // Filter out the source chain from the destination chains
+  // and chains that supports USDC
+  const chainsWithUSDC = useMemo(() => {
+    const usdcAssetChainIds = Object.keys(usdcAssets);
+
+    return skipChains.filter((chain) => usdcAssetChainIds.includes(chain.chainID));
+  }, [skipChains, usdcAssets]);
 
   const { data: txsStatus, errorUpdateCount } = useTxsStatus({
     txs: broadcastedTxs,
@@ -47,8 +58,10 @@ export const HistoryItem = ({ id, data }: HistoryItemProps) => {
 
   const estimatedFinalityTime = useFinalityTimeEstimate(route);
 
-  const steps = useMemo(() => makeActions({ route }), [route]);
-
+  const steps = useMemo(
+    () => makeActions({ route, chains: chainsWithUSDC }),
+    [chainsWithUSDC, route]
+  );
   const progressPercentage = useMemo(() => {
     const successfulStates = steps
       .map((step) => makeStepState({ action: step, statusData: txsStatus }).state)
@@ -92,13 +105,13 @@ export const HistoryItem = ({ id, data }: HistoryItemProps) => {
           <Stack space="$18" attributes={{ mt: '$9', pb: '$8' }}>
             <NobleTxDirectionCard
               direction="From"
-              chainName={CHAIN_ID_TO_PRETTY_NAME[transferInfo.fromChainID]}
+              chainName={getSkipChainPrettyName(transferInfo.fromChainID, skipChains)}
               address={transferInfo.fromChainAddress}
               logoUrl={transferInfo.fromChainLogo}
             />
             <NobleTxDirectionCard
               direction="To"
-              chainName={CHAIN_ID_TO_PRETTY_NAME[transferInfo.toChainID]}
+              chainName={getSkipChainPrettyName(transferInfo.toChainID, skipChains)}
               address={transferInfo.toChainAddress}
               logoUrl={transferInfo.toChainLogo}
             />

@@ -1,7 +1,5 @@
 import { SkipProvider } from '@/contexts';
-import { WagmiProvider } from 'wagmi';
 import { ChainProvider } from '@cosmos-kit/react';
-import { config } from '@/config/wagmi';
 import { assets, chains } from 'chain-registry';
 import { wallets as _wallets } from 'cosmos-kit';
 
@@ -43,9 +41,7 @@ export const AppProvider = ({ children }: { children?: React.ReactNode }) => {
       <NobleProvider>
         <QueryClientProvider client={queryClient}>
           <ChainProvider chains={chains} assetLists={assets} wallets={wallets}>
-            <SkipProvider>
-              <WagmiProvider config={config}>{children}</WagmiProvider>
-            </SkipProvider>
+            <SkipProvider>{children}</SkipProvider>
           </ChainProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
